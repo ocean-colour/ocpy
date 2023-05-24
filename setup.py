@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 # Begin setup
 setup_keywords = dict()
-setup_keywords['name'] = 'ocean-color'
+setup_keywords['name'] = 'oceancolor'
 setup_keywords['description'] = 'Ocean Color Analysis -- Here, there, and everywhere'
 setup_keywords['author'] = 'J. Xavier Prochaska et al.'
 setup_keywords['author_email'] = 'jxp@ucsc.edu'

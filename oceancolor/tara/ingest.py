@@ -11,6 +11,7 @@ import pandas
 
 # HARD CODED FOR INGESTION ONLY
 tara_path = '/home/xavier/Projects/Oceanography/Color/data/Tara'
+drop_columns = ['date', 'time', 'lat', 'lon', 'Wt', 'sal']
 
 from IPython import embed
 
@@ -34,17 +35,32 @@ def read_one_file(ofile:str):
     fields = fields
 
     # Pandas 
-    df = pandas.read_table(ofile, comment='/', 
+    df_val = pandas.read_table(ofile, comment='/', 
+                           names=fields, 
+                           delimiter=' ', index_col=False)
+    sig_file = ofile.replace('.txt', '_uncertainty.txt')
+
+    df_sig = pandas.read_table(sig_file, comment='/', 
                            names=fields, 
                            delimiter=' ', index_col=False)
 
     # Add datetime
-    df['datetime']  = pandas.to_datetime(
-        [str(df['date'][idx]) + ' ' + df['time'][idx] for idx in range(len(df))], 
-        format='%Y%m%d %H:%M:%S')
+    for df in [df_val, df_sig]:
+        df['datetime']  = pandas.to_datetime(
+            [str(df['date'][idx]) + ' ' + df['time'][idx] for idx in range(len(df))], 
+            format='%Y%m%d %H:%M:%S')
+        df.drop(columns='', inplace=True)
 
-    # Drop the dummy
-    df.drop(columns='', inplace=True)
+    # Rename sig
+    rename_dict = {}
+    for key in df_sig.keys():
+        if 'ap' in key or 'cp' in key:
+            rename_dict[key] = f'sig_{key}'
+    df_sig.rename(columns=rename_dict, inplace=True)
+
+    # Merge
+    df_sig.drop(columns=drop_columns, inplace=True)
+    df = df_val.merge(df_sig, on='datetime')
 
     # Return
     return df, units
@@ -62,10 +78,10 @@ def load_cruise(cruise:str):
         cp_file = ifile.replace('ap.txt', 'cp.txt')
         df_cp, _ = read_one_file(cp_file)
         # Drop columns
-        df_cp.drop(columns=['date', 'time', 'lat', 'lon', 'Wt', 'sal'], inplace=True)
+        df_cp.drop(columns=drop_columns, inplace=True)
         # Merge
         df = df.merge(df_cp, on='datetime', suffixes=('_ap', '_cp'))
-        embed(header='load_cruise')
+
         dfs.append(df)
 
     # Concatenate
@@ -107,14 +123,14 @@ def load_all():
 
 # Testing
 if __name__ == '__main__':
-    '''
     # One file
-    ex_file = os.path.join(tara_path, 'CT-Rio', 'Tara_ACS_apcp2010_286cp.txt')
-    df, units = read_one_file(ex_file)
-    '''
+    #ex_file = os.path.join(tara_path, 'CT-Rio', 
+    #                       'Tara_ACS_apcp2010_286cp.txt')
+    #df, units = read_one_file(ex_file)
 
     # One cruise
-    load_cruise('CT-Rio')
+    df = load_cruise('CT-Rio')
+    embed(header='ingest testing 129')
 
     # All
     #df = load_all()

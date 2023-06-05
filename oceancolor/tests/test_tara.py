@@ -33,4 +33,21 @@ def test_load_spectrum():
     assert np.sum(np.isfinite(values)) == len(values)
 
 # Load spectra
-#tara_db = io.load_tara_db()
+@remote_data
+def test_load_spectra():
+    tara_db = io.load_tara_db()
+    wv_nm, values, error = spectra.spectra_from_table(tara_db.loc[0:20])
+    # Test
+    assert isinstance(wv_nm, np.ndarray)
+    assert values.shape[0] == len(wv_nm)
+
+# Average spectrum
+@remote_data
+def test_average_spectrum():
+    tara_db = io.load_tara_db()
+    rio = tara_db[tara_db.cruise == 'Rio-BA']
+    wv_nm, avg_spec, avg_err = spectra.average_spectrum(rio)
+    # Test
+    assert isinstance(wv_nm, np.ndarray)
+    assert avg_spec.size == len(wv_nm)
+    assert np.sum(np.isnan(avg_spec)) == 0

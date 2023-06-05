@@ -10,6 +10,8 @@ import warnings
 
 import pandas
 
+from oceancolor.tara import io
+
 # HARD CODED FOR INGESTION ONLY
 tara_path = '/home/xavier/Projects/Oceanography/Color/data/Tara'
 drop_columns = ['date', 'time', 'lat', 'lon', 'Wt', 'sal']
@@ -161,7 +163,7 @@ if __name__ == '__main__':
 
     # Real deal
     df = load_all()
-    outfile = 'Tara_APCP.parquet'
+    outfile = io.db_name
     df.to_parquet(outfile)
 
     print(f"Wrote: {outfile}")

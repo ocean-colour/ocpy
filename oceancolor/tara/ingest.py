@@ -24,8 +24,16 @@ def read_one_file(ofile:str):
     lines = f.readlines()
     f.close()
 
+    # Meta -- not currently used
+    meta = {}
+    meta_keys = ['measurement_depth']
+    meta_types = [float]
+    for key in meta_keys:
+        meta[key] = None
+
     # Parse
     for line in lines:
+        # Meta
         if line[0] != '/':
             continue
         # Fields?
@@ -34,6 +42,9 @@ def read_one_file(ofile:str):
         # Units
         if 'units' in line:
             units = line.strip().split('=')[1].split(',')
+        for kk,key in enumerate(meta.keys()):
+            if key in line:
+                meta[key] = meta_types[kk](line.strip().split('=')[-1])
     # Ignore the dummy
     fields = fields
 
@@ -141,11 +152,16 @@ if __name__ == '__main__':
     #ex_file = os.path.join(tara_path, 'CT-Rio', 
     #                       'Tara_ACS_apcp2010_286cp.txt')
     #df, units = read_one_file(ex_file)
+    #embed(header='load_all 151')
 
     # One cruise
     #df = load_cruise('CT-Rio')
     #embed(header='ingest testing 129')
 
-    # All
+
+    # Real deal
     df = load_all()
-    embed(header='load_all 151')
+    outfile = 'Tara_APCP.parquet'
+    df.to_parquet(outfile)
+
+    print(f"Wrote: {outfile}")

@@ -2,6 +2,7 @@
 
 import os
 import glob
+from pkg_resources import resource_filename
 import warnings
 
 #import numpy as np
@@ -20,7 +21,17 @@ from IPython import embed
 
 warnings.warn('ADD in META!')
 
-def read_one_file(ofile:str):
+def read_one_file(ofile:str, skip_sig:bool=False):
+    """ Read one file from the Tara database
+
+    Args:
+        ofile (str): Full path to the file 
+        skip_sig (bool, optional): 
+            Skip the uncertainty file.  Default is False
+
+    Returns:
+        tuple: table of data (pandas.DataFrame), units (list)
+    """
     # Read
     f = open(ofile)
     lines = f.readlines()
@@ -56,12 +67,33 @@ def read_one_file(ofile:str):
                            delimiter=' ', index_col=False)
     sig_file = ofile.replace('.txt', '_uncertainty.txt')
 
-    if os.path.isfile(sig_file):
+    if skip_sig:
+        df_sig = None
+    elif os.path.isfile(sig_file):
         df_sig = pandas.read_table(sig_file, comment='/', 
                            names=fields, 
                            delimiter=' ', index_col=False)
+    elif os.path.basename(ofile) == 'Tara_ACS_apcp2011_351ap.txt':
+        ex_file = os.path.join(
+            resource_filename('oceancolor', 'data'),
+            'Tara', '682bc9fe5b_Tara_ACS_apcp2011_351ap.sb')
+        df_sig, _ = read_one_file(ex_file, skip_sig=True)
+        # Fuss!
+        drop = []
+        sigkeys = {}
+        for key in df_sig.keys():
+            if key[0:2]=='ap': 
+                if 'sd' not in key:
+                    drop.append(key)
+                    sigkeys[key+'_sd'] = key
+        # Drop and Rename!
+        df_sig.drop(columns=drop, inplace=True)
+        df_sig.rename(columns=sigkeys, inplace=True)
+        # Dummy
+        df_sig[''] = 0.
     else:
         warnings.warn(f"No uncertainty file for {ofile}")
+        embed(header='ingest 84')
         df_sig = None
 
     # Add datetime
@@ -69,8 +101,8 @@ def read_one_file(ofile:str):
         if df is None:
             continue
         df['datetime']  = pandas.to_datetime(
-            [str(df['date'][idx]) + ' ' + df['time'][idx] for idx in range(len(df))], 
-            format='%Y%m%d %H:%M:%S')
+                [str(df['date'][idx]) + ' ' + df['time'][idx] for idx in range(len(df))], 
+                format='%Y%m%d %H:%M:%S')
         df.drop(columns='', inplace=True)
 
     # Rename sig

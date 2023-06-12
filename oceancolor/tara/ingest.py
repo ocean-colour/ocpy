@@ -123,6 +123,14 @@ def read_one_file(ofile:str, skip_sig:bool=False):
     return df, units
 
 def load_cruise(cruise:str):
+    """ Load one cruise from the Tara database
+
+    Args:
+        cruise (str): Name of the cruise
+
+    Returns:
+        pandas.DataFrame: table of data
+    """
     files = glob.glob(os.path.join(tara_path, cruise, 
                                    f'Tara_ACS_*ap.txt'))
 
@@ -158,6 +166,11 @@ def load_cruise(cruise:str):
     return df
 
 def load_all():
+    """ Load all cruises from the Tara database
+
+    Returns:
+        pandas.DataFrame: table of data
+    """
 
     # Get the cruises
     cruises = [directory for directory in os.listdir(tara_path) 

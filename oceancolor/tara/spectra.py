@@ -6,7 +6,17 @@ import pandas
 from IPython import embed
 
 def parse_wavelengths(inp, flavor:str='ap'):
-    """ Parse wavelengths from a row/table of the Tara Oceans database. """
+    """ Parse wavelengths from a row/table of the Tara Oceans database. 
+
+    Args:
+        inp (pandas.Series or pandas.DataFrame):
+            One row or table of the Tara Oceans database.
+        flavor (str, optional):
+            Flavor of spectrum to load [ap, cp]
+
+    Returns:
+        tuple: wavelengths (nm), keys
+    """
     keys, wv_nm = [], []
 
     for key in inp.keys():
@@ -14,6 +24,7 @@ def parse_wavelengths(inp, flavor:str='ap'):
             keys.append(key)
             # Wavelength
             wv_nm.append(float(key[2:]))
+
     # Recast
     wv_nm = np.array(wv_nm)
     keys = np.array(keys)
@@ -27,6 +38,17 @@ def parse_wavelengths(inp, flavor:str='ap'):
     return wv_nm, keys
 
 def spectra_from_table(tbl:pandas.DataFrame, flavor:str='ap'):
+    """ Load spectra from a table of the Tara Oceans database.
+
+    Args:
+        tbl (pandas.DataFrame): 
+            Table of the Tara Oceans database.
+        flavor (str, optional): 
+            Flavor of spectrum to load [ap, cp]
+
+    Returns:
+        tuple: wavelengths (nm), values, error
+    """
 
     # Wavelengths
     wv_nm, keys = parse_wavelengths(tbl, flavor=flavor)
@@ -52,6 +74,19 @@ def spectra_from_table(tbl:pandas.DataFrame, flavor:str='ap'):
     return wv_nm, values, err_vals
 
 def average_spectrum(tbl:pandas.DataFrame, flavor:str='ap'):
+    """ Average spectrum from a table of the Tara Oceans database.
+
+    Note that NaN in the data are ignored.
+
+    Args:
+        tbl (pandas.DataFrame): 
+            Table of the Tara Oceans database.
+        flavor (str, optional): 
+            Flavor of spectrum to load [ap, cp]
+
+    Returns:
+        tuple: wavelengths (nm), values, error
+    """
     wv_nm, values, err_vals = spectra_from_table(tbl, flavor=flavor)
 
     # Average
@@ -67,7 +102,8 @@ def average_spectrum(tbl:pandas.DataFrame, flavor:str='ap'):
     # Return
     return wv_nm, avg_vals, avg_error
 
-def spectrum_from_row(row:pandas.Series, flavor:str='ap'):
+def spectrum_from_row(row:pandas.Series, flavor:str='ap',
+                      keep_nan:bool=False):
     """ Load a spectrum from a row in the Tara Oceans database.
 
     Args:
@@ -76,6 +112,8 @@ def spectrum_from_row(row:pandas.Series, flavor:str='ap'):
         flavor (str, optional): 
             Flavor of spectrum to load [ap, cp]  
             Defaults to 'ap'.
+        keep_nan (bool, optional):
+            Keep NaN values in the spectrum.  Default is False
 
     Returns:
         tuple: wavelength (nm), values, error
@@ -99,10 +137,11 @@ def spectrum_from_row(row:pandas.Series, flavor:str='ap'):
     err_vals = np.array(err_vals)
 
     # Cut down
-    gd_spec = np.isfinite(values)
-    wv_nm = wv_nm[gd_spec]
-    values = values[gd_spec]
-    err_vals = err_vals[gd_spec]
+    if not keep_nan:
+        gd_spec = np.isfinite(values)
+        wv_nm = wv_nm[gd_spec]
+        values = values[gd_spec]
+        err_vals = err_vals[gd_spec]
 
     
     # Return

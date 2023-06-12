@@ -10,7 +10,11 @@ db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
 
 def load_tara_db():
-    """ Load the Tara Oceans database. """
+    """ Load the Tara Oceans database. 
+
+    Returns:
+        pandas.DataFrame: table of data
+    """
     # Get the file
     # Read
     df = pandas.read_parquet(db_name)

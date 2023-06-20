@@ -51,3 +51,12 @@ def test_average_spectrum():
     assert isinstance(wv_nm, np.ndarray)
     assert avg_spec.size == len(wv_nm)
     assert np.sum(np.isnan(avg_spec)) == 0
+
+@remote_data
+def test_single_value():
+    tara_db = io.load_tara_db()
+    value, sig = spectra.single_value(tara_db, 675.)
+
+    # Test
+    assert np.isclose(value[0], 0.01625)
+    assert np.isclose(sig[0], 0.00465)

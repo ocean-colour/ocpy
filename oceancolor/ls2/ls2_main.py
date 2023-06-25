@@ -2,6 +2,8 @@ import numpy as np
 import warnings
 from scipy import interpolate
 
+from IPython import embed
+
 def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
              bw:float,bp:float,LS2_LUT:dict,Flag_Raman:bool):
     """Implements the LS2 inversion model to calculate a, anw, bb, and bbp from 
@@ -93,8 +95,13 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
         a11 = Kd/(LS2_LUT['a'][idx_eta+1,idx_muw+1,0] + LS2_LUT['a'][idx_eta+1,idx_muw+1,1]*Rrs + LS2_LUT['a'][idx_eta+1,idx_muw+1,2]*Rrs**2 + LS2_LUT['a'][idx_eta+1,idx_muw+1,3]*Rrs**3)
         
         #calculate a using 2-D linear interpolation determined from bracketed values of eta and muw
-        a = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
-                                 np.array([[a00,a01],[a10,a11]]),eta,muw) 
+        f = interpolate.RegularGridInterpolator(
+            (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(), 
+             LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
+            np.array([[a00,a01],[a10,a11]]))
+        a = float(f([eta,muw]))
+        #a = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
+        #                         np.array([[a00,a01],[a10,a11]]),eta,muw) 
         
         #calculation of bb from Eq. 8
         #%bb is first calculated for four combinations of LUT values
@@ -106,8 +113,14 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
         
         #%calculate bb using 2-D linear interpolation determined from
         #%bracketed values of eta and muw
-        bb = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
-                                 np.array([[bb00,bb01],[bb10,bb11]]),eta,muw)
+        #embed(header='LS2_main: 115')
+        f = interpolate.RegularGridInterpolator(
+            (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(),
+            LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
+            np.array([[bb00,bb01],[bb10,bb11]]))
+        bb = float(f([eta,muw]))
+        #bb = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
+        #                         np.array([[bb00,bb01],[bb10,bb11]]),eta,muw)
         
     else:
         a = np.nan
@@ -123,7 +136,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
     #applied and original values are returned with kappa value of 1  
     if Flag_Raman:      
         #call subfunction LS2_calc_kappa 
-        kappa = LS2_calc_kappa(bb/a,lambda_,LS2_LUT.kappa)
+        kappa = LS2_calc_kappa(bb/a,lambda_,LS2_LUT['kappa'])
 
         #apply Raman scattering correction to Rrs and recalculate a & bb  
         if not np.isnan(kappa):        
@@ -133,50 +146,48 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
             
             #a is first calculated for four combinations of LUT values  
             #bracketing the lower and upper limits of eta and muw  
-            a00 = Kd/(LS2_LUT.a[idx_eta,idx_muw,1] +                
-                LS2_LUT.a[idx_eta,idx_muw,2]*Rrs +                
-                LS2_LUT.a[idx_eta,idx_muw,3]*Rrs**2 +                
-                LS2_LUT.a[idx_eta,idx_muw,4]*Rrs**3)  
+            a00 = Kd/(LS2_LUT['a'][idx_eta,idx_muw,0] +                
+                LS2_LUT['a'][idx_eta,idx_muw,1]*Rrs +                
+                LS2_LUT['a'][idx_eta,idx_muw,2]*Rrs**2 +                
+                LS2_LUT['a'][idx_eta,idx_muw,3]*Rrs**3)  
         
             #... (similar calculations for a01, a10, a11)
             
             #calculate a using 2-D linear interpolation determined from  
             #bracketed values of eta and muw  
-            a = np.interp(eta,LS2_LUT.eta[idx_eta:idx_eta+1],        
-                np.interp(muw,LS2_LUT.muw[idx_muw:idx_muw+1],[a00,a10],        
-                [a01,a11]))  
-                
+            f = interpolate.RegularGridInterpolator(
+                (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(), 
+                LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
+                np.array([[a00,a01],[a10,a11]]))
+            a = float(f([eta,muw]))
+                    
             #calculation of bb from Eq. 8  
             
             #bb is first calculated for four combinations of LUT values  
             #bracketing the lower and upper limits of eta and muw  
-            bb00 = Kd*(LS2_LUT.bb[idx_eta,idx_muw,1]*Rrs +            
-                    LS2_LUT.bb[idx_eta,idx_muw,2]*Rrs**2 +             
-                    LS2_LUT.bb[idx_eta,idx_muw,3]*Rrs**3)  
+            bb00 = Kd*(LS2_LUT['bb'][idx_eta,idx_muw,0]*Rrs +            
+                    LS2_LUT['bb'][idx_eta,idx_muw,1]*Rrs**2 +             
+                    LS2_LUT['bb'][idx_eta,idx_muw,2]*Rrs**3)  
 
-            bb01 = Kd*(LS2_LUT.bb[idx_eta,idx_muw+1,1]*Rrs +            
-                    LS2_LUT.bb[idx_eta,idx_muw+1,2]*Rrs**2 +             
-                    LS2_LUT.bb[idx_eta,idx_muw+1,3]*Rrs**3)  
+            bb01 = Kd*(LS2_LUT['bb'][idx_eta,idx_muw+1,0]*Rrs +            
+                    LS2_LUT['bb'][idx_eta,idx_muw+1,1]*Rrs**2 +             
+                    LS2_LUT['bb'][idx_eta,idx_muw+1,2]*Rrs**3)  
 
-            bb10 = Kd*(LS2_LUT.bb[idx_eta+1,idx_muw,1]*Rrs +            
-                    LS2_LUT.bb[idx_eta+1,idx_muw,2]*Rrs**2 +             
-                    LS2_LUT.bb[idx_eta+1,idx_muw,3]*Rrs**3)  
+            bb10 = Kd*(LS2_LUT['bb'][idx_eta+1,idx_muw,0]*Rrs +            
+                    LS2_LUT['bb'][idx_eta+1,idx_muw,1]*Rrs**2 +             
+                    LS2_LUT['bb'][idx_eta+1,idx_muw,2]*Rrs**3)  
             
-            bb11 = Kd*(LS2_LUT.bb[idx_eta+1,idx_muw+1,1]*Rrs +            
-                    LS2_LUT.bb[idx_eta+1,idx_muw+1,2]*Rrs**2 +             
-                    LS2_LUT.bb[idx_eta+1,idx_muw+1,3]*Rrs**3)  
+            bb11 = Kd*(LS2_LUT['bb'][idx_eta+1,idx_muw+1,0]*Rrs +            
+                    LS2_LUT['bb'][idx_eta+1,idx_muw+1,1]*Rrs**2 +             
+                    LS2_LUT['bb'][idx_eta+1,idx_muw+1,2]*Rrs**3)  
             
             #calculate bb using 2-D linear interpolation determined from  
             #bracketed values of eta and muw  
-            raise ValueError()
-            bb = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
-                                 np.array([[bb00,bb01],[bb10,bb11]]),eta,muw)
-            bb = interpolate.interp2d(eta,LS2_LUT.eta[idx_eta:idx_eta+1],        
-                    np.interp(muw,LS2_LUT.muw[idx_muw:idx_muw+1],          
-                            [bb00,bb10],[bb01,bb11]))      
-            #bb = interp2(LS2_LUT.eta(idx_eta:idx_eta+1),...
-            #      LS2_LUT.muw(idx_muw:idx_muw+1),[bb00 bb10; bb01 bb11],...
-            #      eta,muw); %[m^-1]   
+            f = interpolate.RegularGridInterpolator(
+                (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(),
+                LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
+                np.array([[bb00,bb01],[bb10,bb11]]))
+            bb = float(f([eta,muw]))
         #if Flag is not 1, do nothing and return original values of a, anw, bb,  
         #bbp with kappa returned as 1  
     else:        

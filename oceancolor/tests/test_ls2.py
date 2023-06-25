@@ -141,20 +141,30 @@ for i in range(Rrs.shape[0]):
     for j in range(Rrs.shape[1]):
         output_a[i,j], output_anw[i,j], output_bb[i,j], output_bbp[i,j], output_kappa[i,j] = LS2_main(
             sza[i], lambda_[j], Rrs[i,j], Kd[i,j], aw[j], bw[j], bp[i,j], LS2_LUT, input_Flag_Raman)
-embed(header='134 test_ls2.py')
 
 #save inputs and outputs into an excel file  
-for i in range(Rrs.shape[1]):
-    T = np.hstack((np.tile(lambda_[i], (Rrs.shape[0],1)), sza[:, None], Rrs[:,i, None], Kd[:,i, None],  
-                np.tile(aw[i], (Rrs.shape[0],1)), np.tile(bw[i], (Rrs.shape[0],1)), bp[:,i, None],  
-                output_a[:, i, None], output_anw[:, i, None], output_bb[:, i, None], output_bbp[:, i, None],  
-                output_kappa[:, i, None]))  
-    date_str = datetime.datetime.today().strftime('%Y%m%d') 
-    outfile = f'LS2_test_run_{date_str}.xlsx'
-    with pandas.ExcelWriter(outfile) as writer:  
-        df = pandas.DataFrame(T)
-        df.columns = ['Input wavelength [nm]','Input sza [deg]','Input Rrs [1/sr]',  
-                       'Input Kd [1/m]','Input aw [1/m]','Input bw [1/m]','Input bp [1/m]',  
-                       'Ouput a [1/m]','Output anw [1/m]','Output bb [1/m]',  
-                       'Output bbp [1/m]','Output kappa [dim]']  
+date_str = datetime.datetime.today().strftime('%Y%m%d') 
+outfile = f'LS2_test_run_{date_str}.xlsx'
+with pandas.ExcelWriter(outfile) as writer:  
+    for i in range(Rrs.shape[1]):
+        df = pandas.DataFrame()
+        df['Input wavelength [nm]'] = lambda_[i]
+        df['Input sza [deg]'] = sza
+        df['Input Rrs [1/sr]'] = Rrs[:,i]
+        df['Input Kd [1/m]'] = Kd[:,i]
+        df['Input aw [1/m]'] = aw[i]
+        df['Input bw [1/m]'] = bw[i]
+        df['Input bp [1/m]'] = bp[:,i]
+        df['Ouput a [1/m]'] = output_a[:,i]
+        df['Output anw [1/m]'] = output_anw[:,i]
+        df['Output bb [1/m]'] = output_bb[:,i]
+        df['Output bbp [1/m]'] = output_bbp[:,i]
+        df['Output kappa [dim]'] = output_kappa[:,i]
+        
+        #df.columns = ['Input wavelength [nm]','Input sza [deg]','Input Rrs [1/sr]',  
+        #                'Input Kd [1/m]','Input aw [1/m]','Input bw [1/m]','Input bp [1/m]',  
+        #                'Ouput a [1/m]','Output anw [1/m]','Output bb [1/m]',  
+        #                'Output bbp [1/m]','Output kappa [dim]']  
         df.to_excel(writer, sheet_name=f'{lambda_[i]} nm', index=False)
+
+print(f'Output saved to {outfile}')

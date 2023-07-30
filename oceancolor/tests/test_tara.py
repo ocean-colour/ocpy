@@ -1,7 +1,5 @@
-""" Test methods in bayesian.py """
-
+""" Test methods for Tara"""
 import os
-from pkg_resources import resource_filename
 
 import numpy as np
 import pandas

@@ -234,6 +234,7 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
 
     # Loop on wv_grid
     rebin_values = np.zeros((wv_grid.size-1, values.shape[1]))
+    rebin_err = np.zeros((wv_grid.size-1, values.shape[1]))
     rebin_wave = np.zeros(wv_grid.size-1)
     
     for iwv in range(wv_grid.size-1):
@@ -245,9 +246,11 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
 
         # Add em in
         isum = np.nansum(values[gd]*mask[gd], axis=0) / np.sum(mask[gd],axis=0)
+        esum = np.nansum(err_vals[gd]*mask[gd], axis=0) / np.sum(mask[gd],axis=0)
 
         # Fill
         rebin_values[iwv] = isum
+        rebin_err[iwv] = esum
 
     # Return
-    return rebin_wave, rebin_values
+    return rebin_wave, rebin_values, rebin_err

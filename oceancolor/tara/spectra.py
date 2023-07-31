@@ -227,14 +227,14 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
         wv_grid (np.ndarray): New wavelength grid
 
     Returns:
-        tuple: values, error [np.ndarray, np.ndarray]
+        tuple: wave, values, error [np.ndarray (nwv), np.ndarray (nspec,nwv), np.ndarray]
     """
     gd_values = np.isfinite(values)
     mask = gd_values.astype(int)
 
     # Loop on wv_grid
-    rebin_values = np.zeros((wv_grid.size-1, values.shape[1]))
-    rebin_err = np.zeros((wv_grid.size-1, values.shape[1]))
+    rebin_values = np.zeros((values.shape[1], wv_grid.size-1))
+    rebin_err = np.zeros((values.shape[1], wv_grid.size-1))
     rebin_wave = np.zeros(wv_grid.size-1)
     
     for iwv in range(wv_grid.size-1):
@@ -249,8 +249,8 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
         esum = np.nansum(err_vals[gd]*mask[gd], axis=0) / np.sum(mask[gd],axis=0)
 
         # Fill
-        rebin_values[iwv] = isum
-        rebin_err[iwv] = esum
+        rebin_values[:,iwv] = isum
+        rebin_err[:,iwv] = esum
 
     # Return
     return rebin_wave, rebin_values, rebin_err

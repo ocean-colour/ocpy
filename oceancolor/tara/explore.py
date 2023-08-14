@@ -38,6 +38,7 @@ def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.):
 
     cull_raph = r_aph[all_gd, :]
     cull_rsig = r_sig[all_gd, :]
+    cull_tbl = tara_db[all_gd]
 
     # Deal with bad values
     really_bad = np.isnan(cull_raph) | (cull_rsig <= 0.) 
@@ -50,7 +51,7 @@ def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.):
     cull_raph[negative] = 1e-5
 
     # Return
-    return rwv_nm, cull_raph, cull_rsig
+    return rwv_nm, cull_raph, cull_rsig, cull_tbl
 
 def run_sequencer(waves:np.ndarray, aph:np.ndarray, 
                   output_path:str,
@@ -65,5 +66,12 @@ def run_sequencer(waves:np.ndarray, aph:np.ndarray,
 
     # Execute
     final_elongation, final_sequence = seq.execute(output_path)
+
+    # Grab the best
+    estimator_list, scale_list, sequence_list = seq.return_sequence_of_weighted_products_all_metrics_and_scales()
+    final_sequence = sequence_list[1]
+
+    # Output
+
 
     

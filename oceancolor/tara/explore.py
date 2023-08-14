@@ -13,7 +13,8 @@ except ImportError:
 else:
     from sequencer import sequencer_
 
-def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.):
+def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.,
+                 process:dict=None):
 
     if wv_grid is None:
         wv_grid = np.arange(402.5, 707.5, 5.) # nm
@@ -49,6 +50,11 @@ def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.):
     # Negative
     negative = cull_raph < 0.
     cull_raph[negative] = 1e-5
+
+    # Process?
+    if process is not None:
+        if 'Norm_PDF' in process.keys() and process['Norm_PDF']:
+            cull_raph /= np.outer(np.sum(cull_raph, axis=1), np.ones(cull_raph.shape[1]))
 
     # Return
     return rwv_nm, cull_raph, cull_rsig, cull_tbl

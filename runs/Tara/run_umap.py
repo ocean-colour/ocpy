@@ -10,16 +10,13 @@ from oceancolor.tara import explore
 
 from IPython import embed
 
-def run_umap(umap_tblfile:str, umap_savefile:str=None):
-    # Output files
-    if umap_savefile is None:
-        umap_savefile = os.path.join(
-            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP.pkl')
+def run_umap(umap_tblfile:str, umap_savefile:str, process:dict=None):
 
     # prep
-    rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra()
+    rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra(process=process)
 
     # Train
+    print("Training..")
     reducer_umap = umap.UMAP(random_state=42)
     latents_mapping = reducer_umap.fit(cull_raph)
     print("Done..")
@@ -37,6 +34,7 @@ def run_umap(umap_tblfile:str, umap_savefile:str=None):
 
     # Save
     umap_tbl.to_parquet(umap_tblfile)
+    print(f"Wrote UMAP table to {umap_tblfile}")
 
 def main(flg):
     if flg== 'all':
@@ -46,9 +44,23 @@ def main(flg):
 
     # UMAP me
     if flg & (2**0):
+
+        '''
+        # Un-normalized, i.e. Absolute
         out_tbl_file = os.path.join(
-            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP.parquet')
-        run_umap(out_tbl_file)
+            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_abs.parquet')
+        umap_savefile = os.path.join(
+            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_abs.pkl')
+        run_umap(out_tbl_file, umap_savefile)
+        '''
+
+        # Normalize PDF
+        out_tbl_file = os.path.join(
+            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_norm.parquet')
+        umap_savefile = os.path.join(
+            os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_norm.pkl')
+        process = dict(Norm_PDF=True)
+        run_umap(out_tbl_file, umap_savefile, process=process)
 
 
 

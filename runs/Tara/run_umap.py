@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pickle
 
+import pandas
 import umap
 
 from oceancolor.tara import explore
@@ -17,9 +18,6 @@ def run_umap(umap_tblfile:str, umap_savefile:str=None):
 
     # prep
     rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra()
-    nspec = cull_raph.shape[0]
-
-    embed(header='19 of run_umap')
 
     # Train
     reducer_umap = umap.UMAP(random_state=42)
@@ -31,7 +29,14 @@ def run_umap(umap_tblfile:str, umap_savefile:str=None):
     print(f"Saved UMAP to {umap_savefile}")
     embedding = latents_mapping.transform(cull_raph)
 
-    # Save table (only a few entries)
+    # Generate table (only a few entries)
+    umap_tbl = pandas.DataFrame()
+    umap_tbl['tara_id'] = tara_tbl.index
+    umap_tbl['U0'] = embedding[:,0]
+    umap_tbl['U1'] = embedding[:,1]
+
+    # Save
+    umap_tbl.to_parquet(umap_tblfile)
 
 def main(flg):
     if flg== 'all':

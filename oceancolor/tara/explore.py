@@ -54,6 +54,7 @@ def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.,
     # Process?
     if process is not None:
         if 'Norm_PDF' in process.keys() and process['Norm_PDF']:
+            print("Normalizing the PDF")
             cull_raph /= np.outer(np.sum(cull_raph, axis=1), np.ones(cull_raph.shape[1]))
 
     # Return

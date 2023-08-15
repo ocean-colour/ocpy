@@ -45,14 +45,15 @@ def main(flg):
     # UMAP me
     if flg & (2**0):
 
-        '''
         # Un-normalized, i.e. Absolute
         out_tbl_file = os.path.join(
             os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_abs.parquet')
         umap_savefile = os.path.join(
             os.getenv('OS_COLOR'), 'Tara', 'UMAP', 'Tara_UMAP_abs.pkl')
         run_umap(out_tbl_file, umap_savefile)
-        '''
+
+    # UMAP with normalized spectra
+    if flg & (2**1):
 
         # Normalize PDF
         out_tbl_file = os.path.join(
@@ -72,6 +73,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         flg = 0
         flg += 2 ** 0  # 1 -- Unnormalied
+        flg += 2 ** 1  # 2 -- Normalied
     else:
         flg = sys.argv[1]
 

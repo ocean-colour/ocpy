@@ -86,7 +86,8 @@ def main(flg):
         run_sequencer(output_path, tbl_file,
                       process=process,
                       estimator_list=['L2'],
-                      nrand=100)
+                      nrand=10000)
+                      #nrand=100)
 
 
 # Command line execution

@@ -88,6 +88,7 @@ def main(flg):
                       estimator_list=['L2'],
                       nrand=10000)
                       #nrand=100)
+        # 5 min for 10,0000 spectra for one metric scale=1
 
 
 # Command line execution

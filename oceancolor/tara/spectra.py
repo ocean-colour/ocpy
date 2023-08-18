@@ -220,6 +220,8 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
                   err_vals:np.ndarray, wv_grid:np.ndarray):
     """ Rebin spectra to a new wavelength grid.
 
+    Simple nearest neighbor binning (no interpolation)
+
     Args:
         wv_nm (np.ndarray): Wavelengths (nm)
         values (np.ndarray): Values

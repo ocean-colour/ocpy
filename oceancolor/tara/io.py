@@ -18,5 +18,18 @@ def load_tara_db():
     # Get the file
     # Read
     df = pandas.read_parquet(db_name)
+
     # Return
     return df
+
+def load_tara_umap(utype:str):
+
+    # Load UMAP table
+    umap_file = os.path.join(
+        os.getenv('OS_COLOR'), 'Tara', 'UMAP', f'Tara_UMAP_{utype}.parquet')
+    if not os.path.exists(umap_file):
+        raise ValueError(f"Bad utype: {utype}")
+    umap_tbl = pandas.read_parquet(umap_file)
+
+    # Return
+    return umap_tbl

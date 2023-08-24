@@ -11,6 +11,13 @@ from oceancolor.tara import explore
 from IPython import embed
 
 def run_umap(umap_tblfile:str, umap_savefile:str, process:dict=None):
+    """ Run UMAP on a set of Tara spectra
+
+    Args:
+        umap_tblfile (str): Table holding the UMAP info
+        umap_savefile (str): UMAP pickle file
+        process (dict, optional): dict describing how to process the Tara data. Defaults to None.
+    """
 
     # prep
     rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra(process=process)

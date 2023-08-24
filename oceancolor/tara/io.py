@@ -43,3 +43,6 @@ def load_tara_sequencer(utype:str):
                             'Norm', 'Tara_Sequencer_norm.parquet')
                         
     tara_seq = pandas.read_parquet(tbl_file)
+
+    # Return
+    return tara_seq

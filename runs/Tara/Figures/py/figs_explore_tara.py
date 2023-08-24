@@ -14,6 +14,9 @@ import seaborn as sns
 from oceancolor.tara import io as tara_io
 from oceancolor.tara import measures
 from oceancolor.tara import spectra
+from oceancolor.tara import explore
+from oceancolor.utils import cat_utils
+from oceancolor.utils import fig_utils
 
 from IPython import embed
 
@@ -75,7 +78,79 @@ def colored_umap(outfile:str, utype:str, metric:str, log_metric:bool=True,
  
 
 def sequencer_spectra(outfile:str, utype:str):
-    pass
+
+    # Load spectra
+    rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra()
+
+    # Load Sequencer table
+    seq_tbl = tara_io.load_tara_sequencer(utype)
+
+    rows = cat_utils.match_ids(seq_tbl.tara_id, tara_tbl.index, require_in_match=True)
+
+    # plot the ordered dataset
+    reorder_raph = cull_raph[rows, :]
+
+    plt.figure(1, figsize=(15, 8))
+    ax = plt.gca()
+    plt.title("ordered dataset")
+    #plt.pcolormesh(rand_raph, cmap="inferno")
+    im = ax.pcolormesh(rwv_nm, np.arange(len(rows))+1, np.log10(reorder_raph), cmap="inferno")
+    plt.colorbar(im, label="normalized intensity")
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel("object index")
+
+    fig_utils.set_fontsize(ax, 15.)
+
+    plt.savefig(outfile, dpi=300)
+    plt.close()
+    print(f"Saved {outfile}")
+
+def sequencer_geo(outfile:str, utype:str):
+    tformM = ccrs.Mollweide()
+    tformP = ccrs.PlateCarree()
+
+    # Load spectra
+    rwv_nm, cull_raph, cull_rsig, tara_tbl = explore.prep_spectra()
+    # Load Sequencer table
+    seq_tbl = tara_io.load_tara_sequencer(utype)
+
+    # Match
+    rows = cat_utils.match_ids(seq_tbl.tara_id, tara_tbl.index, require_in_match=True)
+    sub_tbl = tara_tbl.iloc[rows]
+
+    # plot the ordered dataset
+
+    fig = plt.figure(figsize=(12,8))
+    plt.clf()
+
+    ax = plt.subplot(projection=tformM)
+
+    img = plt.scatter(
+        x=sub_tbl.lon,
+        y=sub_tbl.lat,
+        c=np.arange(len(sub_tbl)),
+        cmap='jet',
+        #vmin=0.,
+        #vmax=vmax, 
+        s=1,
+        transform=tformP)
+
+    # Coast lines
+    ax.coastlines(zorder=10)
+    ax.add_feature(cartopy.feature.LAND, 
+        facecolor='lightgray', edgecolor='black')
+    ax.set_global()
+    #ax.legend(loc='lower left')
+
+    # Colorbar
+    cb = plt.colorbar(img, orientation='horizontal', pad=0.)
+    lbl = 'Order'
+    cb.set_label(lbl, fontsize=15.)
+    cb.ax.tick_params(labelsize=17)
+
+    plt.savefig(outfile, dpi=300)
+    plt.close()
+    print(f"Saved {outfile}")
 
 
 def main(flg):
@@ -106,13 +181,20 @@ def main(flg):
     if flg & (2**1):
         sequencer_spectra('Tara_Sequencer_Spectra_abs.png', 'abs')
 
+    # Sequencer geo
+    if flg & (2**2):
+        sequencer_geo('Tara_Sequencer_Geo_abs.png', 'abs')
+
+
 # Command line execution
 if __name__ == '__main__':
     import sys
 
     if len(sys.argv) == 1:
         flg_fig = 0
-        flg_fig += 2 ** 0  # Tara UMAP
+        #flg_fig += 2 ** 0  # Tara UMAP
+        #flg_fig += 2 ** 1  # Sequence spectra
+        flg_fig += 2 ** 2  # Sequence geo
     else:
         flg_fig = sys.argv[1]
 

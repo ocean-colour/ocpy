@@ -33,3 +33,13 @@ def load_tara_umap(utype:str):
 
     # Return
     return umap_tbl
+
+def load_tara_sequencer(utype:str):
+    if utype == 'abs':
+        tbl_file = os.path.join(os.getenv('OS_COLOR'), 'Tara', 'Sequencer',
+                            'Abs', 'Tara_Sequencer_abs.parquet')
+    elif utype == 'norm':
+        tbl_file = os.path.join(os.getenv('OS_COLOR'), 'Tara', 'Sequencer',
+                            'Norm', 'Tara_Sequencer_norm.parquet')
+                        
+    tara_seq = pandas.read_parquet(tbl_file)

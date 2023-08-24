@@ -86,10 +86,23 @@ def main(flg):
         run_sequencer(output_path, tbl_file,
                       process=process,
                       estimator_list=['L2'],
-                      nrand=10000)
+                      nrand=50000)
                       #nrand=100)
         # 5 min for 10,0000 spectra for one metric scale=1
 
+    # Normalized
+    if flg & (2**1):
+        process = dict(Norm_PDF=True)
+        output_path = os.path.join(
+            os.getenv('OS_COLOR'), 'Tara', 'Sequencer', 'Norm')
+        tbl_file = os.path.join(output_path,
+            'Tara_Sequencer_norm.parquet')
+
+        run_sequencer(output_path, tbl_file,
+                      process=process,
+                      estimator_list=['L2', 'EMD', 'energy'],
+                      nrand=50000)
+                      #nrand=100)
 
 # Command line execution
 if __name__ == '__main__':

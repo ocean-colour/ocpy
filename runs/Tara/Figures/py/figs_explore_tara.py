@@ -74,6 +74,8 @@ def colored_umap(outfile:str, utype:str, metric:str, log_metric:bool=True,
     print(f"Saved {outfile}")
  
 
+def sequencer_spectra(outfile:str, utype:str):
+    pass
 
 
 def main(flg):
@@ -82,7 +84,7 @@ def main(flg):
     else:
         flg= int(flg)
 
-    # Generate the LLC Table
+    # Colored UMAP's
     if flg & (2**0):
         '''
         # Absolute
@@ -100,6 +102,9 @@ def main(flg):
         # ap410 / ap445
         #colored_umap('Tara_UMAP_norm_ap415_ap445.png', 'norm', 'rap-415-445', vmnx=[-0.5, 0.5])#, log_metric=False)
 
+    # Sequencer spectra
+    if flg & (2**1):
+        sequencer_spectra('Tara_Sequencer_Spectra_abs.png', 'abs')
 
 # Command line execution
 if __name__ == '__main__':

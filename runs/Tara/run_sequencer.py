@@ -89,6 +89,7 @@ def main(flg):
                       nrand=30000)
                       #nrand=100)
         # 5 min for 10,0000 spectra for one metric scale=1
+        # 40 min for 30,0000 spectra for one metric scale=1  (N^2 ?)
 
     # Normalized
     if flg & (2**1):
@@ -101,7 +102,7 @@ def main(flg):
         run_sequencer(output_path, tbl_file,
                       process=process,
                       estimator_list=['L2', 'EMD', 'energy'],
-                      nrand=30000)
+                      nrand=10000)
                       #nrand=100)
 
 # Command line execution
@@ -110,8 +111,8 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         flg = 0
-        flg += 2 ** 0  # 1 -- Unnormalied
-        flg += 2 ** 1  # 2 -- Normalied
+        flg += 2 ** 0  # 1 -- Unnormalized
+        flg += 2 ** 1  # 2 -- Normalized
     else:
         flg = sys.argv[1]
 

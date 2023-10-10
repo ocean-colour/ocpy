@@ -10,20 +10,25 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 
+from IPython import embed
+
 class MyDataset(Dataset):
-    def __init__(self, data, transform=None):
+    def __init__(self, data, targets, transform=None):
         self.data = data
+        self.targets = targets
         self.transform = transform
         
     def __getitem__(self, index):
         x = self.data[index]
-        return x
+        y = self.targets[index]
+        return x, y
     
     def __len__(self):
         return len(self.data)
 
 class SimpleNet(nn.Module):
-    def __init__(self, ninput:int, noutput:int, nhidden:int):
+    def __init__(self, ninput:int, noutput:int, 
+                 nhidden:int):
         super(SimpleNet, self).__init__()
         self.fc1 = nn.Linear(ninput, nhidden)
         self.fc2 = nn.Linear(nhidden, noutput)
@@ -35,21 +40,27 @@ class SimpleNet(nn.Module):
         #output = F.log_softmax(x, dim=1)
         return x
 
+def preprocess_data(data):
+
+    # Normalize
+    data = (data - data.mean(axis=0))/data.std(axis=0)
+
+    return data.astype(np.float32)
 
 def perform_training(model, dataset, ishape:int, train_kwargs, lr):
 
     optimizer = optim.Adadelta(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
-    train_loader = torch.utils.data.DataLoader(dataset,
-                                               **train_kwargs)
+    train_loader = DataLoader(dataset, **train_kwargs)
 
-    epochs=10
+    epochs=100
     for epoch in range(epochs):
         loss = 0
-        for batch_features in train_loader:
-            # reshape mini-batch data to [N, 784] matrix
+        for batch_features, targets in train_loader:
+
             # load it to the active device
             batch_features = batch_features.view(-1, ishape).to(device)
+
             
             # reset the gradients back to zero
             # PyTorch accumulates gradients on subsequent backward passes
@@ -58,8 +69,8 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr):
             # compute reconstructions
             outputs = model(batch_features)
             
-            # compute training reconstruction loss
-            train_loss = criterion(outputs, batch_features)
+            # compute training loss
+            train_loss = criterion(outputs, targets)
             
             # compute accumulated gradients
             train_loss.backward()
@@ -81,7 +92,7 @@ if __name__ == '__main__':
     # ##############################
     # Quick NN on L23
 
-    # Dataset
+    # Load up data
     l23_path = os.path.join(os.getenv('OS_COLOR'),
                             'data', 'Loisel2023')
     outfile = os.path.join(l23_path, 'pca_ab_33_Rrs.npz')
@@ -94,9 +105,22 @@ if __name__ == '__main__':
 
     target = d['Rs']
 
-    dataset = MyDataset(ab)
+    # Preprocess
+    pre_ab = preprocess_data(ab)
+    pre_targ = preprocess_data(target)
+
+    # Dataset
+    dataset = MyDataset(pre_ab, pre_targ)
 
     # Model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = SimpleNet(nparam, target.shape[1]).to(device)
+
+    model = SimpleNet(nparam, target.shape[1], 128).to(device)
     train_kwargs = {'batch_size': 32}
+
+    lr = 1e-3
+    perform_training(model, dataset, nparam, 
+                     train_kwargs, lr)
+
+    # Fuss
+    embed(header='126 of nn.py')

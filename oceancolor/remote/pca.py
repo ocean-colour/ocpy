@@ -15,6 +15,21 @@ def reconstruct(pca_fit, vec):
 
 def l23_hydrolight(X:int, Y:int, Na:int, Nb:int,
                    save_outputs:str=None):
+    """_summary_
+
+    Data may be downloaded from:
+    https://datadryad.org/stash/dataset/doi:10.6076/D1630T
+
+    Args:
+        X (int): _description_
+        Y (int): _description_
+        Na (int): _description_
+        Nb (int): _description_
+        save_outputs (str, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
 
     # Load up the data
     l23_path = os.path.join(os.getenv('OS_COLOR'),

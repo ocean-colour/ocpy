@@ -12,6 +12,9 @@ from torch.optim.lr_scheduler import StepLR
 
 from IPython import embed
 
+# Erdong's Notebook
+#   https://github.com/AI-for-Ocean-Science/ulmo/blob/F_S/ulmo/fs_reg_dense/fs_dense_train.ipynb
+
 class MyDataset(Dataset):
     def __init__(self, data, targets, transform=None):
         self.data = data
@@ -30,7 +33,8 @@ class SimpleNet(nn.Module):
     def __init__(self, ninput:int, noutput:int, 
                  nhidden:int):
         super(SimpleNet, self).__init__()
-        self.fc1 = nn.Linear(ninput, nhidden)
+        self.ninput = ninput
+        self.fc1 = nn.Linear(self.ninput, nhidden)
         self.fc2 = nn.Linear(nhidden, noutput)
 
     def forward(self, x):
@@ -40,21 +44,44 @@ class SimpleNet(nn.Module):
         #output = F.log_softmax(x, dim=1)
         return x
 
+    def prediction(self, sample, sample_norm, para_norm, device):
+        print('\nPrediction...')
+        # Normalize the inputs
+        norm_sample = (sample - sample_norm[0]) / sample_norm[1]
+
+        tensor = torch.Tensor(images[idx])
+        batch_features = tensor.view(-1, ishape).to(device)
+        outputs = model(batch_features)
+
+        # Evaluate
+        self.eval()
+        with torch.no_grad():
+            #feature_sample_reshaped = norm_sample.view(-1, self.ninput).contiguous()
+            feature_sample_reshaped.to(device)
+            label_norm = self(feature_sample_reshaped)
+        label_norm.cpu()
+        # De-normalize
+        mean_norm, std_norm = para_norm
+        label_pred = label_norm * std_norm + mean_norm
+        return label_pred
+
 def preprocess_data(data):
 
     # Normalize
-    data = (data - data.mean(axis=0))/data.std(axis=0)
+    mean = data.mean(axis=0)
+    std = data.std(axis=0)
+    data = (data - mean)/std
 
-    return data.astype(np.float32)
+    return data.astype(np.float32), mean, std
 
-def perform_training(model, dataset, ishape:int, train_kwargs, lr):
+def perform_training(model, dataset, ishape:int, train_kwargs, lr,
+                     nepochs:int=100):
 
     optimizer = optim.Adadelta(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
     train_loader = DataLoader(dataset, **train_kwargs)
 
-    epochs=100
-    for epoch in range(epochs):
+    for epoch in range(nepochs):
         loss = 0
         for batch_features, targets in train_loader:
 
@@ -85,7 +112,7 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr):
         loss = loss / len(train_loader)
         
         # display the epoch training loss
-        print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, loss))
+        print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, nepochs, loss))
 
 if __name__ == '__main__':
 
@@ -106,8 +133,8 @@ if __name__ == '__main__':
     target = d['Rs']
 
     # Preprocess
-    pre_ab = preprocess_data(ab)
-    pre_targ = preprocess_data(target)
+    pre_ab, mean_ab, std_ab = preprocess_data(ab)
+    pre_targ, mean_targ, std_targ = preprocess_data(target)
 
     # Dataset
     dataset = MyDataset(pre_ab, pre_targ)
@@ -120,7 +147,12 @@ if __name__ == '__main__':
 
     lr = 1e-3
     perform_training(model, dataset, nparam, 
-                     train_kwargs, lr)
+                     train_kwargs, lr, nepochs=100)
 
-    # Fuss
+    # Check one
     embed(header='126 of nn.py')
+
+    idx = 200
+    one_ab = ab[idx]
+    pred = model.prediction(one_ab, [mean_ab, std_ab], [mean_targ, std_targ])
+    

@@ -36,13 +36,25 @@ class SimpleNet(nn.Module):
         self.ninput = ninput
         self.fc1 = nn.Linear(self.ninput, nhidden1)
         self.fc2 = nn.Linear(nhidden1, noutput)
-        #self.fc2 = nn.Linear(nhidden1, nhidden2)
-        #self.fc3 = nn.Linear(nhidden2, noutput)
+        self.fc2b = nn.Linear(nhidden1, nhidden2)
+        self.fc3 = nn.Linear(nhidden2, noutput)
 
     def forward(self, x):
+        '''
+        # 1 hidden layers -- 0.23 at 1000
         x = self.fc1(x)
-        x = F.relu(x)
+        x = F.relu(x)  # 0.23 at 1000
+        #x = F.leaky_relu(x)  # 0.23 at 1000
+        #x = F.sigmoid(x)  # Much worse
         x = self.fc2(x)
+        '''
+
+        # 2 hidden layers -- 9,17 at 1000
+        x = self.fc1(x)
+        x = F.relu(x)  
+        x = self.fc2b(x)
+        x = F.relu(x)  
+        x = self.fc3(x)
         #x = F.relu(x)
         #x = self.fc3(x)
 
@@ -158,7 +170,7 @@ if __name__ == '__main__':
 
     lr = 1e-3
     epoch, loss, optimizer = perform_training(model, dataset, nparam, 
-                     train_kwargs, lr, nepochs=2000)
+                     train_kwargs, lr, nepochs=1000)
 
     # Check one
     embed(header='126 of nn.py')

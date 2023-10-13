@@ -148,7 +148,8 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr,
     return epoch, loss, optimizer
 
 def build_quick_nn_l23(nepochs:int,
-                       root:str='model'):
+                       root:str='model',
+                       back_scatt:str='bb'):
 
     # ##############################
     # Quick NN on L23
@@ -159,10 +160,10 @@ def build_quick_nn_l23(nepochs:int,
     outfile = os.path.join(l23_path, 'pca_ab_33_Rrs.npz')
 
     d = np.load(outfile)
-    nparam = d['a'].shape[1]+d['b'].shape[1]
+    nparam = d['a'].shape[1]+d[back_scatt].shape[1]
     ab = np.zeros((d['a'].shape[0], nparam))
     ab[:,0:d['a'].shape[1]] = d['a']
-    ab[:,d['a'].shape[1]:] = d['b']
+    ab[:,d['a'].shape[1]:] = d[back_scatt]
 
     target = d['Rs']
 

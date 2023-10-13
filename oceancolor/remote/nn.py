@@ -30,14 +30,28 @@ class MyDataset(Dataset):
         return len(self.data)
 
 class SimpleNet(nn.Module):
-    def __init__(self, ninput:int, noutput:int, 
-                 nhidden1:int, nhidden2:int):
+    def __init__(self, ninput:int, noutput:int,
+                 nhidden1:int, nhidden2:int,
+                 ab_parm:tuple, 
+                 Rs_parm:tuple):
         super(SimpleNet, self).__init__()
+        # Save
         self.ninput = ninput
+        self.noutput = noutput
+        self.nhidden1 = nhidden1
+        self.nhidden2 = nhidden2
+
+        self.ab_parm = ab_parm
+        self.Rs_parm = Rs_parm
+
+        # Architecture
         self.fc1 = nn.Linear(self.ninput, nhidden1)
         self.fc2 = nn.Linear(nhidden1, noutput)
         self.fc2b = nn.Linear(nhidden1, nhidden2)
         self.fc3 = nn.Linear(nhidden2, noutput)
+
+        # Normalization terms
+        
 
     def forward(self, x):
         '''
@@ -60,26 +74,24 @@ class SimpleNet(nn.Module):
 
         return x
 
-    def prediction(self, sample, sample_norm, para_norm, device):
-        print('\nPrediction...')
+    def prediction(self, sample, device):
         # Normalize the inputs
-        norm_sample = (sample - sample_norm[0]) / sample_norm[1]
+        norm_sample = (sample - self.ab_parm[0])/self.ab_parm[1]
+        tensor = torch.Tensor(norm_sample)
 
-        tensor = torch.Tensor(images[idx])
-        batch_features = tensor.view(-1, ishape).to(device)
-        outputs = model(batch_features)
-
-        # Evaluate
         self.eval()
         with torch.no_grad():
-            #feature_sample_reshaped = norm_sample.view(-1, self.ninput).contiguous()
-            feature_sample_reshaped.to(device)
-            label_norm = self(feature_sample_reshaped)
-        label_norm.cpu()
-        # De-normalize
-        mean_norm, std_norm = para_norm
-        label_pred = label_norm * std_norm + mean_norm
-        return label_pred
+            batch_features = tensor.view(-1, 6).to(device)
+            outputs = self(batch_features)
+
+        outputs.cpu()
+        pred = outputs * self.Rs_parm[1] + self.Rs_parm[0]
+
+        # Convert to numpy
+        pred = pred.numpy()
+
+        return pred.flatten()
+
 
 def preprocess_data(data):
 
@@ -92,6 +104,8 @@ def preprocess_data(data):
 
 def perform_training(model, dataset, ishape:int, train_kwargs, lr,
                      nepochs:int=100):
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     optimizer = optim.Adadelta(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -133,7 +147,8 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr,
     # Return
     return epoch, loss, optimizer
 
-if __name__ == '__main__':
+def build_quick_nn_l23(nepochs:int,
+                       root:str='model'):
 
     # ##############################
     # Quick NN on L23
@@ -163,48 +178,43 @@ if __name__ == '__main__':
 
     nhidden1 = 128
     nhidden2 = 128
+    # Instantiate
     model = SimpleNet(nparam, target.shape[1], 
-                      nhidden1, nhidden2).to(device)
+                      nhidden1, nhidden2,
+                      (mean_ab, std_ab),
+                      (mean_targ, std_targ),
+                      ).to(device)
     nbatch = 64
     train_kwargs = {'batch_size': nbatch}
 
     lr = 1e-3
     epoch, loss, optimizer = perform_training(model, dataset, nparam, 
-                     train_kwargs, lr, nepochs=1000)
+                     train_kwargs, lr, nepochs=nepochs)
 
-    # Check one
-    embed(header='126 of nn.py')
 
-    # Additional information
-    PATH = "model.pt"
-
+    # Save
+    PATH = f"{root}.pt"
     torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': loss,
                 }, PATH)
+    torch.save(model, f'{root}.pth')
+    print(f"Wrote: {root}.pt, {root}.pth")
 
 
-    idx = 200
-    one_ab = ab[idx]
 
-    sample_norm = [mean_ab, std_ab]
-    norm_sample = (one_ab - sample_norm[0]) / sample_norm[1]
-    tensor = torch.Tensor(norm_sample)
+if __name__ == '__main__':
 
-    model.eval()
-    with torch.no_grad():
-        batch_features = tensor.view(-1, 6).to(device)
-        outputs = model(batch_features)
-    
-    outputs.cpu()
-    para_norm = [mean_targ, std_targ]
-    mean_norm, std_norm = para_norm
-    pred = outputs * std_norm + mean_norm
+    # Train
+    build_quick_nn_l23(100, root='model_100')
+    build_quick_nn_l23(20000, root='model_20000')
 
-    # Convert to numpy
-    pred = pred.numpy()
-    one_targ = target[idx]
-
-    pred = model.prediction(one_ab, [mean_ab, std_ab], [mean_targ, std_targ])
+    # Test loading and prediction
+    test = False
+    if test:
+        model = torch.load('model_100.pth')
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        tmp = model.prediction(np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]), device)
+        embed(header='215 of nn')

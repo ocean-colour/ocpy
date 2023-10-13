@@ -31,17 +31,21 @@ class MyDataset(Dataset):
 
 class SimpleNet(nn.Module):
     def __init__(self, ninput:int, noutput:int, 
-                 nhidden:int):
+                 nhidden1:int, nhidden2:int):
         super(SimpleNet, self).__init__()
         self.ninput = ninput
-        self.fc1 = nn.Linear(self.ninput, nhidden)
-        self.fc2 = nn.Linear(nhidden, noutput)
+        self.fc1 = nn.Linear(self.ninput, nhidden1)
+        self.fc2 = nn.Linear(nhidden1, noutput)
+        #self.fc2 = nn.Linear(nhidden1, nhidden2)
+        #self.fc3 = nn.Linear(nhidden2, noutput)
 
     def forward(self, x):
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x)
-        #output = F.log_softmax(x, dim=1)
+        #x = F.relu(x)
+        #x = self.fc3(x)
+
         return x
 
     def prediction(self, sample, sample_norm, para_norm, device):
@@ -114,6 +118,9 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr,
         # display the epoch training loss
         print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, nepochs, loss))
 
+    # Return
+    return epoch, loss, optimizer
+
 if __name__ == '__main__':
 
     # ##############################
@@ -142,17 +149,50 @@ if __name__ == '__main__':
     # Model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = SimpleNet(nparam, target.shape[1], 128).to(device)
-    train_kwargs = {'batch_size': 32}
+    nhidden1 = 128
+    nhidden2 = 128
+    model = SimpleNet(nparam, target.shape[1], 
+                      nhidden1, nhidden2).to(device)
+    nbatch = 64
+    train_kwargs = {'batch_size': nbatch}
 
     lr = 1e-3
-    perform_training(model, dataset, nparam, 
-                     train_kwargs, lr, nepochs=100)
+    epoch, loss, optimizer = perform_training(model, dataset, nparam, 
+                     train_kwargs, lr, nepochs=2000)
 
     # Check one
     embed(header='126 of nn.py')
 
+    # Additional information
+    PATH = "model.pt"
+
+    torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+                }, PATH)
+
+
     idx = 200
     one_ab = ab[idx]
-    pred = model.prediction(one_ab, [mean_ab, std_ab], [mean_targ, std_targ])
+
+    sample_norm = [mean_ab, std_ab]
+    norm_sample = (one_ab - sample_norm[0]) / sample_norm[1]
+    tensor = torch.Tensor(norm_sample)
+
+    model.eval()
+    with torch.no_grad():
+        batch_features = tensor.view(-1, 6).to(device)
+        outputs = model(batch_features)
     
+    outputs.cpu()
+    para_norm = [mean_targ, std_targ]
+    mean_norm, std_norm = para_norm
+    pred = outputs * std_norm + mean_norm
+
+    # Convert to numpy
+    pred = pred.numpy()
+    one_targ = target[idx]
+
+    pred = model.prediction(one_ab, [mean_ab, std_ab], [mean_targ, std_targ])

@@ -33,11 +33,10 @@ def fig_pca_mcmc(outfile:str, l23_idx:int, X:int=4, Y:int=0):
     # Cut down
     flatchain = flatchain[-10000:]
 
-    embed(header='36 of figs')
-
     # Generate the predictions
     a_recon = np.dot(flatchain[:,0:3], d_l23['a_M3']) + d_l23['a_mean']
     a_mean = np.mean(a_recon, axis=0)
+    a_std = np.std(a_recon, axis=0)
 
     a_pca = np.dot(ab[l23_idx, 0:3], d_l23['a_M3']) + d_l23['a_mean']
 
@@ -52,13 +51,41 @@ def fig_pca_mcmc(outfile:str, l23_idx:int, X:int=4, Y:int=0):
     ax_a.plot(ds.Lambda, ds.a.data[l23_idx,:], 'k-', label='True a')
 
     # Plot prediction
-    ax_a.plot(ds.Lambda, a_mean, 'b-', label='Predicted a')
+    ax_a.plot(ds.Lambda, a_mean, 'b--', label='Predicted a')
 
-    # Plot prediction
-    ax_a.plot(ds.Lambda, a_pca, 'r:', label='PCA a')
+    # Plot PCA
+    #ax_a.plot(ds.Lambda, a_pca, 'r:', label='PCA a')
+
+    # Error interval
+    ax_a.fill_between(ds.Lambda, a_mean-a_std, a_mean+a_std, 
+                      color='b', alpha=0.2)
 
     ax_a.set_ylabel(r'$a(\lambda)$')
     ax_a.set_xlabel(r'$\lambda$ [nm]')
+    ax_a.legend()
+
+    # a(lambda) zoom-in
+    ax_b = axes[1]
+
+    # Plot real answer
+    ax_b.plot(ds.Lambda, ds.a.data[l23_idx,:], 'k-', label='True a')
+
+    # Plot prediction
+    ax_b.plot(ds.Lambda, a_mean, 'b--', label='Predicted a')
+
+    # Plot PCA
+    #ax_a.plot(ds.Lambda, a_pca, 'r:', label='PCA a')
+
+    # Error interval
+    ax_b.fill_between(ds.Lambda, a_mean-a_std, a_mean+a_std, 
+                      color='b', alpha=0.2)
+
+    ax_b.set_ylabel(r'$a(\lambda)$')
+    ax_b.set_xlabel(r'$\lambda$ [nm]')
+
+    ax_b.set_xlim(350., 500)
+    ax_b.set_ylim(0., 0.2)
+
 
     ax_a.legend()
 

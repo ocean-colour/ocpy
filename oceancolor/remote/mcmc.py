@@ -55,6 +55,8 @@ def run_emcee_nn(nn_model, Rs, nwalkers:int=32, nsteps:int=20000,
     print("Running full model")
     sampler.run_mcmc(state, nsteps)
 
+    print(f"All done: Wrote {save_file}")
+
     # Return
     return sampler
 

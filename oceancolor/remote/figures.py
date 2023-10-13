@@ -37,15 +37,21 @@ def fig_pca_mcmc(outfile:str, l23_idx:int, X:int=4, Y:int=0):
     a_recon = np.dot(flatchain[:,0:3], d_l23['a_M3']) + d_l23['a_mean']
     a_mean = np.mean(a_recon, axis=0)
     a_std = np.std(a_recon, axis=0)
-
     a_pca = np.dot(ab[l23_idx, 0:3], d_l23['a_M3']) + d_l23['a_mean']
 
+    # Generate the predictions
+    bb_recon = np.dot(flatchain[:,3:], d_l23['bb_M3']) + d_l23['bb_mean']
+    bb_mean = np.mean(bb_recon, axis=0)
+    bb_std = np.std(bb_recon, axis=0)
+    bb_pca = np.dot(ab[l23_idx, 3:], d_l23['bb_M3']) + d_l23['bb_mean']
+
+
     # Init plot
-    fig = plt.figure(figsize=(12,7))
-    axes = fig.subplots(nrows=1, ncols=2)
+    fig = plt.figure(figsize=(12,12))
+    axes = fig.subplots(nrows=2, ncols=2)
 
     # a(lambda)
-    ax_a = axes[0]
+    ax_a = axes[0,0]
 
     # Plot real answer
     ax_a.plot(ds.Lambda, ds.a.data[l23_idx,:], 'k-', label='True a')
@@ -65,29 +71,49 @@ def fig_pca_mcmc(outfile:str, l23_idx:int, X:int=4, Y:int=0):
     ax_a.legend()
 
     # a(lambda) zoom-in
-    ax_b = axes[1]
+    ax_az = axes[0,1]
 
     # Plot real answer
-    ax_b.plot(ds.Lambda, ds.a.data[l23_idx,:], 'k-', label='True a')
+    ax_az.plot(ds.Lambda, ds.a.data[l23_idx,:], 'k-', label='True a')
 
     # Plot prediction
-    ax_b.plot(ds.Lambda, a_mean, 'b--', label='Predicted a')
+    ax_az.plot(ds.Lambda, a_mean, 'b--', label='Predicted a')
 
     # Plot PCA
     #ax_a.plot(ds.Lambda, a_pca, 'r:', label='PCA a')
 
     # Error interval
-    ax_b.fill_between(ds.Lambda, a_mean-a_std, a_mean+a_std, 
+    ax_az.fill_between(ds.Lambda, a_mean-a_std, a_mean+a_std, 
                       color='b', alpha=0.2)
 
-    ax_b.set_ylabel(r'$a(\lambda)$')
-    ax_b.set_xlabel(r'$\lambda$ [nm]')
+    ax_az.set_ylabel(r'$a(\lambda)$')
+    ax_az.set_xlabel(r'$\lambda$ [nm]')
 
-    ax_b.set_xlim(350., 500)
-    ax_b.set_ylim(0., 0.2)
+    ax_az.set_xlim(350., 500)
+    ax_az.set_ylim(0., 0.2)
+
+    # ###################################################################3
+    # bb(lambda)
+    ax_bb = axes[1,0]
+
+    # Plot real answer
+    ax_bb.plot(ds.Lambda, ds.bb.data[l23_idx,:], 'k-', label='True bb')
+
+    # Plot prediction
+    ax_bb.plot(ds.Lambda, bb_mean, 'b--', label='Predicted bb')
+
+    # Plot PCA
+    #ax_a.plot(ds.Lambda, a_pca, 'r:', label='PCA a')
+
+    # Error interval
+    ax_bb.fill_between(ds.Lambda, bb_mean-bb_std, bb_mean+bb_std, 
+                      color='b', alpha=0.2)
+
+    ax_bb.set_ylabel(r'$b_b(\lambda)$')
+    ax_bb.set_xlabel(r'$\lambda$ [nm]')
 
 
-    ax_a.legend()
+
 
     plt.tight_layout(pad=0.5, h_pad=0.5, w_pad=0.5)
     plt.savefig(outfile, dpi=300)

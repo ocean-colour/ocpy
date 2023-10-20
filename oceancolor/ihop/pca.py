@@ -34,11 +34,7 @@ def l23_hydrolight(X:int, Y:int, Na:int, Nb:int, Nbb:int,
     """
 
     # Load up the data
-    l23_path = os.path.join(os.getenv('OS_COLOR'),
-                            'data', 'Loisel2023')
-    variable_file = os.path.join(l23_path, 
-                                 f'Hydrolight{X}{Y:02d}.nc')
-    ds = xarray.load_dataset(variable_file)
+
 
     # Fit
     pca_fit_a = decomposition.PCA(n_components=Na).fit(ds.a.data)

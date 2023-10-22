@@ -3,83 +3,92 @@
 import os
 import numpy as np
 
-from sklearn import decomposition
+from importlib import resources
 
-from matplotlib import pyplot as plt
+from oceancolor.hydrolight import loisel23
+from oceancolor import pca
+from oceancolor.tara import io as tara_io
+from oceancolor.tara import spectra
+from oceancolor import water
+from oceancolor.utils import spectra as spec_utils 
 
-import xarray
+from IPython import embed
 
-def reconstruct(pca_fit, vec):
-    Y = pca_fit.transform(vec)
-    recon = np.dot(Y, pca_fit.components_)
-    # Return
-    return recon[0] # Flatten
+pca_path = os.path.join(resources.files('oceancolor'),
+                            'data', 'PCA')
 
-def l23_hydrolight(X:int, Y:int, Na:int, Nb:int, Nbb:int,
-                   save_outputs:str=None, chk_idx:int=None):
-    """_summary_
 
-    Data may be downloaded from:
-    https://datadryad.org/stash/dataset/doi:10.6076/D1630T
 
-    Args:
-        X (int): _description_
-        Y (int): _description_
-        Na (int): _description_
-        Nb (int): _description_
-        save_outputs (str, optional): _description_. Defaults to None.
+def generate_all_pca(clobber:bool=False):
+    generate_l23_pca(clobber=clobber)
+    generate_l23_tara_pca(clobber=clobber)
 
-    Returns:
-        _type_: _description_
-    """
+
+def generate_l23_pca(clobber:bool=False):
 
     # Load up the data
+    X=4
+    Y=0
+    ds = loisel23.load_ds(X, Y)
+
+    # L23, vanilla
+    for iop in ['a', 'b', 'bb']:
+        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_{iop}_N3.npz')
+        if not os.path.exists(outfile) or clobber:
+            pca.fit_normal(ds[iop].data, 3, save_outputs=outfile)
+
+    # L23 positive, definite
+
+def generate_l23_tara_pca(clobber:bool=False):
+
+    # Load up the data
+    X=4
+    Y=0
+    l23_ds = loisel23.load_ds(X, Y)
+
+    # Load up Tara
+    print("Loading Tara..")
+    tara_db = tara_io.load_tara_db()
+    # Spectra
+    wv_nm, all_a_p, all_a_p_sig = spectra.spectra_from_table(tara_db)
+
+    # Wavelengths, restricted to > 400 nm
+    cut = l23_ds.Lambda > 400.
+    l23_a = l23_ds.a.data[:,cut]
+
+    # Rebin
+    wv_grid = l23_ds.Lambda.data[cut]
+    tara_wv = np.append(wv_grid, [755.]) - 2.5 # Because the rebinning is not interpolation
+    rwv_nm, r_ap, r_sig = spectra.rebin_to_grid(
+        wv_nm, all_a_p, all_a_p_sig, tara_wv)
+
+    # Add in water
+    print("Adding in water..")
+    df_water = water.load_rsr_gsfc()
+    a_w, _ =  spec_utils.rebin(df_water.wavelength.values, 
+                        df_water.aw.values, np.zeros_like(df_water.aw),
+                        wv_grid)
+
+    tara_a_water = r_ap+np.outer(np.ones(r_ap.shape[0]), a_w)
+
+    # Polish Tara for PCA
+    bad = np.isnan(tara_a_water) | (tara_a_water <= 0.)
+
+    # Replace
+    tara_a_water[bad] = 0.
+    tara_a_water[bad] = 1e5
+
+    # N components
+    data = np.append(l23_a, tara_a_water, axis=0)
+    for N in [3,20]:
+        print(f"Fit PCA with N={N}")
+        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_Tara_a_N{N}.npz')
+        if not os.path.exists(outfile) or clobber:
+            pca.fit_normal(data, N, save_outputs=outfile)
 
 
-    # Fit
-    pca_fit_a = decomposition.PCA(n_components=Na).fit(ds.a.data)
-    pca_fit_b = decomposition.PCA(n_components=Nb).fit(ds.b.data)
-    pca_fit_bb = decomposition.PCA(n_components=Nbb).fit(ds.bb.data)
-
-    # Save?
-    if save_outputs:
-        a_coeff = pca_fit_a.transform(ds.a.data)
-        b_coeff = pca_fit_b.transform(ds.b.data)
-        bb_coeff = pca_fit_bb.transform(ds.bb.data)
-        
-        # 
-        np.savez(save_outputs,
-                 a=a_coeff,
-                 b=b_coeff,
-                 bb=bb_coeff,
-                 a_M3=pca_fit_a.components_,
-                 b_M3=pca_fit_b.components_,
-                 bb_M3=pca_fit_bb.components_,
-                 a_mean=pca_fit_a.mean_,
-                 b_mean=pca_fit_b.mean_,
-                 bb_mean=pca_fit_bb.mean_,
-                 Rs=ds.Rrs.data)
-        print(f'Wrote: {save_outputs}')
-
-    if chk_idx is not None:
-        d_l23 = np.load(save_outputs)
-        plt.clf()
-        ax = plt.gca()
-        # 
-        ax.plot(ds.Lambda, ds.a.data[chk_idx], 'k-', label='True')
-
-        # PCA
-        a_pca = np.dot(d_l23['a'][chk_idx], d_l23['a_M3']) + d_l23['a_mean']
-        ax.plot(ds.Lambda, a_pca, 'b-', label='PCA')
-        plt.show()
-        
-
-    # All done
-    return pca_fit_a, pca_fit_b
-
+def load_pca(pca_file:str):
+    return np.load(os.path.join(pca_path, pca_file))
 
 if __name__ == '__main__':
-    l23_path = os.path.join(os.getenv('OS_COLOR'),
-                            'data', 'Loisel2023')
-    outfile = os.path.join(l23_path, 'pca_ab_33_Rrs.npz')
-    l23_hydrolight(4, 0, 3, 3, 3, save_outputs=outfile, chk_idx=200)
+    generate_all_pca()

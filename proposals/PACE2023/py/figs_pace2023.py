@@ -39,8 +39,9 @@ def fig_l23_tara_pca(outfile='fig_l23_tara_pca.png'):
 
     # Load up
     L23_Tara_pca_N20 = ihop_pca.load_pca('pca_L23_X4Y0_Tara_a_N20.npz')
-    L23_Tara_pca_N5 = ihop_pca.load_pca('pca_L23_X4Y0_Tara_a_N5.npz')
-    wave = L23_Tara_pca_N5['wavelength']
+    N=3
+    L23_Tara_pca = ihop_pca.load_pca(f'pca_L23_X4Y0_Tara_a_N{N}.npz')
+    wave = L23_Tara_pca['wavelength']
 
 
     fig = plt.figure(figsize=(12,6))
@@ -62,13 +63,18 @@ def fig_l23_tara_pca(outfile='fig_l23_tara_pca.png'):
     ax_recon = plt.subplot(gs[1])
 
     idx = 1000  # L23 
-    orig, recon = ihop_pca.reconstruct(L23_Tara_pca_N5, idx)
+    orig, recon = ihop_pca.reconstruct(L23_Tara_pca, idx)
     lbl = 'L23'
-
-    #ax.plot(var.Lambda, var.a.data[idx] - a_recon3[idx])#, label='Real')
     ax_recon.plot(wave, orig,  label=lbl)
-    ax_recon.plot(wave, recon, 'r:', label='Model')
-    #
+    ax_recon.plot(wave, recon, 'r:', label=f'L23 Model (N={N})')
+
+    idx = 100000  # L23 
+    orig, recon = ihop_pca.reconstruct(L23_Tara_pca, idx)
+    lbl = 'Tara'
+    ax_recon.plot(wave, orig,  'g', label=lbl)
+    ax_recon.plot(wave, recon, color='orange', ls=':', label=f'Tara Model (N={N})')
+    
+    
     #
     ax_recon.set_xlabel('Wavelength (nm)')
     ax_recon.set_ylabel(r'$a(\lambda)$')

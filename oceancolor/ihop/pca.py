@@ -41,8 +41,7 @@ def generate_l23_pca(clobber:bool=False):
 
     # L23 positive, definite
 
-def generate_l23_tara_pca(clobber:bool=False):
-
+def generate_l23_tara_pca(clobber:bool=False, return_N:int=None):
 
     # Load up
     wave_grid, tara_a_water, l23_a = load_tara()
@@ -51,15 +50,18 @@ def generate_l23_tara_pca(clobber:bool=False):
     data = np.append(l23_a, tara_a_water, axis=0)
     for N in [3,5,20]:
         outfile = os.path.join(pca_path, f'pca_L23_X4Y0_Tara_a_N{N}.npz')
-        if not os.path.exists(outfile) or clobber:
+        if not os.path.exists(outfile) or clobber or ( (return_N is not None) 
+                                                      and (return_N == N) ):
             print(f"Fit PCA with N={N}")
-            pca.fit_normal(data, N, save_outputs=outfile,
+            pca_fit = pca.fit_normal(data, N, save_outputs=outfile,
                            extra_arrays={'wavelength':wave_grid})
+            if return_N is not None and return_N == N:
+                return data, wave_grid, pca_fit
 
 def load_pca(pca_file:str):
     return np.load(os.path.join(pca_path, pca_file))
 
-def load_tara():
+def load_tara(high_cut:float=705.):
 
     # Load up the data
     X=4
@@ -73,12 +75,12 @@ def load_tara():
     wv_nm, all_a_p, all_a_p_sig = spectra.spectra_from_table(tara_db)
 
     # Wavelengths, restricted to > 400 nm
-    cut = l23_ds.Lambda > 400.
+    cut = (l23_ds.Lambda > 400.) & (l23_ds.Lambda < high_cut)
     l23_a = l23_ds.a.data[:,cut]
 
     # Rebin
     wv_grid = l23_ds.Lambda.data[cut]
-    tara_wv = np.append(wv_grid, [755.]) - 2.5 # Because the rebinning is not interpolation
+    tara_wv = np.append(wv_grid, [high_cut+5.]) - 2.5 # Because the rebinning is not interpolation
     rwv_nm, r_ap, r_sig = spectra.rebin_to_grid(
         wv_nm, all_a_p, all_a_p_sig, tara_wv)
 
@@ -93,10 +95,14 @@ def load_tara():
 
     # Polish Tara for PCA
     bad = np.isnan(tara_a_water) | (tara_a_water <= 0.)
+    ibad = np.where(bad)
 
-    # Replace
-    tara_a_water[bad] = 0.
-    tara_a_water[bad] = 1e5
+    mask = np.ones(tara_a_water.shape[0], dtype=bool)
+    mask[np.unique(ibad[0])] = False
+
+    # Cut down: Aggressive but necessary
+    tara_a_water = tara_a_water[mask,:]
+
 
     # Return
     return wv_grid, tara_a_water, l23_a

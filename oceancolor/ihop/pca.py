@@ -35,11 +35,31 @@ def generate_l23_pca(clobber:bool=False):
     for iop in ['a', 'b', 'bb']:
         outfile = os.path.join(pca_path, f'pca_L23_X4Y0_{iop}_N3.npz')
         if not os.path.exists(outfile) or clobber:
-            pca.fit_normal(ds[iop].data, 3, save_outputs=outfile)
+            pca.fit_normal(ds[iop].data, 3, save_outputs=outfile,
+                           extra_arrays={'Rs':ds.Rrs.data,
+                                         'wavelength':ds.Lambda.data})
 
     # L23 positive, definite
 
 def generate_l23_tara_pca(clobber:bool=False):
+
+
+    # Load up
+    wave_grid, tara_a_water, l23_a = load_tara()
+
+    # N components
+    data = np.append(l23_a, tara_a_water, axis=0)
+    for N in [3,5,20]:
+        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_Tara_a_N{N}.npz')
+        if not os.path.exists(outfile) or clobber:
+            print(f"Fit PCA with N={N}")
+            pca.fit_normal(data, N, save_outputs=outfile,
+                           extra_arrays={'wavelength':wave_grid})
+
+def load_pca(pca_file:str):
+    return np.load(os.path.join(pca_path, pca_file))
+
+def load_tara():
 
     # Load up the data
     X=4
@@ -78,17 +98,17 @@ def generate_l23_tara_pca(clobber:bool=False):
     tara_a_water[bad] = 0.
     tara_a_water[bad] = 1e5
 
-    # N components
-    data = np.append(l23_a, tara_a_water, axis=0)
-    for N in [3,20]:
-        print(f"Fit PCA with N={N}")
-        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_Tara_a_N{N}.npz')
-        if not os.path.exists(outfile) or clobber:
-            pca.fit_normal(data, N, save_outputs=outfile)
+    # Return
+    return wv_grid, tara_a_water, l23_a
 
+def reconstruct(pca_dict, idx):
+    orig = pca_dict['data'][idx]
 
-def load_pca(pca_file:str):
-    return np.load(os.path.join(pca_path, pca_file))
+    Y = pca_dict['Y'][idx]
+    recon = np.dot(Y, pca_dict['M']) + pca_dict['mean']
+
+    return orig, recon
+
 
 if __name__ == '__main__':
     generate_all_pca()

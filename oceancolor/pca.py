@@ -4,7 +4,8 @@ import numpy as np
 
 from sklearn import decomposition
 
-def fit_normal(data:np.ndarray, N:int, save_outputs:str=None):
+def fit_normal(data:np.ndarray, N:int, save_outputs:str=None,
+               extra_arrays:dict=None):
     """ Fit a PCA to the data
 
 
@@ -12,6 +13,8 @@ def fit_normal(data:np.ndarray, N:int, save_outputs:str=None):
         N (int): Number of PCA components to fit
         save_outputs (str, optional): If provided, save the 
             fit items to a npz file. Defaults to None.
+        extra_arrays (dict, optional): dict of extra arrays.
+            If provided, save the extras to the npz file. Defaults to None.
 
     Returns:
         PCA: _description_
@@ -25,12 +28,15 @@ def fit_normal(data:np.ndarray, N:int, save_outputs:str=None):
     if save_outputs:
         coeff = pca_fit.transform(data)
         #
-        np.savez(save_outputs,
-                 coeff=coeff,
-                 M3=pca_fit.components_,
+        outputs = dict(Y=coeff,
+                 data=data,
+                 M=pca_fit.components_,
                  mean=pca_fit.mean_,
-                 explained_variance=pca_fit.explained_variance_ratio_,
-        )
+                 explained_variance=pca_fit.explained_variance_ratio_)
+        if extra_arrays:
+            outputs.update(extra_arrays)
+        # Save
+        np.savez(save_outputs, **outputs)
         print(f'Wrote: {save_outputs}')
 
 

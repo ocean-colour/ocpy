@@ -39,7 +39,8 @@ def fig_l23_tara_pca(outfile='fig_l23_tara_pca.png'):
 
     # Load up
     L23_Tara_pca_N20 = ihop_pca.load_pca('pca_L23_X4Y0_Tara_a_N20.npz')
-    L23_Tara_pca_N3 = ihop_pca.load_pca('pca_L23_X4Y0_Tara_a_N3.npz')
+    L23_Tara_pca_N5 = ihop_pca.load_pca('pca_L23_X4Y0_Tara_a_N5.npz')
+    wave = L23_Tara_pca_N5['wavelength']
 
 
     fig = plt.figure(figsize=(12,6))
@@ -56,8 +57,34 @@ def fig_l23_tara_pca(outfile='fig_l23_tara_pca.png'):
     ax_var.set_xlabel('Number of Components')
     ax_var.set_ylabel('Cumulative Explained Variance')
 
+    # #####################################################
+    # Reconstructions
+    ax_recon = plt.subplot(gs[1])
+
+    idx = 1000  # L23 
+    orig, recon = ihop_pca.reconstruct(L23_Tara_pca_N5, idx)
+    lbl = 'L23'
+
+    #ax.plot(var.Lambda, var.a.data[idx] - a_recon3[idx])#, label='Real')
+    ax_recon.plot(wave, orig,  label=lbl)
+    ax_recon.plot(wave, recon, 'r:', label='Model')
+    #
+    #
+    ax_recon.set_xlabel('Wavelength (nm)')
+    ax_recon.set_ylabel(r'$a(\lambda)$')
+    ax_recon.set_ylim(0., 1.1*np.max(recon))
+    ax_recon.legend(fontsize=15.)
+    
+    # Stats
+    #rms = np.sqrt(np.mean((var.a.data[idx] - a_recon3[idx])**2))
+    #max_dev = np.max(np.abs((var.a.data[idx] - a_recon3[idx])/a_recon3[idx]))
+    #ax.text(0.05, 0.7, f'RMS={rms:0.4f}, max '+r'$\delta$'+f'={max_dev:0.2f}',
+    #        transform=ax.transAxes,
+    #          fontsize=16., ha='left', color='k')  
+
+
     # Finish
-    for ax in [ax_var]:
+    for ax in [ax_var, ax_recon]:
         plotting.set_fontsize(ax, 15)
 
 

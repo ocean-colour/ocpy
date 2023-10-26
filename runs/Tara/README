@@ -1,0 +1,16 @@
+To run the UMAP code (run_umap.py), you will need to 
+install UMAP and any of its dependencies:
+
+pip install umap-learn
+
+
+To run the Sequencer, you will need to clone the Repo.
+JXP had to make some edits, so grab his fork:
+
+https://github.com/profxj/Sequencer
+
+if they haven't been merged in yet to the main Repo:
+
+https://github.com/dalya/Sequencer
+
+

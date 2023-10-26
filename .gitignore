@@ -9,6 +9,9 @@ __pycache__/
 # Figures
 *.png
 
+# Data
+*.parquet
+
 # Distribution / packaging
 .Python
 build/

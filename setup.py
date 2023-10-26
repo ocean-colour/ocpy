@@ -23,11 +23,11 @@ setup_keywords['requires'] = ['Python (>3.8.0)']
 setup_keywords['install_requires'] = [
     'torch',  
     'torchvision', 'seaborn', 'smart-open[s3]', 'pyarrow',
+    'scikit-learn', 'scikit-image', 'tqdm', 'astropy', 'astropy-healpix',
+    'healpy', 'cftime', 'bokeh', 'umap-learn', 'llvmlite', 'boto3',
+    'xarray', 'h5netcdf', 'emcee', 
+    'importlib-metadata', 'timm==0.3.2',
     'scikit-learn', 'scikit-image', 'tqdm', 
-    'astropy', 'astropy-healpix',
-    'cftime', 'bokeh', 'umap-learn', 'llvmlite', 'boto3',
-    'xarray', 'h5netcdf', 
-    'importlib-metadata', 'timm==0.3.2', 
     'openpyxl']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False

@@ -2,22 +2,25 @@
 import os
 import numpy as np
 
+from importlib import resources
 
-def load_loisel_2023_pca(pca_file:str='pca_ab_33_Rrs.npz',
-                         back_scatt:str='bb'):
+
+def load_loisel_2023_pca(back_scatt:str='bb'):
 
     # Load up data
-    l23_path = os.path.join(os.getenv('OS_COLOR'),
-                            'data', 'Loisel2023')
-    outfile = os.path.join(l23_path, pca_file)
+    l23_path = os.path.join(resources.files('oceancolor'),
+                            'data', 'PCA')
+    l23_a_file = os.path.join(l23_path, 'pca_L23_X4Y0_a_N3.npz')
+    l23_bb_file = os.path.join(l23_path, 'pca_L23_X4Y0_bb_N3.npz')
 
-    d = np.load(outfile)
-    nparam = d['a'].shape[1]+d[back_scatt].shape[1]
-    ab = np.zeros((d['a'].shape[0], nparam))
-    ab[:,0:d['a'].shape[1]] = d['a']
-    ab[:,d['a'].shape[1]:] = d[back_scatt]
+    d_a = np.load(l23_a_file)
+    d_bb = np.load(l23_bb_file)
+    nparam = d_a['Y'].shape[1]+d_bb['Y'].shape[1]
+    ab = np.zeros((d_a['Y'].shape[0], nparam))
+    ab[:,0:d_a['Y'].shape[1]] = d_a['Y']
+    ab[:,d_a['Y'].shape[1]:] = d_bb['Y']
 
-    Rs = d['Rs']
+    Rs = d_a['Rs']
 
     # Return
-    return ab, Rs, d
+    return ab, Rs, d_a, d_bb

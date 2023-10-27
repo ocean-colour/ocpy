@@ -10,6 +10,8 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 
+from oceancolor.ihop import io as ihop_io
+
 from IPython import embed
 
 # Erdong's Notebook
@@ -155,17 +157,11 @@ def build_quick_nn_l23(nepochs:int,
     # Quick NN on L23
 
     # Load up data
-    l23_path = os.path.join(os.getenv('OS_COLOR'),
-                            'data', 'Loisel2023')
-    outfile = os.path.join(l23_path, 'pca_ab_33_Rrs.npz')
+    ab, Rs, _, _ = ihop_io.load_loisel_2023_pca()
+    
 
-    d = np.load(outfile)
-    nparam = d['a'].shape[1]+d[back_scatt].shape[1]
-    ab = np.zeros((d['a'].shape[0], nparam))
-    ab[:,0:d['a'].shape[1]] = d['a']
-    ab[:,d['a'].shape[1]:] = d[back_scatt]
-
-    target = d['Rs']
+    target = Rs
+    nparam = ab.shape[1]
 
     # Preprocess
     pre_ab, mean_ab, std_ab = preprocess_data(ab)

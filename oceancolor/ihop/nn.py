@@ -119,6 +119,7 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr,
 
             # load it to the active device
             batch_features = batch_features.view(-1, ishape).to(device)
+            targets = targets.view(-1, 81).to(device)
 
             
             # reset the gradients back to zero
@@ -186,7 +187,7 @@ def build_quick_nn_l23(nepochs:int,
     train_kwargs = {'batch_size': nbatch}
 
     lr = 1e-3
-    epoch, loss, optimizer = perform_training(model, dataset, nparam, 
+    epoch, loss, optimizer = perform_training(model, dataset, nparam,
                      train_kwargs, lr, nepochs=nepochs)
 
 

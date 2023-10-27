@@ -208,7 +208,8 @@ if __name__ == '__main__':
 
     # Train
     build_quick_nn_l23(100, root='model_100')
-    build_quick_nn_l23(20000, root='model_20000')
+    #build_quick_nn_l23(20000, root='model_20000')
+    build_quick_nn_l23(100000, root='model_100000')
 
     # Test loading and prediction
     test = False

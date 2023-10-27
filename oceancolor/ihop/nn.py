@@ -172,6 +172,7 @@ def build_quick_nn_l23(nepochs:int,
 
     # Model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
 
     nhidden1 = 128
     nhidden2 = 128

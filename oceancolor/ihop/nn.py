@@ -10,6 +10,8 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 
+from oceancolor.ihop import io as ihop_io
+
 from IPython import embed
 
 # Erdong's Notebook
@@ -117,6 +119,7 @@ def perform_training(model, dataset, ishape:int, train_kwargs, lr,
 
             # load it to the active device
             batch_features = batch_features.view(-1, ishape).to(device)
+            targets = targets.view(-1, 81).to(device)
 
             
             # reset the gradients back to zero
@@ -155,17 +158,11 @@ def build_quick_nn_l23(nepochs:int,
     # Quick NN on L23
 
     # Load up data
-    l23_path = os.path.join(os.getenv('OS_COLOR'),
-                            'data', 'Loisel2023')
-    outfile = os.path.join(l23_path, 'pca_ab_33_Rrs.npz')
+    ab, Rs, _, _ = ihop_io.load_loisel_2023_pca()
+    
 
-    d = np.load(outfile)
-    nparam = d['a'].shape[1]+d[back_scatt].shape[1]
-    ab = np.zeros((d['a'].shape[0], nparam))
-    ab[:,0:d['a'].shape[1]] = d['a']
-    ab[:,d['a'].shape[1]:] = d[back_scatt]
-
-    target = d['Rs']
+    target = Rs
+    nparam = ab.shape[1]
 
     # Preprocess
     pre_ab, mean_ab, std_ab = preprocess_data(ab)
@@ -176,6 +173,7 @@ def build_quick_nn_l23(nepochs:int,
 
     # Model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
 
     nhidden1 = 128
     nhidden2 = 128
@@ -189,7 +187,7 @@ def build_quick_nn_l23(nepochs:int,
     train_kwargs = {'batch_size': nbatch}
 
     lr = 1e-3
-    epoch, loss, optimizer = perform_training(model, dataset, nparam, 
+    epoch, loss, optimizer = perform_training(model, dataset, nparam,
                      train_kwargs, lr, nepochs=nepochs)
 
 
@@ -210,7 +208,8 @@ if __name__ == '__main__':
 
     # Train
     build_quick_nn_l23(100, root='model_100')
-    build_quick_nn_l23(20000, root='model_20000')
+    #build_quick_nn_l23(20000, root='model_20000')
+    build_quick_nn_l23(100000, root='model_100000')
 
     # Test loading and prediction
     test = False

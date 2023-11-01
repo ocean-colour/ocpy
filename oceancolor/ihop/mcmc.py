@@ -1,4 +1,4 @@
-""" MCMC module for remote sensing """
+""" MCMC module for IHOP """
 
 import os
 from importlib import resources
@@ -12,8 +12,8 @@ import corner
 
 import torch
 
-from oceancolor.remote.nn import SimpleNet
-from oceancolor.remote import io as remote_io
+from oceancolor.ihop.nn import SimpleNet
+from oceancolor.ihop import io as ihop_io
 
 
 def log_prob(ab, Rs, model, device):
@@ -25,14 +25,15 @@ def log_prob(ab, Rs, model, device):
 
 
 def run_emcee_nn(nn_model, Rs, nwalkers:int=32, nsteps:int=20000,
-                 save_file:str=None):
+                 save_file:str=None, p0=None):
 
     # Device for NN
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Init
     ndim = nn_model.ninput
-    p0 = np.random.rand(nwalkers, ndim)
+    if p0 is None:
+        p0 = np.random.rand(nwalkers, ndim)
 
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -64,11 +65,11 @@ if __name__ == '__main__':
 
     # Load Hydrolight
     print("Loading Hydrolight data")
-    ab, Rs, d_l23 = remote_io.load_loisel_2023_pca()
+    ab, Rs, d_l23 = ihop_io.load_loisel_2023_pca()
 
     # Load model
     model_file = os.path.join(resources.files('oceancolor'), 
-                              'remote', 'model_20000.pth')
+                              'ihop', 'model_20000.pth')
     print(f"Loading model: {model_file}")
     model = torch.load(model_file)
 

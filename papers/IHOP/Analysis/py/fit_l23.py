@@ -16,8 +16,68 @@ import corner
 from oceancolor.ihop import mcmc
 from oceancolor.ihop import io as ihop_io
 from oceancolor.ihop.nn import SimpleNet
+from oceancolor.ihop import pca as ihop_pca
 
 from IPython import embed
+
+out_path = os.path.join(
+        os.getenv('OS_COLOR'), 'IHOP', 'L23')
+
+def do_all_fits(n_cores:int=4):
+
+    for perc in [0, 5, 10, 15, 20]:
+        print(f"Working on: perc={perc}")
+        fit_fixed_perc(perc=perc, n_cores=n_cores, Nspec=100)
+
+def analyze_l23(chain_file, chop_burn:int=-4000):
+
+    # #############################################
+    # Load
+
+    # Load Hydrolight
+    print("Loading Hydrolight data")
+    ab, Rs, d_a, d_bb = ihop_io.load_loisel_2023_pca()
+
+    # MCMC
+    print("Loading MCMC")
+    d = np.load(os.path.join(out_path, chain_file))
+    chains = d['chains']
+    l23_idx = d['idx']
+
+    all_medchi, all_stdchi, all_rms, all_maxdev = [], [], [], []
+    all_mxwv = []
+    
+    # Loop
+    for ss, idx in enumerate(l23_idx):
+        # a
+        Y = chains[ss, chop_burn:, :, 0:3].reshape(-1,3)
+        orig, a_recon = ihop_pca.reconstruct(Y, d_a, idx)
+        a_mean = np.mean(a_recon, axis=0)
+        a_std = np.std(a_recon, axis=0)
+
+        # Stats
+        rms = np.std(a_mean-orig)
+        chi = np.abs(a_mean-orig)/a_std
+        dev = np.abs(a_mean-orig)/a_mean
+        imax_dev = np.argmax(dev)
+        max_dev = dev[imax_dev]
+        mxwv = d_a['wavelength'][imax_dev]
+
+        # Save
+        all_rms.append(rms)
+        all_maxdev.append(max_dev)
+        all_medchi.append(np.median(chi))
+        all_stdchi.append(np.std(chi))
+        all_mxwv.append(mxwv)
+
+    # Return
+    stats = dict(rms=all_rms,
+                 max_dev=all_maxdev,
+                 med_chi=all_medchi,
+                 std_chi=all_stdchi,
+                 mx_wave=all_mxwv)
+    return stats
+
 
 def fit_one(items:list, pdict:dict=None):
     # Unpack
@@ -42,8 +102,7 @@ def fit_one(items:list, pdict:dict=None):
 def fit_fixed_perc(perc:int, n_cores:int, seed:int=1234,
                    Nspec:int=100):
     # Outfile
-    outfile = os.path.join(
-        os.getenv('OS_COLOR'), 'IHOP', 'L23',
+    outfile = os.path.join(out_path,
         f'fit_a_L23_NN_Rs{perc:02d}')
 
     # Load Hydrolight
@@ -68,7 +127,7 @@ def fit_fixed_perc(perc:int, n_cores:int, seed:int=1234,
     map_fn = partial(fit_one, pdict=pdict)
 
     # Prep
-    items = [(Rs[i], ab[i], idx) for i in idx]
+    items = [(Rs[i], ab[i], i) for i in idx]
     
     # Parallel
     with ProcessPoolExecutor(max_workers=n_cores) as executor:
@@ -76,20 +135,19 @@ def fit_fixed_perc(perc:int, n_cores:int, seed:int=1234,
         answers = list(tqdm(executor.map(map_fn, items,
                                             chunksize=chunksize), total=len(items)))
 
-    embed(header='79 of figs')
     # Slurp
     samples = [item[0].get_chain() for item in answers]
     all_idx = np.array([item[1] for item in answers])
-    srt = np.argsort(all_idx)
 
     # Chains
     all_samples = np.zeros((len(samples), samples[0].shape[0], 
         samples[0].shape[1], samples[0].shape[2]))
-    for kk, ss in enumerate(srt):
+    for ss in range(len(all_idx)):
         all_samples[ss,:,:,:] = samples[ss]
 
-
-    
+    # Save
+    np.savez(outfile, chains=all_samples, idx=all_idx)
+    print(f"Wrote: {outfile}")
 
 def another_test():
     fit_fixed_perc(perc=10, n_cores=4, Nspec=8)
@@ -134,4 +192,10 @@ if __name__ == '__main__':
 
     # Testing
     #quick_test()
-    another_test()
+    #another_test()
+
+    # All of em
+    do_all_fits()
+
+    # Analysis
+    #stats = analyze_l23('fit_a_L23_NN_Rs10.npz')

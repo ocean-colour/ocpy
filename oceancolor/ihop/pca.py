@@ -107,10 +107,11 @@ def load_tara(high_cut:float=705.):
     # Return
     return wv_grid, tara_a_water, l23_a
 
-def reconstruct(pca_dict, idx):
+def reconstruct(Y, pca_dict, idx):
+    # Grab the orginal
     orig = pca_dict['data'][idx]
 
-    Y = pca_dict['Y'][idx]
+    # Reconstruct
     recon = np.dot(Y, pca_dict['M']) + pca_dict['mean']
 
     return orig, recon

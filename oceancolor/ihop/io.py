@@ -2,7 +2,11 @@
 import os
 import numpy as np
 
+import torch
+
 from importlib import resources
+
+from oceancolor.ihop.nn import SimpleNet
 
 
 def load_loisel_2023_pca(back_scatt:str='bb'):
@@ -24,3 +28,11 @@ def load_loisel_2023_pca(back_scatt:str='bb'):
 
     # Return
     return ab, Rs, d_a, d_bb
+
+def load_nn(root:str):
+    model_file = os.path.join(
+        resources.files('oceancolor'), 
+        'data', 'ihop', f'{root}.pth')
+    model = torch.load(model_file)
+
+    return model

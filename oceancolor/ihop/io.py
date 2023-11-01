@@ -6,7 +6,7 @@ import torch
 
 from importlib import resources
 
-from oceancolor.ihop.nn import SimpleNet
+#from oceancolor.ihop.nn import SimpleNet
 
 
 def load_loisel_2023_pca(back_scatt:str='bb'):

@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas
-from scipy.interpolate import interp1d
 
 from IPython import embed
 

@@ -1,7 +1,10 @@
-""" I/O for Water """
+""" Water methods """
 
 import os
 from importlib import resources
+
+import numpy as np
+from scipy.interpolate import interp1d
 
 import pandas
 
@@ -22,3 +25,14 @@ def load_rsr_gsfc():
 
     # Return
     return df
+
+def a_water(wv:np.ndarray):
+    # Load
+    df_water = load_rsr_gsfc()
+
+    # Interpolate
+    f = interp1d(df_water['wavelength'],
+                        df_water['aw'], bounds_error=False, 
+                        fill_value=np.nan)
+    # Done
+    return f(wv)

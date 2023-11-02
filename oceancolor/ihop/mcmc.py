@@ -16,16 +16,16 @@ from oceancolor.ihop.nn import SimpleNet
 from oceancolor.ihop import io as ihop_io
 
 
-def log_prob(ab, Rs, model, device):
+def log_prob(ab, Rs, model, device, scl_sig):
     pred = model.prediction(ab, device)
     #
-    sig = 0.05 * Rs
+    sig = scl_sig * Rs
     #
     return -1*0.5 * np.sum( (pred-Rs)**2 / sig**2)
 
 
 def run_emcee_nn(nn_model, Rs, nwalkers:int=32, nsteps:int=20000,
-                 save_file:str=None, p0=None):
+                 save_file:str=None, p0=None, scl_sig:float=0.05):
 
     # Device for NN
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -44,7 +44,7 @@ def run_emcee_nn(nn_model, Rs, nwalkers:int=32, nsteps:int=20000,
         backend = None
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, 
-                                    args=[Rs, nn_model, device],
+                                    args=[Rs, nn_model, device, scl_sig],
                                     backend=backend)
 
     # Burn in

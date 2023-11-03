@@ -280,8 +280,8 @@ if __name__ == '__main__':
     #another_test()
 
     # All of em
-    #do_all_fits()
+    do_all_fits()
 
     # Analysis
     #stats = analyze_l23('fit_a_L23_NN_Rs10.npz')
-    check_one('fit_a_L23_NN_Rs10.npz', 0)
+    #check_one('fit_a_L23_NN_Rs10.npz', 0)

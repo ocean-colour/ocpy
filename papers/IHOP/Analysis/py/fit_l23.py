@@ -11,6 +11,9 @@ from tqdm import tqdm
 import torch
 
 from matplotlib import pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['figure.dpi'] = 200
+
 import seaborn as sns
 
 import corner
@@ -109,8 +112,14 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
     a_std = np.std(a_recon, axis=0)
 
     allY = chains[in_idx, chop_burn:, :, :].reshape(-1,6)
-    Ys = np.median(allY, axis=0)
-    pred_Rs = model.prediction(Ys, device)
+    all_pred = np.zeros((allY.shape[0], 81))
+    for kk in range(allY.shape[0]):
+        Ys = allY[kk]
+        pred_Rs = model.prediction(Ys, device)
+        all_pred[kk,:] = pred_Rs
+
+    pred_Rs = np.median(all_pred, axis=0)
+    std_pred = np.std(all_pred, axis=0)
 
     # #########################################################
     # Plot the solution
@@ -127,6 +136,7 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
 
     plt.show()
 
+    '''
     # #########################################################
     # Plot the residuals
     plt.clf()
@@ -139,6 +149,7 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
     ax.set_ylabel(r'$a(\lambda)$ [Fit-Orig]')
 
     plt.show()
+    '''
 
     # #########################################################
     # Compare Rs
@@ -148,8 +159,14 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
     ax.plot(d_a['wavelength'], obs_Rs[in_idx], 'ks', label='Obs')
     ax.plot(d_a['wavelength'], pred_Rs, 'rx', label='Model')
 
+    ax.fill_between(
+        d_a['wavelength'], pred_Rs-std_pred, pred_Rs+std_pred,
+        color='r', alpha=0.5) 
+
     ax.set_xlabel('Wavelength (nm)')
     ax.set_ylabel(r'$R_s$')
+
+    ax.legend()
 
     plt.show()
 
@@ -280,8 +297,8 @@ if __name__ == '__main__':
     #another_test()
 
     # All of em
-    do_all_fits()
+    #do_all_fits()
 
     # Analysis
     #stats = analyze_l23('fit_a_L23_NN_Rs10.npz')
-    #check_one('fit_a_L23_NN_Rs10.npz', 0)
+    check_one('fit_a_L23_NN_Rs10.npz', 0)

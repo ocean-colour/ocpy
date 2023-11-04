@@ -24,7 +24,7 @@ def generate_all_pca(clobber:bool=False):
     generate_l23_tara_pca(clobber=clobber)
 
 
-def generate_l23_pca(clobber:bool=False):
+def generate_l23_pca(clobber:bool=False, Ncomp:int=3):
 
     # Load up the data
     X=4
@@ -33,9 +33,9 @@ def generate_l23_pca(clobber:bool=False):
 
     # L23, vanilla
     for iop in ['a', 'b', 'bb']:
-        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_{iop}_N3.npz')
+        outfile = os.path.join(pca_path, f'pca_L23_X4Y0_{iop}_N{Ncomp}.npz')
         if not os.path.exists(outfile) or clobber:
-            pca.fit_normal(ds[iop].data, 3, save_outputs=outfile,
+            pca.fit_normal(ds[iop].data, Ncomp, save_outputs=outfile,
                            extra_arrays={'Rs':ds.Rrs.data,
                                          'wavelength':ds.Lambda.data})
 

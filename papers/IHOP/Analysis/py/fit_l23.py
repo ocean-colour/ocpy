@@ -12,7 +12,7 @@ import torch
 
 from matplotlib import pyplot as plt
 import matplotlib as mpl
-mpl.rcParams['figure.dpi'] = 200
+mpl.rcParams['figure.dpi'] = 150
 
 import seaborn as sns
 
@@ -84,7 +84,7 @@ def analyze_l23(chain_file, chop_burn:int=-4000):
     return stats
 
 
-def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
+def check_one(chain_file:str, in_idx:int, chop_burn:int=-3000):
 
     # #############################################
     # Load
@@ -105,12 +105,16 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
     obs_Rs = d['obs_Rs']
 
     idx = l23_idx[in_idx]
+    print(f'Working on: L23 index={idx}')
+    
     # a
     Y = chains[in_idx, chop_burn:, :, 0:3].reshape(-1,3)
     orig, a_recon = ihop_pca.reconstruct(Y, d_a, idx)
     a_mean = np.mean(a_recon, axis=0)
     a_std = np.std(a_recon, axis=0)
+    _, a_pca = ihop_pca.reconstruct(ab[idx][:3], d_a, idx)
 
+    # Rs
     allY = chains[in_idx, chop_burn:, :, :].reshape(-1,6)
     all_pred = np.zeros((allY.shape[0], 81))
     for kk in range(allY.shape[0]):
@@ -120,13 +124,15 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
 
     pred_Rs = np.median(all_pred, axis=0)
     std_pred = np.std(all_pred, axis=0)
+    NN_Rs = model.prediction(ab[idx], device)
 
     # #########################################################
     # Plot the solution
     plt.clf()
     ax = plt.gca()
-    ax.plot(d_a['wavelength'], orig, 'ko', label='True')
+    ax.plot(d_a['wavelength'], orig, 'bo', label='True')
     ax.plot(d_a['wavelength'], a_mean, 'r-', label='Fit')
+    ax.plot(d_a['wavelength'], a_pca, 'k:', label='PCA')
     ax.fill_between(
         d_a['wavelength'], a_mean-a_std, a_mean+a_std, 
         color='r', alpha=0.5) 
@@ -158,6 +164,7 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
     ax.plot(d_a['wavelength'], Rs[idx], 'bo', label='True')
     ax.plot(d_a['wavelength'], obs_Rs[in_idx], 'ks', label='Obs')
     ax.plot(d_a['wavelength'], pred_Rs, 'rx', label='Model')
+    ax.plot(d_a['wavelength'], NN_Rs, 'g-', label='NN+True')
 
     ax.fill_between(
         d_a['wavelength'], pred_Rs-std_pred, pred_Rs+std_pred,
@@ -170,7 +177,11 @@ def check_one(chain_file:str, in_idx:int, chop_burn:int=-4000):
 
     plt.show()
 
-    
+    # Corner
+    fig = corner.corner(
+        allY, labels=['a0', 'a1', 'a2', 'b0', 'b1', 'b2'],
+        truths=ab[idx])
+    plt.show() 
 
 def fit_one(items:list, pdict:dict=None):
     # Unpack

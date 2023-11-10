@@ -94,6 +94,69 @@ class SimpleNet(nn.Module):
 
         return pred.flatten()
 
+class DenseNet(nn.Module):
+    def __init__(
+        self, d_input:int, d_output:int,
+        hidden_list:list, drop_on:bool,
+        p_drop:float, batchnorm:bool,
+        ab_parm:tuple, Rs_parm:tuple
+    ):
+        super(DenseNet, self).__init__()
+        self.ab_parm = ab_parm
+        self.Rs_parm = Rs_parm
+        self.num_layers = len(hidden_list) + 1
+        block_layers = []
+        d_in = d_input
+        d_out = hidden_list[0]
+        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+        for i in range(self.num_layers-2):
+            d_in = hidden_list[i]
+            d_out = hidden_list[i+1]
+            block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+        d_in = hidden_list[-1]
+        d_out = d_output
+        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+        self.block_layers = nn.ModuleList(block_layers)
+        
+    def layer_block(self, d_in, d_out, drop_on, p_drop):
+        if drop_on:
+            block_i = nn.Sequential(
+                nn.Linear(in_features=d_in, out_features=d_out),
+                nn.BatchNorm1d(d_out),
+                nn.ReLU(),
+                nn.Dropout(p_drop)
+            )
+        else:
+            block_i = nn.Sequential(
+                nn.Linear(in_features=d_in, out_features=d_out),
+                nn.BatchNorm1d(d_out),
+                nn.ReLU()
+            )            
+        return block_i
+
+    def forward(self, x):
+        for i in range(self.num_layers):
+            layer_i = self.block_layers[i]
+            x = layer_i(x)
+        return x
+
+    def prediction(self, sample, device):
+        # Normalize the inputs
+        norm_sample = (sample - self.ab_parm[0])/self.ab_parm[1]
+        tensor = torch.Tensor(norm_sample)
+
+        self.eval()
+        with torch.no_grad():
+            batch_features = tensor.view(-1, 6).to(device)
+            outputs = self(batch_features)
+
+        outputs.cpu()
+        pred = outputs * self.Rs_parm[1] + self.Rs_parm[0]
+
+        # Convert to numpy
+        pred = pred.numpy()
+
+        return pred.flatten()
 
 def preprocess_data(data):
 
@@ -202,7 +265,50 @@ def build_quick_nn_l23(nepochs:int,
     torch.save(model, f'{root}.pth')
     print(f"Wrote: {root}.pt, {root}.pth")
 
+def build_densenet(nepochs:int,
+                   lr:float,
+                   root:str='model',
+                   back_scatt:str='bb'):
+    ### The DenseNet with dropout and batchnorm layers.
+    
+    # Load up data
+    ab, Rs, _, _ = ihop_io.load_loisel_2023_pca()
 
+    target = Rs
+    nparam = ab.shape[1]
+
+    # Preprocess
+    pre_ab, mean_ab, std_ab = preprocess_data(ab)
+    pre_targ, mean_targ, std_targ = preprocess_data(target)
+
+    # Dataset
+    dataset = MyDataset(pre_ab, pre_targ)
+
+    # Model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+
+    hidden_list = [16, 32, 64, 128]
+    # Instantiate
+    model = DenseNet(nparam, target.shape[1],
+                     hidden_list, True, 0.5, True,
+                     (mean_ab, std_ab), (mean_targ, std_targ)).to(device)
+    nbatch = 64
+    train_kwargs = {'batch_size': nbatch}
+
+    epoch, loss, optimizer = perform_training(model, dataset, nparam,
+                     train_kwargs, lr, nepochs=nepochs)
+
+    # Save
+    PATH = f"{root}.pt"
+    torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+                }, PATH)
+    torch.save(model, f'{root}.pth')
+    print(f"Wrote: {root}.pt, {root}.pth")
 
 if __name__ == '__main__':
 
@@ -210,7 +316,8 @@ if __name__ == '__main__':
     build_quick_nn_l23(100, root='model_100')
     #build_quick_nn_l23(20000, root='model_20000')
     build_quick_nn_l23(100000, root='model_100000')
-
+    build_densenet(10000, 0.01, root='model_dense_10000')
+    
     # Test loading and prediction
     test = False
     if test:

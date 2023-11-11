@@ -1,6 +1,8 @@
 """ Cross-sections of ocean particles """
 import numpy as np
 
+from oceancolor.iop import io
+
 def detritus_abs(lamb:float):
     """ Absorption cross-section of detritus
 

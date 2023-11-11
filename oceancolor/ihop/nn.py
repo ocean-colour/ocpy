@@ -108,30 +108,35 @@ class DenseNet(nn.Module):
         block_layers = []
         d_in = d_input
         d_out = hidden_list[0]
-        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop, batchnorm))
         for i in range(self.num_layers-2):
             d_in = hidden_list[i]
             d_out = hidden_list[i+1]
-            block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+            block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop, batchnorm))
         d_in = hidden_list[-1]
         d_out = d_output
-        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop))
+        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop, batchnorm))
         self.block_layers = nn.ModuleList(block_layers)
         
-    def layer_block(self, d_in, d_out, drop_on, p_drop):
-        if drop_on:
+    def layer_block(self, d_in, d_out, drop_on, p_drop, batchnorm):
+        if drop_on and batchnorm:
             block_i = nn.Sequential(
                 nn.Linear(in_features=d_in, out_features=d_out),
                 nn.BatchNorm1d(d_out),
                 nn.ReLU(),
                 nn.Dropout(p_drop)
             )
+        elif drop_on:
+            block_i = nn.Sequential(
+                nn.Linear(in_features=d_in, out_features=d_out),
+                nn.ReLU(),
+                nn.Dropout(p_drop)
+            )
         else:
             block_i = nn.Sequential(
                 nn.Linear(in_features=d_in, out_features=d_out),
-                nn.BatchNorm1d(d_out),
                 nn.ReLU()
-            )            
+            )
         return block_i
 
     def forward(self, x):
@@ -241,10 +246,10 @@ def build_quick_nn_l23(nepochs:int,
     nhidden1 = 128
     nhidden2 = 128
     # Instantiate
-    model = SimpleNet(nparam, target.shape[1], 
+    model = SimpleNet(nparam, target.shape[1],
                       nhidden1, nhidden2,
                       (mean_ab, std_ab),
-                      (mean_targ, std_targ),
+                      (mean_targ, std_targ)
                       ).to(device)
     nbatch = 64
     train_kwargs = {'batch_size': nbatch}
@@ -265,8 +270,13 @@ def build_quick_nn_l23(nepochs:int,
     torch.save(model, f'{root}.pth')
     print(f"Wrote: {root}.pt, {root}.pth")
 
-def build_densenet(nepochs:int,
+def build_densenet(hidden_list,
+                   nepochs:int,
                    lr:float,
+                   dropout_on:bool,
+                   p_dropout:float,
+                   batchnorm:bool,
+                   save:bool,
                    root:str='model',
                    back_scatt:str='bb'):
     ### The DenseNet with dropout and batchnorm layers.
@@ -288,10 +298,9 @@ def build_densenet(nepochs:int,
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
-    hidden_list = [16, 32, 64, 128]
     # Instantiate
     model = DenseNet(nparam, target.shape[1],
-                     hidden_list, True, 0.5, True,
+                     hidden_list, dropout_on, p_dropout, batchnorm,
                      (mean_ab, std_ab), (mean_targ, std_targ)).to(device)
     nbatch = 64
     train_kwargs = {'batch_size': nbatch}
@@ -300,15 +309,14 @@ def build_densenet(nepochs:int,
                      train_kwargs, lr, nepochs=nepochs)
 
     # Save
-    PATH = f"{root}.pt"
-    torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss,
-                }, PATH)
-    torch.save(model, f'{root}.pth')
-    print(f"Wrote: {root}.pt, {root}.pth")
+    if save:
+        PATH = f"{root}.pt"
+        torch.save({'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': loss,}, PATH)
+        torch.save(model, f'{root}.pth')
+        print(f"Wrote: {root}.pt, {root}.pth")
 
 if __name__ == '__main__':
 
@@ -316,7 +324,8 @@ if __name__ == '__main__':
     build_quick_nn_l23(100, root='model_100')
     #build_quick_nn_l23(20000, root='model_20000')
     build_quick_nn_l23(100000, root='model_100000')
-    build_densenet(10000, 0.01, root='model_dense_10000')
+    hidden_list, epochs, lr, p_drop = [64, 128, 256], 10000, 1e-2, 0.05
+    build_densenet(hidden_list, epochs, lr, True, p_drop, False, False)
     
     # Test loading and prediction
     test = False

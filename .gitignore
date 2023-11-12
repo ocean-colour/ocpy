@@ -6,6 +6,16 @@ __pycache__/
 # C extensions
 *.so
 
+# Figures
+*.png
+
+# Data
+*.npz
+
+# torch
+*.pth
+*.pt
+
 # Distribution / packaging
 .Python
 build/

@@ -1,10 +1,10 @@
-Pure water absorption coefficients (/m) as function of light wavelength (nm),,,,,
-"Data from Absorption protocol Table 1.1, cols. 1 & 2",,,,,
-,,,,,
-Original table values,,,,Interpolated to 1-nm resolution using pchip,
-,,,,,
-Wavelength,a_w,,,Wavelength,a_w
-[nm],[/m],,,[nm],[/m]
+#Pure water absorption coefficients (/m) as function of light wavelength (nm),,,,,
+#"Data from Absorption protocol Table 1.1, cols. 1 & 2",,,,,
+#,,,,,
+#Original table values,,,,Interpolated to 1-nm resolution using pchip,
+#,,,,,
+wavelength,aw,,,Wavelength_nm,a_w_nm
+#[nm],[/m],,,[nm],[/m]
 180,7647,,,180,7647
 185,527,,,181,5599.53242
 190,42.4,,,182,3724.84526

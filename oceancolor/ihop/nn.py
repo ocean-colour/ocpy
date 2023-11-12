@@ -115,7 +115,10 @@ class DenseNet(nn.Module):
             block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop, batchnorm))
         d_in = hidden_list[-1]
         d_out = d_output
-        block_layers.append(self.layer_block(d_in, d_out, drop_on, p_drop, batchnorm))
+        head_layer = nn.Sequential(
+            nn.Linear(in_features=d_in, out_features=d_out)
+        )
+        block_layers.append(head_layer)
         self.block_layers = nn.ModuleList(block_layers)
         
     def layer_block(self, d_in, d_out, drop_on, p_drop, batchnorm):
@@ -317,6 +320,7 @@ def build_densenet(hidden_list,
                     'loss': loss,}, PATH)
         torch.save(model, f'{root}.pth')
         print(f"Wrote: {root}.pt, {root}.pth")
+    return loss
 
 if __name__ == '__main__':
 
@@ -324,8 +328,11 @@ if __name__ == '__main__':
     build_quick_nn_l23(100, root='model_100')
     #build_quick_nn_l23(20000, root='model_20000')
     build_quick_nn_l23(100000, root='model_100000')
-    hidden_list, epochs, lr, p_drop = [64, 128, 256], 10000, 1e-2, 0.05
-    build_densenet(hidden_list, epochs, lr, True, p_drop, False, False)
+    #####################################################################
+    hidden_list, epochs, lr, p_drop = [512, 512, 256], 2500, 1e-2, 0.0
+    build_densenet(hidden_list, epochs, lr, True, p_drop, True, False)
+    ### loss for above model is: 0.001996453170879529.
+    #####################################################################
     
     # Test loading and prediction
     test = False

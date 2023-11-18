@@ -49,3 +49,19 @@ def stramski2001():
 
     # Return
     return tables
+
+def clementson2019():
+
+    dfs = []
+    for ss in [2,3]:
+        c2019_tab_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            f'clementson2019_{ss}.txt')
+        df = pandas.read_table(c2019_tab_file, sep='\t', header=0)
+        dfs.append(df)
+
+    # Return
+    return dfs[0], dfs[1]
+
+df0, df1 = clementson2019()
+embed(header='67 of load_data.py')

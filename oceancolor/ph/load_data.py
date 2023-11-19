@@ -57,11 +57,13 @@ def clementson2019():
         c2019_tab_file = os.path.join(resource_filename(
             'oceancolor', 'data'), 'phytoplankton', 
             f'clementson2019_{ss}.txt')
-        df = pandas.read_table(c2019_tab_file, sep='\t', header=0)
+        df = pandas.read_table(c2019_tab_file, delim_whitespace=True, header=0)
+        # Sort on wavelength
+        df = 
         dfs.append(df)
 
     # Return
     return dfs[0], dfs[1]
 
-df0, df1 = clementson2019()
-embed(header='67 of load_data.py')
+#df0, df1 = clementson2019()
+#embed(header='63 of load_data.py')

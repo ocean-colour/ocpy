@@ -59,11 +59,23 @@ def clementson2019():
             f'clementson2019_{ss}.txt')
         df = pandas.read_table(c2019_tab_file, delim_whitespace=True, header=0)
         # Sort on wavelength
-        df = 
+        df.sort_values(by='wave', inplace=True)
         dfs.append(df)
 
     # Return
     return dfs[0], dfs[1]
+
+def bricaud():
+
+    # 2004
+    b2004_tab_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            'Bricaud_2004.csv')
+    df = pandas.read_csv(b2004_tab_file, comment='#')
+    df.sort_values(by='wave', inplace=True)
+
+    # Return
+    return df
 
 #df0, df1 = clementson2019()
 #embed(header='63 of load_data.py')

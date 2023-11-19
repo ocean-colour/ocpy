@@ -1,4 +1,4 @@
-Wave	Chlorophyll-a	Chlorophyll-b	DV_chlorophyll-a	Chlorophyllide-a	Phaeophorbide-a	Phaeophytin-a	Chlorophyll-C3	chlorophyll-c2
+wave	Chl-a	Chl-b	DV_chlorophyll-a	Chlorophyllide-a	Phaeophorbide-a	Phaeophytin-a	Chl-c3	Chl-c2
 800.2	-8.13E-05	3.48E-05	-0.000212929	0.000534122	0.000247332	0.000392685	0.000704616	-0.000450992												
 799.3	-0.000109876	-1.87E-05	-0.000207273	0.000568957	0.000306233	0.000369148	0.000661688	-0.000305528												
 798.5	-5.90E-05	-8.73E-05	-0.000184308	0.000536431	0.000291074	0.000419164	0.000791505	-0.00035853												

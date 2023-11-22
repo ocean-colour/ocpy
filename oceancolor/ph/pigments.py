@@ -13,10 +13,10 @@ def pg():
         25.905, 23.55 ]
 
 def a_chl(wave:np.ndarray, ctype:str='a',
-          source:str='clementson2019'):
+          source:str='bricaud'):
 
     # Load data
-    if source == 'clementson2019':
+    if source == 'clementson':
         _, df = load_ph.clementson2019()
     elif source == 'bricaud':
         df = load_ph.bricaud()

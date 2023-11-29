@@ -82,6 +82,18 @@ def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
     return betasw, beta90sw, bsw
 
 def RInw(lambda_, Tc, S):
+    """ refractive index of seawater
+
+    Args:
+        lambda_ (np.ndarray): wavelength (nm)
+        Tc (float): temperauter in degree Celsius, must be a scalar
+        S (float): salinity, must be scalar
+
+    Returns:
+        tuple: (nsw, dnswds)
+            nsw: absolute refractive index of seawater
+            dnswds: partial derivative of seawater refractive index w.r.t. salinity
+    """
     # refractive index of air is from Ciddor (1996,Applied Optics)
     n_air = 1.0 + (5792105.0 / (238.0185 - 1 / (lambda_ / 1e3) ** 2) + 167917.0 / (57.362 - 1 / (lambda_ / 1e3) ** 2)) / 1e8
 
@@ -104,6 +116,15 @@ def RInw(lambda_, Tc, S):
     return nsw, dnswds
 
 def BetaT(Tc, S):
+    """ isothermal compressibility of seawater
+
+    Args:
+        Tc (float): temperauter in degree Celsius, must be a scalar
+        S (float): salinity, must be scalar
+
+    Returns:
+        float: isothermal compressibility of seawater
+    """
     # pure water secant bulk Millero (1980, Deep-sea Research)
     kw = 19652.21 + 148.4206 * Tc - 2.327105 * Tc ** 2 + 1.360477e-2 * Tc ** 3 - 5.155288e-5 * Tc ** 4
     Btw_cal = 1. / kw
@@ -119,6 +140,15 @@ def BetaT(Tc, S):
     return IsoComp
 
 def rhou_sw(Tc, S):
+    """ density of seawater
+
+    Args:
+        Tc (float): temperauter in degree Celsius, must be a scalar
+        S (float): salinity, must be scalar
+
+    Returns:
+        float: density of seawater
+    """
     # density of water and seawater,unit is Kg/m^3, from UNESCO,38,1981
     a0 = 8.24493e-1
     a1 = -4.0899e-3
@@ -146,6 +176,15 @@ def rhou_sw(Tc, S):
     return density_sw
 
 def dlnasw_ds(Tc, S):
+    """ partial derivative of natural logarithm of water activity w.r.t.salinity
+
+    Args:
+        Tc (float): temperauter in degree Celsius, must be a scalar
+        S (float): salinity, must be scalar
+
+    Returns:
+        float: dlnasw_ds is partial derivative of natural logarithm of water activity w.r.t.salinity
+    """
     # water activity data of seawater is from Millero and Leung (1976,American Journal of Science,276,1035-1077).
     # Table 19 was reproduced using Eqs.(14,22,23,88,107) then were fitted to polynominal equation.
     # dlnawds is partial derivative of natural logarithm of water activity w.r.t.salinity
@@ -156,6 +195,14 @@ def dlnasw_ds(Tc, S):
     return dlnawds
 
 def PMH(n_wat):
+    """ density derivative of refractive index from PMH model
+
+    Args:
+        n_wat (float): refractive index of water
+
+    Returns:
+        float: density derivative of refractive index from PMH model
+    """
     n_wat2 = n_wat ** 2
     n_density_derivative = (n_wat2 - 1) * (1 + 2 / 3 * (n_wat2 + 2) * (n_wat / 3 - 1 / 3 / n_wat) ** 2)
 

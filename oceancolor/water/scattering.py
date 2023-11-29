@@ -204,7 +204,8 @@ def PMH(n_wat):
         float: density derivative of refractive index from PMH model
     """
     n_wat2 = n_wat ** 2
-    n_density_derivative = (n_wat2 - 1) * (1 + 2 / 3 * (n_wat2 + 2) * (n_wat / 3 - 1 / 3 / n_wat) ** 2)
+    n_density_derivative = (n_wat2 - 1) * (1 + 2 / 3 * (
+        n_wat2 + 2) * (n_wat / 3 - 1 / 3 / n_wat) ** 2)
 
     return n_density_derivative
 
@@ -220,3 +221,4 @@ if __name__ == '__main__':
     print(betasw)
     print(beta90sw)
     print(bsw)
+

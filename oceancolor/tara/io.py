@@ -9,8 +9,20 @@ from IPython import embed
 db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
 
-def load_tara_db():
+def load_db(dataset='pg'):
+
+    if dataset == 'pg':
+        df = load_pg_db()
+    elif dataset == 'ac':
+        df = load_ac_db()
+
+    # Return
+    return df
+
+def load_ac_db():
     """ Load the Tara Oceans database. 
+
+    Kindly provided by Alison Chase.
 
     Returns:
         pandas.DataFrame: table of data
@@ -22,10 +34,20 @@ def load_tara_db():
     # Return
     return df
 
-def load_pg_db():
+def load_pg_db(expedition:str='all'):
     pg_db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather')
     df = pandas.read_feather(pg_db_name)
+
+    # Cut?
+    if expedition == 'Microbiome':
+        df = df[df.index > pandas.Timestamp('2020-01-01')]
+    elif expedition == 'all':
+        pass
+    elif expedition == 'Pacific':
+        df = df[df.index < pandas.Timestamp('2020-01-01')]
+    else:
+        raise ValueError(f"Bad mission: {expedition}")
 
     # Return
     return df

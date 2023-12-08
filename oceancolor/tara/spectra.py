@@ -22,6 +22,13 @@ def parse_wavelengths(inp, flavor:str='ap'):
 
     for key in inp.keys():
         if key[0:2] == flavor:
+            # Skip a few 
+            if key in ['ap_n', 'ap676_lh', 'cp_n']:
+                continue
+            # Ends in sd
+            if key[-2:] == 'sd':
+                continue
+            # Keep
             keys.append(key)
             # Wavelength
             wv_nm.append(float(key[2:]))
@@ -39,11 +46,19 @@ def parse_wavelengths(inp, flavor:str='ap'):
     return wv_nm, keys
 
 def spectbl_from_keys(tbl:pandas.DataFrame, keys:np.ndarray):
+
+
     # Read
     values, err_vals = [], []
     for key in keys:
+        err_key = 'sig_'+key if 'sig_'+key in tbl.keys() else key+'_sd'
+        # Hack for integer keys
+        if err_key not in tbl.keys() and 'sd' in err_key:
+            # Try adding in a .0
+            err_key = err_key.replace('_sd', '.0_sd')
+        # Do it
         for ilist, ikey in zip([values,err_vals], 
-                               [key, 'sig_'+key]):
+                               [key, err_key]):
             # Slurp
             val = tbl[ikey].values
             # Masked?

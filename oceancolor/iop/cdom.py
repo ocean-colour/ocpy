@@ -9,7 +9,7 @@ from IPython import embed
 def a_exp(wave:np.ndarray, S_CDOM:float=0.0176,
         wave0:float=440., const:float=0.):
     """
-    Calculate the absorption spectrum of colored dissolved organic matter (CDOM) using the exponential function.
+    Calculate the absorption coefficient of colored dissolved organic matter (CDOM) using the exponential function.
 
     Args:
         wave (np.ndarray): Array of wavelengths.
@@ -56,7 +56,7 @@ def fit_exp_tot(wave:np.ndarray, a_cdom:np.ndarray):
 
     Args:
         wave (np.ndarray): Wavelengths
-        a_cdom (np.ndarray): Absorption spectrum
+        a_cdom (np.ndarray): Absorption coefficients
 
     Returns:
         tuple: A tuple containing the optimized parameters and covariance matrix of the fit.

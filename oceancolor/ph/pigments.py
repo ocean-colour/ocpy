@@ -14,7 +14,18 @@ def pg():
 
 def a_chl(wave:np.ndarray, ctype:str='a',
           source:str='bricaud'):
+    """
+    Load up the chlorophyll absorption coefficient.
 
+    Args:
+        wave (np.ndarray): Array of wavelengths.
+        ctype (str, optional): Chlorophyll type. Defaults to 'a'.
+            Options are: 'a' (default), 'b', 'c12'
+        source (str, optional): Data source. Defaults to 'bricaud'.
+
+    Returns:
+        np.ndarray: Array of chlorophyll absorption coefficients.
+    """
     # Load data
     if source == 'clementson':
         _, df = load_ph.clementson2019()
@@ -25,7 +36,6 @@ def a_chl(wave:np.ndarray, ctype:str='a',
 
     # Type
     key = f'Chl-{ctype}'
-
 
     # Interpolate
     f = interp1d(df.wave, df[key], kind='linear',

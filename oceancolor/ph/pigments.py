@@ -2,6 +2,7 @@
 import numpy as np
 
 from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit
 
 from oceancolor.ph import load_data as load_ph
 
@@ -43,3 +44,34 @@ def a_chl(wave:np.ndarray, ctype:str='a',
 
     # Rinish
     return f(wave)
+
+
+def fit_a_chl(wave:np.ndarray, a_ph:np.ndarray):
+    """
+    Fits Chl pigments to a presumed a_chl spectrum.
+
+    Args:
+        wave (np.ndarray): Array of wavelengths.
+            These can be restricted to a subset
+        a_ph (np.ndarray): Array of absorption coefficients.
+
+    Returns:
+        tuple: A tuple containing the optimized parameters and covariance matrix of the fit.
+    """
+    chla = a_chl(wave, ctype='a')
+    chlb = a_chl(wave, ctype='b')
+    chlc = a_chl(wave, ctype='c12')
+
+    nrm_wv = [673.,440.,440.]
+    p0 = []
+    for wv, pig in zip(nrm_wv, [chla, chlb, chlc]):
+        iwv = np.argmin(np.abs(wave-wv))
+        nrm = pig[iwv]/a_ph[iwv]
+        p0.append(1./nrm)
+
+    # Func
+    def func(x, Aa, Ab, Ac):
+        return Aa*chla + Ab*chlb + Ac*chlc 
+
+    # Fit
+    return curve_fit(func, wave, a_ph, p0=p0) #sigma=sig_y, #maxfev=maxfev)

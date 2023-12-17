@@ -6,15 +6,22 @@ from scipy.optimize import curve_fit
 
 from oceancolor.ph import load_data as load_ph
 
-def pg():
-    peak_loc=[406,434,453,470,492,523,550,584,617,
+pig_peak_loc=[406,434,453,470,492,523,550,584,617,
           638,660,675]  
-    FWHM = [37.68 , 28.26 , 28.26 , 30.615, 37.68 , 
+pig_FWHM = [37.68 , 28.26 , 28.26 , 30.615, 37.68 , 
         32.97 , 32.97 , 37.68 , 30.615, 25.905, 
-        25.905, 23.55 ]
+        25.905, 23.55]
+
+def gen_pigment(wave:np.ndarray, idx:int):
+
+    # Gaussian with peak_loc and FWHM
+    profile = np.exp(-4*np.log(2)*((wave-pig_peak_loc[idx])/pig_FWHM[idx])**2)
+    return profile
+
 
 def a_chl(wave:np.ndarray, ctype:str='a',
-          source:str='bricaud'):
+          source:str='bricaud',
+          pigment:str=None):
     """
     Load up the chlorophyll absorption coefficient.
 
@@ -36,7 +43,10 @@ def a_chl(wave:np.ndarray, ctype:str='a',
         raise IOError(f"Bad input source {source}")
 
     # Type
-    key = f'Chl-{ctype}'
+    if pigment is not None:
+        key = pigment
+    else:
+        key = f'Chl-{ctype}'
 
     # Interpolate
     f = interp1d(df.wave, df[key], kind='linear',
@@ -46,7 +56,8 @@ def a_chl(wave:np.ndarray, ctype:str='a',
     return f(wave)
 
 
-def fit_a_chl(wave:np.ndarray, a_ph:np.ndarray):
+def fit_a_chl(wave:np.ndarray, a_ph:np.ndarray,
+              add_pigments:list=None):
     """
     Fits Chl pigments to a presumed a_chl spectrum.
 
@@ -69,9 +80,22 @@ def fit_a_chl(wave:np.ndarray, a_ph:np.ndarray):
         nrm = pig[iwv]/a_ph[iwv]
         p0.append(1./nrm)
 
-    # Func
-    def func(x, Aa, Ab, Ac):
-        return Aa*chla + Ab*chlb + Ac*chlc 
+    # Additoinal pigments??
+    if add_pigments is not None:
+        for pigment in add_pigments:
+            p0.append(10.)
 
+    # Func
+    #def func(x, Aa, Ab, Ac):
+    def func(*pargs):
+        # pargs[0] is not used
+        # Chl
+        a = pargs[1]*chla + pargs[2]*chlb + pargs[3]*chlc 
+        # Others?
+        if add_pigments is not None:
+            for i, pigment in enumerate(add_pigments):
+                a += pargs[4+i]*pigment
+        # Return
+        return a
     # Fit
     return curve_fit(func, wave, a_ph, p0=p0) #sigma=sig_y, #maxfev=maxfev)

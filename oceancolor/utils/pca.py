@@ -17,7 +17,7 @@ def fit_normal(data:np.ndarray, N:int, save_outputs:str=None,
             If provided, save the extras to the npz file. Defaults to None.
 
     Returns:
-        PCA: _description_
+        PCA: Fitted pca to the input data
     """
 
 

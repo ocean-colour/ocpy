@@ -4,6 +4,8 @@ import os
 from pkg_resources import resource_filename
 import pandas
 
+from oceancolor.tara import utils as tara_utils
+
 from IPython import embed
 
 db_name = os.path.join(resource_filename(
@@ -13,6 +15,8 @@ def load_db(dataset='pg'):
 
     if dataset == 'pg':
         df = load_pg_db()
+        # Add ID number
+        tara_utils.tara_uid(df)
     elif dataset == 'ac':
         df = load_ac_db()
 
@@ -38,6 +42,9 @@ def load_pg_db(expedition:str='all'):
     pg_db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather')
     df = pandas.read_feather(pg_db_name)
+
+    # Add ID number
+    tara_utils.tara_uid(df)
 
     # Cut?
     if expedition == 'Microbiome':

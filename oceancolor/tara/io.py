@@ -1,10 +1,16 @@
 """ Methods for I/O on Tara Oceans data. """
 import os
 
+import numpy as np
+import warnings
+
 from pkg_resources import resource_filename
 import pandas
 
-from oceancolor.tara import utils as tara_utils
+try:
+    import geopandas
+except ImportError:
+    warnings.warn("geopandas not installed")
 
 from IPython import embed
 
@@ -38,13 +44,23 @@ def load_ac_db():
     # Return
     return df
 
-def load_pg_db(expedition:str='all'):
+def load_pg_db(expedition:str='all', as_geo:bool=False):
     pg_db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather')
-    df = pandas.read_feather(pg_db_name)
+    if as_geo:
+        df = geopandas.read_feather(pg_db_name)
+    else:
+        df = pandas.read_feather(pg_db_name)
+
+    # Restrict to unique
+    times = df.index.astype(int)
+    uni, idx = np.unique(times, return_index=True)
+    if len(uni) != len(times):
+        warnings.warn("Duplicate times in Tara Oceans database")
+        df = df.iloc[idx,:]
 
     # Add ID number
-    tara_utils.tara_uid(df)
+    df['UID'] = times[idx]
 
     # Cut?
     if expedition == 'Microbiome':

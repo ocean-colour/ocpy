@@ -124,7 +124,7 @@ def fit_a_chl(wave:np.ndarray, a_ph:np.ndarray,
     def func(*pargs):
         # pargs[0] is not used
         # Chl
-        a = pargs[1]*chla + pargs[2]*chlb + pargs[3]*chlc 
+        a = pargs[1]*chla + pargs[2]*chlb + pargs[3]*chlc
         # Others?
         if add_pigments is not None:
             for i, pigment in enumerate(add_pigments):

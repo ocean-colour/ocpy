@@ -1,10 +1,9 @@
 """ Loisel+2023 Hydrolight Outputs """
 
 import os
-import xarray
 import numpy as np
 
-from oceancolor.tara import io as tara_io 
+import xarray
 
 l23_path = os.path.join(os.getenv('OS_COLOR'),
                         'data', 'Loisel2023')
@@ -35,3 +34,19 @@ def load_ds(X:int, Y:int):
 
     # Return
     return ds
+
+def calc_Chl(ds):
+    """
+    Calculate chlorophyll concentration from the given dataset.
+
+    Args:
+        ds (xarray.Dataset): Dataset object containing the necessary data.
+
+    Returns:
+        np.ndarray: Chlorophyll concentration calculated from the dataset.
+    """
+    i440 = np.argmin(np.abs(ds.Lambda.data - 440.))
+    Chl = ds.aph.data[:,i440] / 0.05582
+
+    # Return
+    return Chl

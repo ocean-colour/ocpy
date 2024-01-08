@@ -66,6 +66,14 @@ def clementson2019():
     return dfs[0], dfs[1]
 
 def bricaud():
+    """
+    Load the Bricaud phytoplankton data from their 2004 paper.
+
+    https://ui.adsabs.harvard.edu/abs/2004JGRC..10911010B/abstract
+
+    Returns:
+        pandas.DataFrame: The loaded data with columns 'wave' and other properties.
+    """
 
     # 2004
     b2004_tab_file = os.path.join(resource_filename(

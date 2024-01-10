@@ -56,8 +56,8 @@ def load_pg_db(expedition:str='all', as_geo:bool=False):
     times = df.index.astype(int)
     uni, idx = np.unique(times, return_index=True)
     if len(uni) != len(times):
-        warnings.warn("Duplicate times in Tara Oceans database")
-        df = df.iloc[idx,:]
+        raise ValueError("Duplicate times in Tara Oceans database")
+        #df = df.iloc[idx,:]
 
     # Add ID number
     df['UID'] = times[idx]

@@ -14,15 +14,22 @@ except ImportError:
 
 from IPython import embed
 
-db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
 
 def load_db(dataset='pg'):
+    """
+    Load the specified Tara dataset.
+
+    Args:
+        dataset (str): The dataset to load. Options are 'pg' for 
+        Patrick Gray database and 'ac' for Alison Chase database. 
+        Default is 'pg'.
+
+    Returns:
+        DataFrame: The loaded dataset as a pandas DataFrame.
+    """
 
     if dataset == 'pg':
         df = load_pg_db()
-        # Add ID number
-        tara_utils.tara_uid(df)
     elif dataset == 'ac':
         df = load_ac_db()
 
@@ -30,14 +37,16 @@ def load_db(dataset='pg'):
     return df
 
 def load_ac_db():
-    """ Load the Tara Oceans database. 
+    """ Load the Tara Oceans database kindly provided by Alison Chase.
 
-    Kindly provided by Alison Chase.
+    TODO -- Add publication info
 
     Returns:
         pandas.DataFrame: table of data
     """
     # Get the file
+    db_name = os.path.join(resource_filename(
+        'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
     # Read
     df = pandas.read_parquet(db_name)
 
@@ -45,6 +54,16 @@ def load_ac_db():
     return df
 
 def load_pg_db(expedition:str='all', as_geo:bool=False):
+    """
+    Load the Tara Oceans database from a feather file.
+
+    Args:
+        expedition (str): The expedition to load. Options are 'all', 'Microbiome', or 'Pacific'. Default is 'all'.
+        as_geo (bool): If True, load the database as a geopandas DataFrame. Default is False.
+
+    Returns:
+        pandas.DataFrame or geopandas.GeoDataFrame: The loaded database.
+    """
     pg_db_name = os.path.join(resource_filename(
         'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather')
     if as_geo:

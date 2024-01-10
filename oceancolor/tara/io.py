@@ -52,15 +52,16 @@ def load_pg_db(expedition:str='all', as_geo:bool=False):
     else:
         df = pandas.read_feather(pg_db_name)
 
-    # Restrict to unique
+    # Check on unique times
     times = df.index.astype(int)
     uni, idx = np.unique(times, return_index=True)
     if len(uni) != len(times):
         raise ValueError("Duplicate times in Tara Oceans database")
         #df = df.iloc[idx,:]
 
-    # Add ID number
-    df['UID'] = times[idx]
+    # Add ID number?
+    if 'UID' not in df.columns:
+        df['UID'] = times[idx]
 
     # Cut?
     if expedition == 'Microbiome':

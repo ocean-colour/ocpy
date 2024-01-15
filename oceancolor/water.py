@@ -27,6 +27,15 @@ def load_rsr_gsfc():
     return df
 
 def a_water(wv:np.ndarray):
+    """
+    Calculate the absorption coefficient of water for the given wavelengths.
+
+    Args:
+        wv (np.ndarray): Array of wavelengths.
+
+    Returns:
+        np.ndarray: Array of absorption coefficients.
+    """
     # Load
     df_water = load_rsr_gsfc()
 

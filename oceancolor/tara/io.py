@@ -101,7 +101,14 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
 
     # Deal with flagged data
     if clean_flagged:
-        embed(header='load_pg_db')
+        keep = np.ones(len(df), dtype=bool)
+        for bit_flag in bit_flags:
+            bad = (df.flag_bit & bit_flag) > 0
+            keep[bad] = False
+        # Do it
+        print(f"Using bit_flags={bit_flags} removed {np.sum(~keep)} rows of a total {len(df)}")
+        df = df[keep]
+        #embed(header='load_pg_db')
 
     # Return
     return df

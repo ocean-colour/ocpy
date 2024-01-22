@@ -53,13 +53,15 @@ def load_ac_db():
     # Return
     return df
 
-def load_pg_db(expedition:str='all', as_geo:bool=False):
+def load_pg_db(expedition:str='all', as_geo:bool=False, 
+               clean_flagged:bool=True):
     """
     Load the Tara Oceans database from a feather file.
 
     Args:
         expedition (str): The expedition to load. Options are 'all', 'Microbiome', or 'Pacific'. Default is 'all'.
         as_geo (bool): If True, load the database as a geopandas DataFrame. Default is False.
+        clean_flagged (bool): If True, remove flagged data. Default is True.
 
     Returns:
         pandas.DataFrame or geopandas.GeoDataFrame: The loaded database.
@@ -85,12 +87,18 @@ def load_pg_db(expedition:str='all', as_geo:bool=False):
     # Cut?
     if expedition == 'Microbiome':
         df = df[df.index > pandas.Timestamp('2020-01-01')]
+        bit_flags = [8, 9]
     elif expedition == 'all':
         pass
     elif expedition == 'Pacific':
         df = df[df.index < pandas.Timestamp('2020-01-01')]
+        bit_flags = [3]
     else:
         raise ValueError(f"Bad mission: {expedition}")
+
+    # Deal with flagged data
+    if clean_flagged:
+        embed(header='load_pg_db')
 
     # Return
     return df

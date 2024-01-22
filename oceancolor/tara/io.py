@@ -67,7 +67,9 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
         pandas.DataFrame or geopandas.GeoDataFrame: The loaded database.
     """
     pg_db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather')
+        'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs_160124.feather')
+        #'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather') # Old file
+    print(f"Reading: {pg_db_name}")
     if as_geo:
         df = geopandas.read_feather(pg_db_name)
     else:
@@ -77,12 +79,13 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
     times = df.index.astype(int)
     uni, idx = np.unique(times, return_index=True)
     if len(uni) != len(times):
-        raise ValueError("Duplicate times in Tara Oceans database")
-        #df = df.iloc[idx,:]
+        #raise ValueError("Duplicate times in Tara Oceans database")
+        warnings.warn("Duplicate times in Tara Oceans database")
+        df = df.iloc[idx,:]
 
     # Add ID number?
-    if 'UID' not in df.columns:
-        df['UID'] = times[idx]
+    if 'uid' not in df.columns:
+        df['uid'] = times[idx]
 
     # Cut?
     if expedition == 'Microbiome':

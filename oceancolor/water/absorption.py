@@ -26,6 +26,23 @@ def load_rsr_gsfc():
     # Return
     return df
 
+def load_ioccg_2018():
+    """
+    Load the IOCCG 2018 water absorption data.
+
+    Kindly provided by R. Reynolds (Scripps)
+
+    Returns:
+        pandas.DataFrame: The loaded data as a pandas DataFrame.
+    """
+    ioccg_file = os.path.join(
+        resources.files('oceancolor'), 
+        'data', 'water', 'a_water_IOCCG_2018.csv')
+    # Load table, ignore #
+    df = pandas.read_csv(ioccg_file, comment='#')
+    # Return
+    return df
+
 def a_water(wv:np.ndarray):
     """
     Calculate the absorption coefficient of water for the given wavelengths.

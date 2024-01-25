@@ -71,47 +71,80 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
         #'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather') # Old file
     print(f"Reading: {pg_db_name}")
     if as_geo:
-        df = geopandas.read_feather(pg_db_name)
+        gdf = geopandas.read_feather(pg_db_name)
     else:
-        df = pandas.read_feather(pg_db_name)
+        gdf = pandas.read_feather(pg_db_name)
 
     # Check on unique times
-    times = df.index.astype(int)
+    times = gdf.index.astype(int)
     uni, idx = np.unique(times, return_index=True)
     if len(uni) != len(times):
         #raise ValueError("Duplicate times in Tara Oceans database")
         warnings.warn("Duplicate times in Tara Oceans database")
-        df = df.iloc[idx,:]
+        gdf = gdf.iloc[idx,:]
 
     # Add ID number?
-    if 'uid' not in df.columns:
-        df['uid'] = times[idx]
+    if 'uid' not in gdf.columns:
+        gdf['uid'] = times[idx]
+
+
+    def is_set(x, n):
+        return x & 1 << n != 0
+
+    # Mission
+    gdf['mission_id'] = 0
+    gdf.loc[gdf['datetime'] > '2020-01-01', 'mission_id'] = 1
+
+    gdf['passes_flags'] = True
+
+    # find relevant flags in TaraPacific
+    passes_flag = []
+    flag_bits = [3]
+
+    for i in gdf[gdf.mission_id==0].flag_bit:
+        passed = True
+        for bit in flag_bits:
+            if is_set(i,bit):
+                passed = False
+        passes_flag.append(passed)
+        
+    passes_flag = np.array(passes_flag, dtype=bool)
+
+    gdf.loc[gdf['mission_id'] == 0, 'passes_flags'] = passes_flag
+
+    # find relevant flags in TaraMicrobiome
+    passes_flag = []
+    flag_bits = [8,9]
+
+    for i in gdf[gdf.mission_id==1].flag_bit:
+        passed = True
+        for bit in flag_bits:
+            if is_set(i,bit):
+                passed = False
+        passes_flag.append(passed)
+        
+    passes_flag = np.array(passes_flag, dtype=bool)
+
+    gdf.loc[gdf['mission_id'] == 1, 'passes_flags'] = passes_flag
+
+
+    # dataframe with the flagged data removed
+    if clean_flagged:
+        print(f"Using bit_flags removes {np.sum(~gdf.passes_flags)} rows of a total {len(gdf)}")
+        gdf = gdf[gdf.passes_flags]
 
     # Cut?
     if expedition == 'Microbiome':
-        df = df[df.index > pandas.Timestamp('2020-01-01')]
-        bit_flags = [8, 9]
+        gdf = gdf[gdf.mission_id == 1]
     elif expedition == 'all':
         pass
     elif expedition == 'Pacific':
-        df = df[df.index < pandas.Timestamp('2020-01-01')]
-        bit_flags = [3]
+        gdf = gdf[gdf.mission_id == 0]
     else:
         raise ValueError(f"Bad mission: {expedition}")
 
-    # Deal with flagged data
-    if clean_flagged:
-        keep = np.ones(len(df), dtype=bool)
-        for bit_flag in bit_flags:
-            bad = (df.flag_bit & bit_flag) > 0
-            keep[bad] = False
-        # Do it
-        print(f"Using bit_flags={bit_flags} removed {np.sum(~keep)} rows of a total {len(df)}")
-        df = df[keep]
-        #embed(header='load_pg_db')
-
     # Return
-    return df
+    return gdf
 
 def load_tara_umap(utype:str):
 

@@ -46,7 +46,18 @@ def parse_wavelengths(inp, flavor:str='ap'):
     return wv_nm, keys
 
 def spectbl_from_keys(tbl:pandas.DataFrame, keys:np.ndarray):
+    """
+    Extracts values and error values from a pandas DataFrame based on a given set of keys.
 
+    Args:
+        tbl (pandas.DataFrame): The input DataFrame containing the data.
+        keys (np.ndarray): An array of keys specifying the columns to extract from the DataFrame.
+
+    Returns:
+        tuple: A tuple containing two numpy arrays - values and error values.
+               The values array has shape (len(keys), len(tbl)) and contains the extracted values.
+               The error values array has the same shape and contains the extracted error values.
+    """
 
     # Read
     values, err_vals = [], []
@@ -204,70 +215,3 @@ def single_value(tbl:pandas.DataFrame, wv_cen:float,
     
     # Return
     return value, sig
-
-def interpolate_to_grid(wv_nm:np.ndarray, values:np.ndarray, 
-                  err_vals:np.ndarray, wv_grid:np.ndarray):
-    """ Rebin a spectrum to a new wavelength grid.
-
-    Args:
-        wv_nm (np.ndarray): Wavelengths (nm)
-        values (np.ndarray): Values
-        err_vals (np.ndarray): Error values
-        wv_grid (np.ndarray): New wavelength grid
-
-    Returns:
-        tuple: values, error [np.ndarray, np.ndarray]
-    """
-    # Interpolate
-    f_values = interp1d(wv_nm, values, 
-        bounds_error=False, fill_value=np.nan)
-    f_err = interp1d(wv_nm, err_vals, 
-        bounds_error=False, fill_value=np.nan)
-
-    # Evaluate
-    new_values = f_values(wv_grid)
-    new_err = f_err(wv_grid)
-
-    # Return
-    return new_values, new_err
-
-def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray, 
-                  err_vals:np.ndarray, wv_grid:np.ndarray):
-    """ Rebin spectra to a new wavelength grid.
-
-    Simple nearest neighbor binning (no interpolation)
-
-    Args:
-        wv_nm (np.ndarray): Wavelengths (nm)
-        values (np.ndarray): Values
-        err_vals (np.ndarray): Error values
-        wv_grid (np.ndarray): New wavelength grid
-
-    Returns:
-        tuple: wave, values, error [np.ndarray (nwv), np.ndarray (nspec,nwv), np.ndarray]
-    """
-    gd_values = np.isfinite(values)
-    mask = gd_values.astype(int)
-
-    # Loop on wv_grid
-    rebin_values = np.zeros((values.shape[1], wv_grid.size-1))
-    rebin_err = np.zeros((values.shape[1], wv_grid.size-1))
-    rebin_wave = np.zeros(wv_grid.size-1)
-    
-    for iwv in range(wv_grid.size-1):
-        w0 = wv_grid[iwv]
-        w1 = wv_grid[iwv+1]
-        rebin_wave[iwv] = (w0+w1)/2.
-        # In grid?
-        gd = np.where((wv_nm >= w0) & (wv_nm < w1))[0]
-
-        # Add em in
-        isum = np.nansum(values[gd]*mask[gd], axis=0) / np.sum(mask[gd],axis=0)
-        esum = np.nansum(err_vals[gd]*mask[gd], axis=0) / np.sum(mask[gd],axis=0)
-
-        # Fill
-        rebin_values[:,iwv] = isum
-        rebin_err[:,iwv] = esum
-
-    # Return
-    return rebin_wave, rebin_values, rebin_err

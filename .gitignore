@@ -11,6 +11,8 @@ __pycache__/
 
 # Data
 *.npz
+*.csv
+*.xlsx
 
 # torch
 *.pth

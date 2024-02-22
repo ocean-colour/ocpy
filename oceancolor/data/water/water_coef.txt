@@ -1,33 +1,38 @@
-
-/begin_header
-/missing=-999
-/delimiter=space
-!
-! Water absorption and scattering coefficients
-! 300nm - 2450nm
-!
-! Absorption coefficients were derived from Pope and Fry and Kou et. al.,
-! Scattering coefficients were derived from Table 1 of Smith and Baker (1981)
-!
-!       300-380 Smith and Baker 1981
-!
-!       Pope, R. M. and E. S. Fry, 1997, "Absorption spectrum (380-700 nm) of
-!               pure water. II. Integrating cavity measurements,"
-!               Appl. Opt.,36, 8710-8723.
-!
-!       Kou, L., D. Labrie, P. Chylek, 1993, "Refractive indices of water and
-!               ice in the 0.65-2.5 m spectral range,"
-!               Appl. Opt.,32, 3531-3540 (1993).
-!
-!        Smith, R.C. and K.S. Baker, 1981, "Optical properties of the clearest
-!               natural waters (200-800 nm)," Appl. Opt.,20, 177-184.
-!
-! NOTE: for backscatter, we use 0.5*bw
-!               for bw longer than 1100nm the 0.0076*(400./wvl)^4.32 was used.
-!
-/fields=wavelength,aw,bw
-/units=nm,m^-1,m^-1
-/end_header
+# Taken from 
+# https://oceancolor.gsfc.nasa.gov/resources/docs/rsr_tables/
+# https://oceancolor.gsfc.nasa.gov/resources/docs/rsr/water_coef.txt
+# on 2023-Oct-20 by JXP
+#
+#/begin_header
+#/missing=-999
+#/delimiter=space
+#!
+#! Water absorption and scattering coefficients
+#! 300nm - 2450nm
+#!
+#! Absorption coefficients were derived from Pope and Fry and Kou et. al.,
+#! Scattering coefficients were derived from Table 1 of Smith and Baker (1981)
+#!
+#!       300-380 Smith and Baker 1981
+#!
+#!       Pope, R. M. and E. S. Fry, 1997, "Absorption spectrum (380-700 nm) of
+#!               pure water. II. Integrating cavity measurements,"
+#!               Appl. Opt.,36, 8710-8723.
+#!
+#!       Kou, L., D. Labrie, P. Chylek, 1993, "Refractive indices of water and
+#!               ice in the 0.65-2.5 m spectral range,"
+#!               Appl. Opt.,32, 3531-3540 (1993).
+#!
+#!        Smith, R.C. and K.S. Baker, 1981, "Optical properties of the clearest
+#!               natural waters (200-800 nm)," Appl. Opt.,20, 177-184.
+#!
+#! NOTE: for backscatter, we use 0.5*bw
+#!               for bw longer than 1100nm the 0.0076*(400./wvl)^4.32 was used.
+#!
+#/fields=wavelength,aw,bw
+#/units=nm,m^-1,m^-1
+#/end_header
+wavelength aw bw
 200.00 3.07000 0.151000
 201.00 2.96200 0.147800
 202.00 2.85400 0.144600

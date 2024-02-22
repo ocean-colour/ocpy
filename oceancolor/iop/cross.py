@@ -1,6 +1,11 @@
 """ Cross-sections of ocean particles """
 import numpy as np
+
+import numpy as np
 from scipy.interpolate import interp1d
+
+from oceancolor.iop import io as iop_io
+
 
 
 def detritus_abs(lamb:float):
@@ -131,9 +136,23 @@ def bubbles_backscatt(lamb:float):
     else:
         return const
 
-def a_water(lamb:np.ndarray):
+def a_water(lamb:np.ndarray, data:str='gsfc'):
+    """ Absorption coefficient of pure water 
+
+    Args:
+        lamb (np.ndarray): wavelength in nm
+
+    Returns:
+        np.ndarray: absorption cross-section in m^-1
+    """
+
     # Load
-    df_water = load_rsr_gsfc()
+    if data == 'gsfc':
+        df_water = iop_io.load_rsr_gsfc()
+    elif data == 'IOCCG':
+        df_water = iop_io.load_IOCCG_2018()
+    else:
+        raise ValueError(f'Unknown data for water: {data}')
 
     # Interpolate
     f = interp1d(df_water['wavelength'],

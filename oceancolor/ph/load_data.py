@@ -4,6 +4,8 @@ import os
 from pkg_resources import resource_filename
 import warnings
 
+import scipy.io as sio
+
 import pandas
 
 from IPython import embed
@@ -49,3 +51,76 @@ def stramski2001():
 
     # Return
     return tables
+
+def clementson2019():
+
+    dfs = []
+    for ss in [2,3]:
+        c2019_tab_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            f'clementson2019_{ss}.txt')
+        df = pandas.read_table(c2019_tab_file, delim_whitespace=True, header=0)
+        # Sort on wavelength
+        df.sort_values(by='wave', inplace=True)
+        dfs.append(df)
+
+    # Return
+    return dfs[0], dfs[1]
+
+def bricaud():
+    """
+    Load the Bricaud phytoplankton data from their 2004 paper.
+
+    https://ui.adsabs.harvard.edu/abs/2004JGRC..10911010B/abstract
+
+    Returns:
+        pandas.DataFrame: The loaded data with columns 'wave' and other properties.
+    """
+
+    # 2004
+    b2004_tab_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            'Bricaud_2004.csv')
+    df = pandas.read_csv(b2004_tab_file, comment='#')
+    df.sort_values(by='wave', inplace=True)
+
+    # Return
+    return df
+
+#df0, df1 = clementson2019()
+#embed(header='63 of load_data.py')
+
+def moore1995():
+    """
+    Taken from Moore et al. (1995) "Compartive ..."
+        Marine Ecology Progress Series 116: 259-275
+        doi.org/10.3354/meps116259
+
+    Species are:
+       'Pro SS120 9'
+       'ProSS120 70'
+       'Pro MED4 9'
+       'Pro MED4 70'
+       'SynWH8103'
+
+    Returns:
+        pandas.DataFrame: The loaded data with columns 'wave' and the various species
+    """
+
+    # Load
+    moore_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            'data_moore.mat')
+    moore_data = sio.loadmat(moore_file)
+
+    # Extract
+    df = pandas.DataFrame()
+    df['wave'] = moore_data['wvl'][0,:]
+    # Spectra
+    for ss in range(moore_data['spectra'].shape[1]):
+        lbl = moore_data['labels'][0][ss][0]
+        df[lbl] = moore_data['spectra'][:,ss]
+    df.sort_values(by='wave', inplace=True)
+
+    # Return
+    return df

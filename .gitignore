@@ -10,6 +10,11 @@ __pycache__/
 *.png
 
 # Data
+*.npz
+
+# torch
+*.pth
+*.pt
 *.parquet
 
 # Distribution / packaging

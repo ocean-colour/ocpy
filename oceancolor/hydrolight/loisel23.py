@@ -2,11 +2,16 @@
 
 import os
 import numpy as np
+import warnings
 
 import xarray
 
-l23_path = os.path.join(os.getenv('OS_COLOR'),
+if os.getenv('OS_COLOR') is not None:
+    l23_path = os.path.join(os.getenv('OS_COLOR'),
                         'data', 'Loisel2023')
+else:
+    warnings.warn("OS_COLOR not set. Using current directory.")
+    l23_path = './'                    
 
 def load_ds(X:int, Y:int):
     """ Load up the data

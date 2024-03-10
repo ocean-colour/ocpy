@@ -39,7 +39,8 @@ def gauss_pigment(wave:np.ndarray, idx:int):
 
 def a_chl(wave:np.ndarray, ctype:str='a',
           source:str='bricaud',
-          pigment:str=None):
+          pigment:str=None,
+          use_div:bool=True):
     """
     Load up the chlorophyll absorption coefficient.
 
@@ -49,6 +50,7 @@ def a_chl(wave:np.ndarray, ctype:str='a',
             Options are: 'a' (default), 'b', 'c12'
         source (str, optional): Data source. Defaults to 'bricaud'.
             Options are: 'chase', 'clementson'
+        use_div (bool, optional): Use divinyl for a and b. Defaults to True.
 
     Returns:
         np.ndarray: Array of chlorophyll absorption coefficients.
@@ -73,7 +75,10 @@ def a_chl(wave:np.ndarray, ctype:str='a',
     if pigment is not None:
         key = pigment
     else:
-        key = f'Chl-{ctype}'
+        if use_div and ctype in ['a', 'b']:
+            key = f'Dv-Chl{ctype}'
+        else:
+            key = f'Chl-{ctype}'
 
 
     # Interpolate

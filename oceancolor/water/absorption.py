@@ -43,18 +43,24 @@ def load_ioccg_2018():
     # Return
     return df
 
-def a_water(wv:np.ndarray):
+def a_water(wv:np.ndarray, data='GSFC'):
     """
     Calculate the absorption coefficient of water for the given wavelengths.
 
     Args:
         wv (np.ndarray): Array of wavelengths.
+        data (str, optional): The data source to use. Defaults to 'GSFC'.
 
     Returns:
         np.ndarray: Array of absorption coefficients.
     """
     # Load
-    df_water = load_rsr_gsfc()
+    if data == 'GSFC':
+        df_water = load_rsr_gsfc()
+    elif data == 'IOCCG': 
+        df_water = load_ioccg_2018()
+    else:
+        raise ValueError(f"Unknown data: {data}")
 
     # Interpolate
     f = interp1d(df_water['wavelength'],

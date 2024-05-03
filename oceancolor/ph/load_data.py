@@ -4,6 +4,8 @@ import os
 from pkg_resources import resource_filename
 import warnings
 
+import scipy.io as sio
+
 import pandas
 
 from IPython import embed
@@ -87,3 +89,38 @@ def bricaud():
 
 #df0, df1 = clementson2019()
 #embed(header='63 of load_data.py')
+
+def moore1995():
+    """
+    Taken from Moore et al. (1995) "Compartive ..."
+        Marine Ecology Progress Series 116: 259-275
+        doi.org/10.3354/meps116259
+
+    Species are:
+       'Pro SS120 9'
+       'ProSS120 70'
+       'Pro MED4 9'
+       'Pro MED4 70'
+       'SynWH8103'
+
+    Returns:
+        pandas.DataFrame: The loaded data with columns 'wave' and the various species
+    """
+
+    # Load
+    moore_file = os.path.join(resource_filename(
+            'oceancolor', 'data'), 'phytoplankton', 
+            'data_moore.mat')
+    moore_data = sio.loadmat(moore_file)
+
+    # Extract
+    df = pandas.DataFrame()
+    df['wave'] = moore_data['wvl'][0,:]
+    # Spectra
+    for ss in range(moore_data['spectra'].shape[1]):
+        lbl = moore_data['labels'][0][ss][0]
+        df[lbl] = moore_data['spectra'][:,ss]
+    df.sort_values(by='wave', inplace=True)
+
+    # Return
+    return df

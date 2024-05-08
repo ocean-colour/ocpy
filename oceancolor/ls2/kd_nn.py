@@ -35,6 +35,16 @@ def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
             coefficient of downwelling planar irradiance [m^-1] between the sea
             surface and first attenuation depth at the output light wavelength
             (lambda) for input spectral Rrs and sza.
+    %Version 1.1 (v1.1)
+    %
+    %Version History: 
+    %2018-04-04: Original implementation in C written by David Dessailly
+    %2020-03-23: Original Matlab version, D. Jorge 
+    %2022-09-01: Revised Matlab version, M. Kehrli
+    %2022-11-03: Final Revised MATLAB version (v1.0), M. Kehrli, R. A. Reynolds
+    %and D. Stramski
+    %2023-10-10: Corrected weights and biases in KdNN LUT for clear waters
+    %(v1.1)
     """
     # Load up the tables
     weights_1, weights_2, train_switch = ls2_io.load_Kd_tables()

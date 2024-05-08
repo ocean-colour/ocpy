@@ -5,6 +5,41 @@ from oceancolor.ls2 import io as ls2_io
 
 from IPython import embed
 
+def load_weights(wtype:str):
+    weights_1, weights_2, train_switch = ls2_io.load_Kd_tables()
+
+    #number of input neurons in the NN
+    #number of neurons on the first hidden layer in the NN
+    #number of neurons on the second hidden layer in the NN
+    #number of neurons on the output layer in the NN
+    if wtype == 'turbid':
+        ne, nc1, nc2, ns = 7, 9, 6, 1
+        weights = weights_2
+    else:
+        ne, nc1, nc2, ns = 6, 8, 6, 1
+        weights = weights_1
+
+    # Extract weights and biases from LUT
+    b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
+    #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
+    w1, w2, wout = weights["w1"], weights["w2"], weights["wout"]
+
+    # Nans
+    b1 = b1[np.isfinite(b1)].values
+    b2 = b2[np.isfinite(b2)].values
+    bout = bout[np.isfinite(bout)].values
+    w1 = w1[np.isfinite(w1)].values
+    w2 = w2[np.isfinite(w2)].values
+    wout = wout[np.isfinite(wout)].values
+    # Reshape
+    #w1 = w1.reshape(nc1, ne)  # These could be backwards
+    w1 = w1.reshape(ne, nc1)  # These could be backwards
+    w2 = w2.reshape(nc1, nc2)
+    wout = wout.reshape(ns, nc2)
+
+    # Return
+    return w1, b1, w2, b2, wout, bout
+
 def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
     """
     Implements the neural network (NN) algorithm to calculate the diffuse 
@@ -79,30 +114,14 @@ def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
     # Build NN for clear waters
     if ratio >= 0.85:
         #read in NN weights and biases for clear waters
-        weights = weights_1
+        #weights = weights_1
         #number of input neurons in the NN
         #number of neurons on the first hidden layer in the NN
         #number of neurons on the second hidden layer in the NN
         #number of neurons on the output layer in the NN
-        ne, nc1, nc2, ns = 6, 8, 6, 1
+        #ne, nc1, nc2, ns = 6, 8, 6, 1
 
-        # Extract weights and biases from LUT
-        b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
-        #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
-        w1, w2, wout = weights["w1"], weights["w2"], weights["wout"]
-
-        # Nans
-        b1 = b1[np.isfinite(b1)].values
-        b2 = b2[np.isfinite(b2)].values
-        bout = bout[np.isfinite(bout)].values
-        w1 = w1[np.isfinite(w1)].values
-        w2 = w2[np.isfinite(w2)].values
-        wout = wout[np.isfinite(wout)].values
-        # Reshape
-        w1 = w1.reshape(nc1, ne)  # These could be backwards
-        w2 = w2.reshape(nc2, nc1)
-        wout = wout.reshape(ns, nc2)
-
+        w1, b1, w2, b2, wout, bout = load_weights('clear')
 
         # Check for negative Rrs input
         if np.any(inputs[0, :4] < 0):
@@ -113,8 +132,6 @@ def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
         #training dataset; remove Rrs(667) data for clear waters
         mu = np.array(means[1:5].tolist()+means[6:].tolist())
         std = np.array(stds[1:5].tolist()+stds[6:].tolist())
-        #mu = mu([2:5,7:9]);
-        #std = std([2:5,7:9]);
 
 
         #set NN input for clear waters
@@ -126,38 +143,43 @@ def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
 
         # Normalize inputs
         x_N = np.ones_like(x)
-        
         for j in range(6):
             x_N[:, j] = (2/3) * ((x[:, j] - mu[j]) / std[j])
-
-        embed(header='Kd_NN_MODIS 123')
 
     # Build NN for turbid waters
     elif ratio < 0.85:
         #read in NN weights and biases for turbid waters
-        weights = Kd_NN_LUT_MODIS["weights_2"]
+        #weights = weights_2
         #number of input neurons in the NN
         #number of neurons on the first hidden layer in the NN
         #number of neurons on the second hidden layer in the NN
         #number of neurons on the output layer in the NN
-        ne, nc1, nc2, ns = 7, 9, 6, 1
+        #ne, nc1, nc2, ns = 7, 9, 6, 1
 
         # Extract weights and biases from LUT
-        b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
-        w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
+        #b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
+        #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
+
+        #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
+
+        w1, b1, w2, b2, wout, bout = load_weights('turbid')
 
         # Check for negative Rrs input
         if np.any(inputs[0] < 0):
             warnings.warn("Negative Rrs input detected. Kd set to NaN.")
             return np.nan
 
+        # Unpack things
+        x = inputs
+        mu = means[1:]
+        std = stds[1:]
+
         # Normalize inputs
-        x_N = np.empty_like(inputs)
+        x_N = np.ones_like(x)
         for j in range(7):
-            x_N[:, j] = (2/3) * ((inputs[:, j] - mu[j]) / std[j])
+            x_N[:, j] = (2/3) * ((x[:, j] - mu[j]) / std[j])
 
     # Kd inversion 
-    embed(header='Kd_NN_MODIS 150')
     Kd = MLP_Kd(x_N, w1, b1, w2, b2, wout, bout, 
                 np.array(mu[-1]).reshape(1,-1), 
                 np.array(std[-1]).reshape(1,-1)) 
@@ -192,12 +214,13 @@ def MLP_Kd(x, w1, b1, w2, b2, wout, bout, muKd, stdKd):
     rx, _ = x.shape
 
     # Forward propagation through the NN with tanh activation
-    a = 1.715905 * np.tanh(0.6666667 * (np.dot(x, w1.T) + np.ones((1, rx)) * b1))
-    b = 1.715905 * np.tanh((2.0 / 3.0) * (np.dot(a, w2.T) + np.ones((1, rx)) * b2))
+    a = 1.715905 * np.tanh(0.6666667 * (np.dot(x, w1) + np.ones((1, rx)) * b1))
+    #a = 1.715905 * np.tanh(0.6666667 * (np.dot(x, w1.T) + np.ones((1, rx)) * b1))
+    #b = 1.715905 * np.tanh((2.0 / 3.0) * (np.dot(a, w2.T) + np.ones((1, rx)) * b2))
+    b = 1.715905 * np.tanh((2.0 / 3.0) * (np.dot(a, w2) + np.ones((1, rx)) * b2))
     y = np.dot(b, wout.T) + bout * np.ones((rx, 1))
 
     # Denormalize the output (assuming log-transformed training data)
     Kd = 10.0 ** (1.5 * y * stdKd + muKd)
 
-    embed(header='Kd_NN_MODIS 190')
     return Kd

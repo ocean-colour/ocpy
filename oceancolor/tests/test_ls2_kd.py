@@ -16,8 +16,14 @@ def test_kd_nn():
     ilambda = [430,531,645,570,520]#,430;700;400;488;555;620;500;650;610;...
 
 
+    # Clear
     i = 0
-    Kd = kd_nn.Kd_NN_MODIS(Rrs[i],sza[i],ilambda[i])
+    Kd0 = kd_nn.Kd_NN_MODIS(Rrs[i],sza[i],ilambda[i])
+    assert np.isclose(Kd0, 0.04600481236, atol=0.0001)
 
+    # Turbid
+    i = 1
+    Kd1 = kd_nn.Kd_NN_MODIS(Rrs[i],sza[i],ilambda[i])
+    assert np.isclose(Kd1, 0.5623341777, atol=0.0001)
 
 test_kd_nn()

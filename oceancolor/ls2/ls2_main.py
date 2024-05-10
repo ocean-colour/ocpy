@@ -76,6 +76,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
     # %% Calculation of a and bb from Eqs. 9 and 8
     if not np.isnan(eta) and not np.isnan(muw):
         #find leftmost index of eta and mu values in the LUTs for interpolation
+        #embed(header='79 of ls2_main')
         idx_eta = LS2_seek_pos(eta,LS2_LUT['eta'],'eta')
         idx_muw = LS2_seek_pos(muw,LS2_LUT['muw'],'muw')
         

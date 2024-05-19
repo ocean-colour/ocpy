@@ -10,6 +10,7 @@ def fit_normal(data:np.ndarray, N:int, save_outputs:str=None,
 
 
     Args:
+        data (np.ndarray): Data to fit
         N (int): Number of PCA components to fit
         save_outputs (str, optional): If provided, save the 
             fit items to a npz file. Defaults to None.

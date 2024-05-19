@@ -3,6 +3,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
+from IPython import embed
 
 def rebin(wv_nm:np.ndarray, values:np.ndarray, 
           wv_grid:np.ndarray,
@@ -68,6 +69,11 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
         rebin_wave[iwv] = (w0+w1)/2.
         # In grid?
         gd = np.where((wv_nm >= w0) & (wv_nm < w1))[0]
+
+        # Check
+        if len(gd) == 0:
+            rebin_err[:,iwv] = np.nan
+            continue
 
         # Add em in
         mask_sum = np.sum(mask[gd],axis=0)

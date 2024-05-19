@@ -9,6 +9,9 @@ def rebin(wv_nm:np.ndarray, values:np.ndarray,
           err_vals:np.ndarray=None): 
     """ Rebin a spectrum to a new wavelength grid.
 
+    This uses interpolation.
+    The method below implements without binning
+
     Args:
         wv_nm (np.ndarray): Wavelengths (nm)
         values (np.ndarray): Values

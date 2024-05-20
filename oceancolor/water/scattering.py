@@ -25,7 +25,7 @@ def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
             % where x is the number of angles (x = length(theta)) and y is the number
             % of wavelengths in lambda (y = length(lambda))
             % beta90sw: volume scattering at 90 degree. Its size is [1 y]
-            % bw: total scattering coefficient. Its size is [1 y]
+            % bw: total scattering coefficient. Its size is [y]
             % for backscattering coefficients, divide total scattering by 2
             %
         

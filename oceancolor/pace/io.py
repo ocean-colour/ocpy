@@ -73,18 +73,37 @@ def load_iop_l2(fn:str, full_flag:bool=False):
                coords = {'latitude': (('x', 'y'), lats),
                                   'longitude': (('x', 'y'), lons),
                                   'wavelength' : ('wl', wls)},
-               attrs={'variable':'Remote sensing reflectance'})
+               attrs={'variable':'Total absorption coefficient'})
     rrsu_xds = xr.Dataset(
         {'bb':(('x', 'y', 'wl'),gd.variables['bb'][:].data)},
                coords = {'latitude': (('x', 'y'), lats),
                                   'longitude': (('x', 'y'), lons),
                                   'wavelength' : ('wl', wls)},
-               attrs={'variable':'Remote sensing reflectance error'})
+               attrs={'variable':'Total? backscatter coefficient'})
+    aph_xds = xr.Dataset(
+        {'aph':(('x', 'y', 'wl'),gd.variables['aph'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons),
+                                  'wavelength' : ('wl', wls)},
+               attrs={'variable':'Phytoplankton absorption spectrum'})
+    adgs_xds = xr.Dataset(
+        {'adg_s':(('x', 'y'),gd.variables['adg_s'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'adg spectral parameter'})
+    adg_xds = xr.Dataset(
+        {'adg_442':(('x', 'y'),gd.variables['adg_442'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'adg 442 value'})
     
 
     # merge back into the xarray dataset with all the attributes
     xds['a'] = rrs_xds.a
     xds['bb'] = rrsu_xds.bb
+    xds['aph'] = aph_xds.aph
+    xds['adg_s'] = adgs_xds.adg_s
+    xds['adg_442'] = adg_xds.adg_442
 
     # replace nodata areas with nan
     #xds = xds.where(xds['Rrs'] != -32767.0)

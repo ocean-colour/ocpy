@@ -13,7 +13,7 @@ else:
     warnings.warn("OS_COLOR not set. Using current directory.")
     l23_path = './'                    
 
-def load_ds(X:int, Y:int):
+def load_ds(X:int, Y:int, profile:bool=False):
     """ Load up the data
 
     Data may be downloaded from:
@@ -26,15 +26,17 @@ def load_ds(X:int, Y:int):
             X = 4: Raman scattering by water molecules and fluorescence of chlorophyll-a included.
         Y (int):  solar zenith angle used in the simulation, and 
             represents a value of 00, 30, or 60 degrees.
+        profile (bool, optional): Flag to load the profile data. Defaults to False.
 
 
     Returns:
         xa.Dataset: dataset from L+23
     """
+    ps = '_profile' if profile else ''
 
     # Load up the data
     variable_file = os.path.join(l23_path,
-                                 f'Hydrolight{X}{Y:02d}.nc')
+                                 f'Hydrolight{X}{Y:02d}{ps}.nc')
     ds = xarray.load_dataset(variable_file)
 
     # Return

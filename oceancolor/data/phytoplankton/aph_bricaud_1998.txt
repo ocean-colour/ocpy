@@ -1,15 +1,17 @@
-/begin_header
-/missing=-999
-/delimiter=comma
-!
-! Bricaud et al. 1998, JGR 103, 31033-31044
-! ap = Ap Chl^Ep
-! ap* = Ap Chl^(Ep-1)
-! aphi = Aphi Chl^Ephi
-! aphi* = Aphi Chl^(Ephi-1)
-!
-/fields=lambda,Ap,Ep,Aphi,Ephi
 /end_header
+#/begin_header
+#/missing=-999
+#/delimiter=comma
+#!
+#! Bricaud et al. 1998, JGR 103, 31033-31044
+#! ap = Ap Chl^Ep
+#! ap* = Ap Chl^(Ep-1)
+#! aphi = Aphi Chl^Ephi
+#! aphi* = Aphi Chl^(Ephi-1)
+#!
+#/fields=lambda,Ap,Ep,Aphi,Ephi
+#/end_header
+lambda,Ap,Ep,Aphi,Ephi
 400,0.043321,0.702647,0.0240515,0.687735
 402,0.043805,0.700084,0.0248166,0.688701
 404,0.044307,0.697132,0.0255988,0.686988

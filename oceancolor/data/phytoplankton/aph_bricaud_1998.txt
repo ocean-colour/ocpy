@@ -1,4 +1,3 @@
-/end_header
 #/begin_header
 #/missing=-999
 #/delimiter=comma

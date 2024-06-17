@@ -20,8 +20,8 @@ import pandas
 #wv: 670, std=0.00026 sr^-1, rel_std=99.60%
 
 seawifs_wave = np.array([412, 443, 490, 510, 555, 670])
-seawifs_error = [0.00143, 0.00114, 0.00091, 
-                     0.00063, 0.00071, 0.00026]
+seawifs_error = np.array([0.00143, 0.00114, 0.00091, 
+                     0.00063, 0.00071, 0.00026])
 
 def calc_stats(tbl, wv):
     diff = tbl[f'seawifs_rrs{wv}'] - tbl[f'insitu_rrs{wv}']

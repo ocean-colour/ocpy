@@ -37,10 +37,17 @@ def calc_stats(tbl, wv):
     return diff, cut, std, rel_std
 
 def calc_errors():
+    """
+    Calculate errors for SeaWiFS data.
+
+    Returns:
+        dict: A dictionary containing the standard deviation and relative standard deviation
+              for each wavelength in the SeaWiFS data.
+    """
     # Load
-    seawifs_file = files('boring').joinpath(os.path.join(
-        'data', 'SeaWiFS', 'SeaWiFS_rrs_seabass.csv'))
-    modis = pandas.read_csv(modis_file, comment='#')
+    seawifs_file = files('oceancolor').joinpath(os.path.join(
+        'data', 'satellites', 'SeaWiFS_rrs_seabass.csv'))
+    seawifs = pandas.read_csv(seawifs_file, comment='#')
 
     err_dict = {}
     for wv in seawifs_wave:

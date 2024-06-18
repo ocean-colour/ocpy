@@ -30,11 +30,29 @@ modis_aqua_error = [0.00141, 0.00113,
                     0.00060,  # Assumed for 748
                     ]
 
-def calc_stats(modis:pandas.DataFrame, wv:int):
+def calc_stats(modis:pandas.DataFrame, wv:int, sig_cut:float=4.):
+    """
+    Calculate error statistics for the MODIS data using
+    the difference between the Aqua and in-situ Rrs.
+        Performs sigma clipping on the distribution.
+
+    Parameters:
+        modis (pandas.DataFrame): DataFrame containing MODIS data.
+        wv (int): Wavelength of interest.
+        sig_cut (float, optional): Sigma cut-off value. Default is 4.
+
+    Returns:
+    tuple: A tuple containing the following elements:
+        - diff (pandas.Series): Difference between 'aqua_rrs{wv}' and 'insitu_rrs{wv}' columns.
+        - cut (pandas.Series): Boolean mask indicating valid data points.
+        - std (float): Standard deviation of the difference.
+        - rel_std (float): Relative standard deviation.
+
+    """
     diff = modis[f'aqua_rrs{wv}'] - modis[f'insitu_rrs{wv}']
     cut = (np.abs(diff) < 100.) & np.isfinite(modis[f'aqua_rrs{wv}']) & (modis[f'aqua_rrs{wv}'] > 0.)
     # Sigma clip
-    _, low, high = sigmaclip(diff[cut], low=3., high=3.)
+    _, low, high = sigmaclip(diff[cut], low=sig_cut, high=sig_cut)
     sig_cut = (diff > low) & (diff < high)
     cut &= sig_cut
     #
@@ -44,8 +62,17 @@ def calc_stats(modis:pandas.DataFrame, wv:int):
     return diff, cut, std, rel_std
 
 def calc_errors():
+    """
+    Calculate errors for MODIS satellite data.
+
+    Returns:
+        dict: A dictionary containing the calculated errors for each wavelength.
+              The keys are the wavelengths and the values are tuples containing
+              the standard deviation and relative standard deviation.
+    """
     # Load
-    modis_file = files('boring').joinpath(os.path.join('data', 'MODIS', 'MODIS_matchups_rrs.csv'))
+    modis_file = files('oceancolor').joinpath(
+        os.path.join('data', 'satellites', 'MODIS_matchups_rrs.csv'))
     modis = pandas.read_csv(modis_file, comment='#')
 
     err_dict = {}

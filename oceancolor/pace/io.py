@@ -7,6 +7,20 @@ from netCDF4 import Dataset
 from IPython import embed
 
 def load_oci_l2(fn, full_flag:bool=False):
+    """
+    Load OCI L2 data from a netCDF file.
+
+    Reflectance data is loaded as 'Rrs' and 'Rrs_unc'.
+
+    Parameters:
+    - fn (str): The file path of the netCDF file.
+    - full_flag (bool): Flag indicating whether to include only data with no flags (default: False).
+
+    Returns:
+    - xds (xarray.Dataset): The loaded dataset containing OCI L2 data.
+    - flags (numpy.ndarray): The l2_flags data.
+
+    """
     # Kindly provided by Patrick Gray
 
     # create the initial dataset so that we have all the attributes
@@ -51,8 +65,20 @@ def load_oci_l2(fn, full_flag:bool=False):
         
     return xds, flags
 
-def load_iop_l2(fn:str, full_flag:bool=False):
 
+def load_iop_l2(fn:str):
+    """
+    Load IOP (Inherent Optical Properties) Level 2 data from a netCDF file.
+
+    Parameters:
+        fn (str): The file path of the netCDF file.
+
+    Returns:
+        xds (xr.Dataset): The xarray dataset containing the loaded data.
+            Variables include 'a', 'bb', 'aph', 'adg_s', 'adg_442'.
+            Coordinates include 'latitude', 'longitude', 'wavelength'.
+        flags (numpy.ndarray): The l2_flags data from the netCDF file.
+    """
     # create the initial dataset so that we have all the attributes
     xds = xr.open_dataset(fn)
     # open the file with netCDF to get all the actual data

@@ -8,6 +8,16 @@ import pandas as pd
 
 
 def dist_coast():
+    """
+    Calculate the minimum distance from each point in the geodataframe to the coastline.
+
+    This function reads high-resolution coastline datasets and calculates the minimum distance
+    from each point in the geodataframe to the coastline. The geodataframe must be in a projection
+    with meters as the unit to accurately calculate the distance in meters.
+
+    Returns:
+        None
+    """
     # pull in high res coastline datasets from https://www.naturalearthdata.com/downloads/10m-physical-vectors/
     # get the coastline and minor islands at 10m
     coastlines = gpd.read_file('data/ne_10m_coastline.shp')

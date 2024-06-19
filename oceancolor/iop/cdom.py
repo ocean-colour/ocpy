@@ -24,8 +24,18 @@ def a_exp(wave:np.ndarray, S_CDOM:float=0.0176,
 
 
 def a_pow(wave:np.ndarray, S:float=-5.91476,
-          wave0:float=440.):
-    #  Return
+        wave0:float=440.):
+    """
+    Calculate the absorption coefficient power law.
+
+    Parameters:
+        wave (np.ndarray): Array of wavelengths.
+        S (float): Power law exponent (default: -5.91476).
+        wave0 (float): Reference wavelength (default: 440).
+
+    Returns:
+        np.ndarray: Array of absorption coefficients calculated using the power law formula.
+    """
     return (wave/wave0)**S
 
 def fit_exp_norm(wave:np.ndarray, a_cdom:np.ndarray):
@@ -71,6 +81,16 @@ def fit_exp_tot(wave:np.ndarray, a_cdom:np.ndarray):
 
 
 def fit_pow(wave:np.ndarray, a_cdom:np.ndarray):
+    """
+    Fits a power-law function to the given wavelength and absorption coefficient data.
+
+    Parameters:
+        wave (np.ndarray): Array of wavelengths.
+        a_cdom (np.ndarray): Array of absorption coefficients.
+
+    Returns:
+        tuple: A tuple containing the optimized parameters and covariance matrix of the fit.
+    """
 
     def func(x, a440, exponent, wave0=440.):
         return a440*(x/wave0)**exponent

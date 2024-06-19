@@ -6,6 +6,22 @@ from oceancolor.ls2 import io as ls2_io
 from IPython import embed
 
 def load_weights(wtype:str):
+    """
+    Load weights and biases for the neural network based on the given water type.
+
+    Parameters:
+        wtype (str): The water type. Can be either 'turbid' or any other value.
+
+    Returns:
+    tuple: A tuple containing the weights and biases for the neural network.
+           The tuple contains the following elements in order: w1, b1, w2, b2, wout, bout.
+           - w1: The weights for the first hidden layer.
+           - b1: The biases for the first hidden layer.
+           - w2: The weights for the second hidden layer.
+           - b2: The biases for the second hidden layer.
+           - wout: The weights for the output layer.
+           - bout: The biases for the output layer.
+    """
     weights_1, weights_2, train_switch = ls2_io.load_Kd_tables()
 
     #number of input neurons in the NN

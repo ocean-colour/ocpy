@@ -22,13 +22,13 @@ import pandas
 #wv: 678, std=0.00060 sr^-1, rel_std=4.15%
 
 modis_wave = np.array([412, 443, 469, 488, 531, 547, 555, 645, 667, 678, 748])# , 859, 869] # nm
-modis_aqua_error = [0.00141, 0.00113, 
+modis_aqua_error = np.array([0.00141, 0.00113, 
                     0.00113,  # Assumed for 469
                     0.00113, 0.00102, 0.00117, 0.00120, 
                     0.00070,  # Assumed for 645
                     0.00056, 0.00060,
                     0.00060,  # Assumed for 748
-                    ]
+                    ])
 
 def calc_stats(modis:pandas.DataFrame, wv:int, sig_cut:float=4.):
     """

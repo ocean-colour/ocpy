@@ -8,21 +8,21 @@ import pandas
 
 from IPython import embed
 
-# Defatuls
-PACE_wave = np.arange(400, 701, 5)
-
 def gen_noise_vector(wave:np.ndarray, include_sampling:bool=False):
     """
     Generate a noise vector based on PACE error.
 
     Parameters:
         wave (np.ndarray): Array of wavelengths.
+        include_sampling (bool): Whether to adjust the error due
+            to differences in sampling. Default is False.
 
     Returns:
         np.ndarray: Noise vector based on PACE error.
     """
     # Load PACE error
-    pace_file = files('boring').joinpath(os.path.join('data', 'PACE', 'PACE_error.csv'))
+    pace_file = files('oceancolor').joinpath(os.path.join(
+        'data', 'satellites', 'PACE_error.csv'))
     PACE_errors = pandas.read_csv(pace_file)
 
     # Interpolate

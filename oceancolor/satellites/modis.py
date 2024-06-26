@@ -30,6 +30,18 @@ modis_aqua_error = np.array([0.00141, 0.00113,
                     0.00060,  # Assumed for 748
                     ])
 
+def load_matchups():
+    """
+    Load the MODIS matchups.
+
+    Returns:
+        pandas.DataFrame: DataFrame containing the MODIS matchups.
+    """
+    modis_file = files('oceancolor').joinpath(
+        os.path.join('data', 'satellites', 'MODIS_matchups_rrs.csv'))
+    modis = pandas.read_csv(modis_file, comment='#')
+    return modis
+
 def calc_stats(modis:pandas.DataFrame, wv:int, sig_cut:float=4.):
     """
     Calculate error statistics for the MODIS data using
@@ -71,9 +83,7 @@ def calc_errors():
               the standard deviation and relative standard deviation.
     """
     # Load
-    modis_file = files('oceancolor').joinpath(
-        os.path.join('data', 'satellites', 'MODIS_matchups_rrs.csv'))
-    modis = pandas.read_csv(modis_file, comment='#')
+    modis = load_matchups()
 
     err_dict = {}
     for wv in modis_wave:

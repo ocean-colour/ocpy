@@ -30,6 +30,7 @@ def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
             %
         
     """
+    raise ValueError("THIS IS NOT SUCCESFULLY CONVERTED YET")
 
     # values of the constants
     Na = 6.0221417930e23  # Avogadros constant

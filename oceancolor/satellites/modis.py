@@ -8,6 +8,7 @@ from scipy.stats import sigmaclip
 import pandas
 
 
+from oceancolor.satellites import utils as sat_utils
 
 
 # MODIS Aqua -- derived from https://seabass.gsfc.nasa.gov/search/?search_type=Perform%20Validation%20Search&val_sata=1&val_products=11&val_source=0
@@ -22,13 +23,13 @@ import pandas
 #wv: 678, std=0.00060 sr^-1, rel_std=4.15%
 
 modis_wave = np.array([412, 443, 469, 488, 531, 547, 555, 645, 667, 678, 748])# , 859, 869] # nm
-modis_aqua_error = np.array([0.00141, 0.00113, 
-                    0.00113,  # Assumed for 469
-                    0.00113, 0.00102, 0.00117, 0.00120, 
-                    0.00070,  # Assumed for 645
-                    0.00056, 0.00060,
-                    0.00060,  # Assumed for 748
-                    ])
+#modis_aqua_error = np.array([0.00141, 0.00113, 
+#                    0.00113,  # Assumed for 469
+#                    0.00113, 0.00102, 0.00117, 0.00120, 
+#                    0.00070,  # Assumed for 645
+#                    0.00056, 0.00060,
+#                    0.00060,  # Assumed for 748
+#                    ])
 
 def load_matchups():
     """
@@ -42,40 +43,13 @@ def load_matchups():
     modis = pandas.read_csv(modis_file, comment='#')
     return modis
 
-def calc_stats(modis:pandas.DataFrame, wv:int, sig_cut:float=4.):
-    """
-    Calculate error statistics for the MODIS data using
-    the difference between the Aqua and in-situ Rrs.
-        Performs sigma clipping on the distribution.
 
-    Parameters:
-        modis (pandas.DataFrame): DataFrame containing MODIS data.
-        wv (int): Wavelength of interest.
-        sig_cut (float, optional): Sigma cut-off value. Default is 4.
-
-    Returns:
-    tuple: A tuple containing the following elements:
-        - diff (pandas.Series): Difference between 'aqua_rrs{wv}' and 'insitu_rrs{wv}' columns.
-        - cut (pandas.Series): Boolean mask indicating valid data points.
-        - std (float): Standard deviation of the difference.
-        - rel_std (float): Relative standard deviation.
-
-    """
-    diff = modis[f'aqua_rrs{wv}'] - modis[f'insitu_rrs{wv}']
-    cut = (np.abs(diff) < 100.) & np.isfinite(modis[f'aqua_rrs{wv}']) & (modis[f'aqua_rrs{wv}'] > 0.)
-    # Sigma clip
-    _, low, high = sigmaclip(diff[cut], low=sig_cut, high=sig_cut)
-    sig_cut = (diff > low) & (diff < high)
-    cut &= sig_cut
-    #
-    std = np.std(diff[cut])
-    rel_std = np.std(np.abs(diff[cut])/modis[f'aqua_rrs{wv}'][cut])
-    # Return
-    return diff, cut, std, rel_std
-
-def calc_errors():
+def calc_errors(rel_in_situ_error:float=0.05):
     """
     Calculate errors for MODIS satellite data.
+
+    Args:
+        rel_in_situ_error (float): The relative error in the in situ data. Default is 0.05.
 
     Returns:
         dict: A dictionary containing the calculated errors for each wavelength.
@@ -86,8 +60,13 @@ def calc_errors():
     modis = load_matchups()
 
     err_dict = {}
+
     for wv in modis_wave:
-        diff, cut, std, rel_std = calc_stats(modis, wv)
+        if wv in [469, 645, 748]:
+            print('Skipping wv={:d} and using the previous errors'.format(wv))
+        else:
+            diff, cut, std, rel_std = sat_utils.calc_stats(
+                modis, wv, ['aqua_rrs', 'insitu_rrs'], rel_in_situ_error)
         #
         print(f'wv: {wv}, std={std:0.5f} sr^-1, rel_std={rel_std:0.2f}%')
         err_dict[wv] = (std, rel_std)

@@ -6,13 +6,13 @@ from setuptools import setup, find_packages
 
 # Begin setup
 setup_keywords = dict()
-setup_keywords['name'] = 'oceancolor'
+setup_keywords['name'] = 'ocpy'
 setup_keywords['description'] = 'Ocean Color Analysis -- Here, there, and everywhere'
 setup_keywords['author'] = 'J. Xavier Prochaska et al.'
 setup_keywords['author_email'] = 'jxp@ucsc.edu'
 setup_keywords['license'] = 'BSD'
-setup_keywords['url'] = 'https://github.com/AI-for-Ocean-Science/ocean-color'
-setup_keywords['version'] = '0.0.dev0'
+setup_keywords['url'] = 'https://github.com/ocean-colour/ocpy'
+setup_keywords['version'] = '0.1.dev0'
 # Use README.rst as long_description.
 setup_keywords['long_description'] = ''
 if os.path.exists('README.md'):
@@ -21,8 +21,7 @@ if os.path.exists('README.md'):
 setup_keywords['provides'] = [setup_keywords['name']]
 setup_keywords['requires'] = ['Python (>3.8.0)']
 setup_keywords['install_requires'] = [
-    'torch',  
-    'torchvision', 'seaborn', 'smart-open[s3]', 'pyarrow',
+    'seaborn', 'smart-open[s3]', 'pyarrow',
     'scikit-learn', 'scikit-image', 'tqdm', 'astropy', 'astropy-healpix',
     'healpy', 'cftime', 'bokeh', 'umap-learn', 'llvmlite', 'boto3',
     'xarray', 'h5netcdf', 'emcee', 

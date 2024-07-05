@@ -7,7 +7,7 @@ from scipy.stats import sigmaclip
 
 import pandas
 
-from oceancolor.satellites import utils as sat_utils
+from ocpy.satellites import utils as sat_utils
 
 
 # https://oceancolor.gsfc.nasa.gov/resources/atbd/rrs/#sec_4
@@ -32,19 +32,19 @@ def load_matchups():
     Returns:
         pandas.DataFrame: DataFrame containing the SeaWiFS matchups.
     """
-    seawifs_file = files('oceancolor').joinpath(os.path.join(
+    seawifs_file = files('ocpy').joinpath(os.path.join(
         'data', 'satellites', 'SeaWiFS_rrs_seabass.csv'))
     seawifs = pandas.read_csv(seawifs_file, comment='#')
     return seawifs
 
 
 
-def calc_errors(rel_in_situ_error=0.05):
+def calc_errors(rel_in_situ_error:float=None):
     """
     Calculate errors for SeaWiFS data.
 
     Args:
-        rel_in_situ_error (float): The relative error in the in situ data. Default is 0.05.
+        rel_in_situ_error (float, optional): The relative error in the in situ data. Default is 0.05.
 
     Returns:
         dict: A dictionary containing the standard deviation and relative standard deviation

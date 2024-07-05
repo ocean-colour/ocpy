@@ -6,7 +6,8 @@ from scipy.stats import sigmaclip
 from IPython import embed
 
 
-def calc_stats(tbl, wv, key_roots:list, rel_in_situ_error:float):
+def calc_stats(tbl, wv, key_roots:list, 
+               rel_in_situ_error:float=None):
     """
     Calculate statistics for a given table and wavelength.
 
@@ -15,7 +16,8 @@ def calc_stats(tbl, wv, key_roots:list, rel_in_situ_error:float):
         wv (str): The wavelength.
         key_roots (list): A list of key roots used to access the data columns.
             satellite, in_situ
-        rel_in_situ_error (float): The relative in-situ error.
+        rel_in_situ_error (float, optional): 
+            The relative in-situ error to subtract off.
 
     Returns:
         tuple: A tuple containing the following elements:
@@ -35,7 +37,11 @@ def calc_stats(tbl, wv, key_roots:list, rel_in_situ_error:float):
     # Calculate
     std = np.std(diff[cut])
     rel_std = np.std(np.abs(diff[cut])/tbl[f'{key_roots[0]}{wv}'][cut])
-    # Subtract in situ error
+
+    # Subtract in situ error?
+    if rel_in_situ_error is None:
+        return diff, cut, std, rel_std
+
     sig_insitu = tbl[f'{key_roots[1]}{wv}'] * rel_in_situ_error
     med_sig_insitu = np.median(sig_insitu)
     print(f"wv: {wv}, sig_insitu: {med_sig_insitu}, std: {std}, rel_std: {rel_std}")

@@ -8,7 +8,7 @@ from scipy.stats import sigmaclip
 import pandas
 
 
-from oceancolor.satellites import utils as sat_utils
+from ocpy.satellites import utils as sat_utils
 
 
 # MODIS Aqua -- derived from https://seabass.gsfc.nasa.gov/search/?search_type=Perform%20Validation%20Search&val_sata=1&val_products=11&val_source=0
@@ -22,7 +22,8 @@ from oceancolor.satellites import utils as sat_utils
 #wv: 667, std=0.00056 sr^-1, rel_std=6.22%
 #wv: 678, std=0.00060 sr^-1, rel_std=4.15%
 
-modis_wave = np.array([412, 443, 469, 488, 531, 547, 555, 645, 667, 678, 748])# , 859, 869] # nm
+modis_wave = np.array([412, 443, 469, 488, 531, 547, 
+                       555, 645, 667, 678, 748])# , 859, 869] # nm
 #modis_aqua_error = np.array([0.00141, 0.00113, 
 #                    0.00113,  # Assumed for 469
 #                    0.00113, 0.00102, 0.00117, 0.00120, 
@@ -38,13 +39,13 @@ def load_matchups():
     Returns:
         pandas.DataFrame: DataFrame containing the MODIS matchups.
     """
-    modis_file = files('oceancolor').joinpath(
+    modis_file = files('ocpy').joinpath(
         os.path.join('data', 'satellites', 'MODIS_matchups_rrs.csv'))
     modis = pandas.read_csv(modis_file, comment='#')
     return modis
 
 
-def calc_errors(rel_in_situ_error:float=0.05):
+def calc_errors(rel_in_situ_error:float=None):
     """
     Calculate errors for MODIS satellite data.
 

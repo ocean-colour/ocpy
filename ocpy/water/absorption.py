@@ -17,7 +17,7 @@ def load_rsr_gsfc():
     """
     # File
     gsfc_file = os.path.join(
-        resources.files('oceancolor'), 
+        resources.files('ocpy'), 
         'data', 'water', 'water_coef.txt')
 
     # Load table, ignore #
@@ -36,7 +36,7 @@ def load_ioccg_2018():
         pandas.DataFrame: The loaded data as a pandas DataFrame.
     """
     ioccg_file = os.path.join(
-        resources.files('oceancolor'), 
+        resources.files('ocpy'), 
         'data', 'water', 'a_water_IOCCG_2018.csv')
     # Load table, ignore #
     df = pandas.read_csv(ioccg_file, comment='#')

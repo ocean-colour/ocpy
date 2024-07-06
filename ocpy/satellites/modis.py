@@ -22,8 +22,8 @@ from ocpy.satellites import utils as sat_utils
 #wv: 667, std=0.00056 sr^-1, rel_std=6.22%
 #wv: 678, std=0.00060 sr^-1, rel_std=4.15%
 
-modis_wave = np.array([412, 443, 469, 488, 531, 547, 
-                       555, 645, 667, 678, 748])# , 859, 869] # nm
+modis_wave = np.array([412, 443, 488, 531, 547, 
+                       555, 667, 678])  # Narrow bands only
 #modis_aqua_error = np.array([0.00141, 0.00113, 
 #                    0.00113,  # Assumed for 469
 #                    0.00113, 0.00102, 0.00117, 0.00120, 
@@ -63,11 +63,8 @@ def calc_errors(rel_in_situ_error:float=None):
     err_dict = {}
 
     for wv in modis_wave:
-        if wv in [469, 645, 748]:
-            print('Skipping wv={:d} and using the previous errors'.format(wv))
-        else:
-            diff, cut, std, rel_std = sat_utils.calc_stats(
-                modis, wv, ['aqua_rrs', 'insitu_rrs'], rel_in_situ_error)
+        diff, cut, std, rel_std = sat_utils.calc_stats(
+            modis, wv, ['aqua_rrs', 'insitu_rrs'], rel_in_situ_error)
         #
         print(f'wv: {wv}, std={std:0.5f} sr^-1, rel_std={rel_std:0.2f}%')
         err_dict[wv] = (std, rel_std)

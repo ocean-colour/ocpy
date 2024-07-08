@@ -16,17 +16,17 @@ def load_nomb():
     wave = nobm_xds.wavelength.data
 
     # Stack
-    nobm_rrs_stacked = nobm_xds.rrs.stack(z=("lat", "lon", "months"))
+    nobm_Rrs_stacked = nobm_xds.rrs.stack(z=("lat", "lon", "months"))
     nobm_a_stacked = nobm_xds.total_a.stack(z=("lat", "lon", "months"))
     nobm_bb_stacked = nobm_xds.total_bb.stack(z=("lat", "lon", "months"))
 
     # Remove nans
-    nobm_rrs_stacked = nobm_rrs_stacked.dropna(dim='z')
+    nobm_Rrs_stacked = nobm_Rrs_stacked.dropna(dim='z')
     nobm_a_stacked = nobm_a_stacked.dropna(dim='z')
     nobm_bb_stacked = nobm_bb_stacked.dropna(dim='z')
 
     # Return
-    return wave, nobm_rrs_stacked, nobm_a_stacked, nobm_bb_stacked
+    return wave, nobm_Rrs_stacked.T, nobm_a_stacked.T, nobm_bb_stacked.T
 
 
 

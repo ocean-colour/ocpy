@@ -45,12 +45,14 @@ def load_matchups():
     return modis
 
 
-def calc_errors(rel_in_situ_error:float=None):
+def calc_errors(rel_in_situ_error:float=None, reduce_by_in_situ:float=None, verbose:bool=False):
     """
     Calculate errors for MODIS satellite data.
 
     Args:
         rel_in_situ_error (float): The relative error in the in situ data. Default is 0.05.
+        reduce_by_in_situ (bool): Whether to reduce the error by the in situ error. 
+            If provided, reduce by this factor, e.g. sqrt(2)
 
     Returns:
         dict: A dictionary containing the calculated errors for each wavelength.
@@ -65,8 +67,13 @@ def calc_errors(rel_in_situ_error:float=None):
     for wv in modis_wave:
         diff, cut, std, rel_std = sat_utils.calc_stats(
             modis, wv, ['aqua_rrs', 'insitu_rrs'], rel_in_situ_error)
+        # Reduce?
+        if reduce_by_in_situ is not None:
+            std /= reduce_by_in_situ
+            rel_std /= reduce_by_in_situ
         #
-        print(f'wv: {wv}, std={std:0.5f} sr^-1, rel_std={rel_std:0.2f}%')
+        if verbose:
+            print(f'wv: {wv}, std={std:0.5f} sr^-1, rel_std={rel_std:0.2f}%')
         err_dict[wv] = (std, rel_std)
 
     # Return

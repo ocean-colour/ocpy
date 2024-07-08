@@ -21,7 +21,7 @@ def gen_noise_vector(wave:np.ndarray, include_sampling:bool=False):
         np.ndarray: Noise vector based on PACE error.
     """
     # Load PACE error
-    pace_file = files('oceancolor').joinpath(os.path.join(
+    pace_file = files('ocpy').joinpath(os.path.join(
         'data', 'satellites', 'PACE_error.csv'))
     PACE_errors = pandas.read_csv(pace_file)
 

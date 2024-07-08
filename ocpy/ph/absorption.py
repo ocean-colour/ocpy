@@ -13,7 +13,7 @@ def load_bricaud1998():
         pandas.DataFrame: The loaded Bricaud 1998 aph data.
     """
     b1998_tab_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'aph_bricaud_1998.txt')
 
     b1998_tab = pandas.read_csv(b1998_tab_file, comment='#')

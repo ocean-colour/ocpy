@@ -21,7 +21,7 @@ def load_gloria():
             df_qc_flags (pandas.DataFrame): Quality control flags
     """
     print("Loading GLORIA dataset...")
-    gloria_path = os.path.join(resources.files('oceancolor'), 
+    gloria_path = os.path.join(resources.files('ocpy'), 
                                  'data', 'Rrs', 'GLORIA') 
     # Files
     Rrs_file = os.path.join(gloria_path, 'GLORIA_Rrs.csv')

@@ -18,6 +18,7 @@ def calc_stats(tbl, wv, key_roots:list,
             satellite, in_situ
         rel_in_situ_error (float, optional): 
             The relative in-situ error to subtract off.
+            e.g. 0.5 means 1/2 the error is due to in-situ
 
     Returns:
         tuple: A tuple containing the following elements:

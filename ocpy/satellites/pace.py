@@ -11,6 +11,8 @@ from IPython import embed
 def gen_noise_vector(wave:np.ndarray, include_sampling:bool=False):
     """
     Generate a noise vector based on PACE error.
+    Built from this file:
+        PACE_OCI.20240413T175656.L2.OC_AOP.V1_0_0.NRT.nc
 
     Parameters:
         wave (np.ndarray): Array of wavelengths.

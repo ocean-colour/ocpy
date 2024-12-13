@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
-from oceancolor.ph import load_data as load_ph
+from ocpy.ph import load_data as load_ph
 
 from IPython import embed
 

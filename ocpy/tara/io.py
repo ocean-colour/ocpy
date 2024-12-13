@@ -4,7 +4,7 @@ import os
 import numpy as np
 import warnings
 
-from pkg_resources import resource_filename
+from importlib import resources
 import pandas
 
 try:
@@ -45,8 +45,8 @@ def load_ac_db():
         pandas.DataFrame: table of data
     """
     # Get the file
-    db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
+    db_name = os.path.join(resources.files(
+        'ocpy'), 'data', 'Tara', 'Tara_APCP.parquet')
     # Read
     df = pandas.read_parquet(db_name)
 
@@ -66,8 +66,10 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
     Returns:
         pandas.DataFrame or geopandas.GeoDataFrame: The loaded database.
     """
-    pg_db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs_160124.feather')
+    pg_db_name = os.path.join(resources.files(
+        'ocpy'), 'data', 'Tara', 
+                              'TaraMicrobiome_fCDOM_interpolation_Rottgers2013_semiempirical_scattering_correction.feather')
+                              #'merged_tara_pacific_microbiome_acs_160124.feather')
         #'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather') # Old file
     print(f"Reading: {pg_db_name}")
     if as_geo:

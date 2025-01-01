@@ -6,6 +6,8 @@ import warnings
 
 import xarray
 
+from IPython import embed
+
 if os.getenv('OS_COLOR') is not None:
     l23_path = os.path.join(os.getenv('OS_COLOR'),
                         'data', 'Loisel2023')
@@ -37,7 +39,8 @@ def load_ds(X:int, Y:int, profile:bool=False):
     # Load up the data
     variable_file = os.path.join(l23_path,
                                  f'Hydrolight{X}{Y:02d}{ps}.nc')
-    ds = xarray.load_dataset(variable_file)
+    embed(header='load_ds 50')
+    ds = xarray.load_dataset(variable_file, engine='netcdf4')
 
     # Return
     return ds

@@ -15,6 +15,9 @@ merged_tara_pacific_microbiome_acs.feather
 
 https://drive.google.com/file/d/1QMLUokbhCmmiXcOeVDqCvGL__piucFK7/view
 
+TaraMicrobiome_fCDOM_interpolation_Rottgers2013_semiempirical_scattering_correction.feather
+
+
 
 # Other files
 

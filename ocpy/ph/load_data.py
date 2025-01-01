@@ -20,7 +20,7 @@ def stramski2001():
 
     # Stramski Table 1
     s2001_tab1_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'stramski2001_table1.ascii')
     # Read
     s2001_tab1 = pandas.read_csv(s2001_tab1_file, sep='\t', 
@@ -30,7 +30,7 @@ def stramski2001():
 
     # Stramski Absorption
     s2001_abs_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'Stramski 2001_absorption cross sections_18 species.xlsx')
     if os.path.isfile(s2001_abs_file):
         df_abs = pandas.read_excel(s2001_abs_file, sheet_name='Sheet1')
@@ -41,7 +41,7 @@ def stramski2001():
 
     # Stramski Absorption
     s2001_att_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'Stramski 2001_attenuation cross sections_18 species.xlsx')
     if os.path.isfile(s2001_att_file):
         df_att = pandas.read_excel(s2001_att_file, sheet_name='Sheet1')
@@ -57,7 +57,7 @@ def clementson2019():
     dfs = []
     for ss in [2,3]:
         c2019_tab_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             f'clementson2019_{ss}.txt')
         df = pandas.read_table(c2019_tab_file, delim_whitespace=True, header=0)
         # Sort on wavelength
@@ -79,7 +79,7 @@ def bricaud():
 
     # 2004
     b2004_tab_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'Bricaud_2004.csv')
     df = pandas.read_csv(b2004_tab_file, comment='#')
     df.sort_values(by='wave', inplace=True)
@@ -109,7 +109,7 @@ def moore1995():
 
     # Load
     moore_file = os.path.join(resource_filename(
-            'oceancolor', 'data'), 'phytoplankton', 
+            'ocpy', 'data'), 'phytoplankton', 
             'data_moore.mat')
     moore_data = sio.loadmat(moore_file)
 

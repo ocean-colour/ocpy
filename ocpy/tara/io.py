@@ -4,7 +4,7 @@ import os
 import numpy as np
 import warnings
 
-from pkg_resources import resource_filename
+from importlib import resources
 import pandas
 
 try:
@@ -45,8 +45,8 @@ def load_ac_db():
         pandas.DataFrame: table of data
     """
     # Get the file
-    db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'Tara_APCP.parquet')
+    db_name = os.path.join(resources.files(
+        'ocpy'), 'data', 'Tara', 'Tara_APCP.parquet')
     # Read
     df = pandas.read_parquet(db_name)
 
@@ -66,9 +66,16 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
     Returns:
         pandas.DataFrame or geopandas.GeoDataFrame: The loaded database.
     """
-    pg_db_name = os.path.join(resource_filename(
-        'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs_160124.feather')
-        #'oceancolor', 'data'), 'Tara', 'merged_tara_pacific_microbiome_acs.feather') # Old file
+    root_name = os.path.join(resources.files('ocpy'), 'data', 'Tara') 
+
+    if expedition == 'Microbiome':
+        pg_db_name = os.path.join(root_name, 
+                              'TaraMicrobiome_fCDOM_interpolation_Rottgers2013_semiempirical_scattering_correction.feather')
+    else:
+        pg_db_name = os.path.join(root_name, 
+                              'merged_tara_pacific_microbiome_acs_160124.feather')
+
+
     print(f"Reading: {pg_db_name}")
     if as_geo:
         gdf = geopandas.read_feather(pg_db_name)
@@ -92,14 +99,14 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
         return x & 1 << n != 0
 
     # Mission
-    gdf['mission_id'] = 0
-    gdf.loc[gdf['datetime'] > '2020-01-01', 'mission_id'] = 1
+    gdf['mission_id'] = 0  # Tara Pacific
+    gdf.loc[gdf['datetime'] > '2020-01-01', 'mission_id'] = 1 # Tara Microbiome
 
     gdf['passes_flags'] = True
 
     # find relevant flags in TaraPacific
     passes_flag = []
-    flag_bits = [3]
+    flag_bits = [3]  # Previous microbiome flag
 
     for i in gdf[gdf.mission_id==0].flag_bit:
         passed = True
@@ -114,7 +121,7 @@ def load_pg_db(expedition:str='all', as_geo:bool=False,
 
     # find relevant flags in TaraMicrobiome
     passes_flag = []
-    flag_bits = [8,9]
+    flag_bits = [18,19,20,21]
 
     for i in gdf[gdf.mission_id==1].flag_bit:
         passed = True

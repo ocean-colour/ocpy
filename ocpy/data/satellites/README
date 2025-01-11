@@ -1,6 +1,9 @@
 PACE_error.csv
    Calculated by JXP from one granuale of PACE data in the early data release
    Using a Notebook in IHOP (I think)
+   2025-01-11
+     Created by JXP from PACE_OCI.20240413T175656.L2.OC_AOP.V2_0.NRT.nc
+        from the Notebook in this folder
 
 MODIS
    Calculated from validation 

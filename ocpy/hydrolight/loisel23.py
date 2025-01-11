@@ -39,8 +39,7 @@ def load_ds(X:int, Y:int, profile:bool=False):
     # Load up the data
     variable_file = os.path.join(l23_path,
                                  f'Hydrolight{X}{Y:02d}{ps}.nc')
-    embed(header='load_ds 50')
-    ds = xarray.load_dataset(variable_file, engine='netcdf4')
+    ds = xarray.load_dataset(variable_file, engine='h5netcdf')
 
     # Return
     return ds

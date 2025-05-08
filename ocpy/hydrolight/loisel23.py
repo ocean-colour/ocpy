@@ -10,7 +10,7 @@ from IPython import embed
 
 if os.getenv('OS_COLOR') is not None:
     l23_path = os.path.join(os.getenv('OS_COLOR'),
-                        'data', 'Loisel2023')
+                        'Loisel2023')
 else:
     warnings.warn("OS_COLOR not set. Using current directory.")
     l23_path = './'                    

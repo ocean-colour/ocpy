@@ -69,9 +69,11 @@ def fig_stommel():
         {"text": "Surface\nTides", "center": (8.5, 2.7), 
          "width": 1.0, "height": 0.5, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
         {"text": "Mixed Layer\nDepth", "center": (8.5, 5.5), 
-         "width": 1.0, "height": 1.0, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
+         "width": 1.0, "height": 1.0, "angle": 0, "color": "lightblue", 
+         "label": "Molecular", "label_off": (0.0, -0.2)},
         {"text": "Rossby\nWaves", "center": (9.5, 6.0), 
-         "width": 1.7, "height": 1.0, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
+         "width": 1.7, "height": 1.0, "angle": 0, "color": "lightblue", 
+         "label": "Molecular", "label_off": (0.0, -0.0)},
         {"text": "ENSO", "center": (10.2, 6.5), 
          "width": 1.0, "height": 0.5, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
         # Biological processes
@@ -86,13 +88,13 @@ def fig_stommel():
             "label_off": (0.0, 0.0)},
         {"text": "Biomass\nCycles", "center": (8.0, 5.5), 
          "width": 1.3, "height": 1.0, "angle": 0, "color": "pink", 
-         "label": "Molecular", "label_off": (+0.4, -0.5)},
+         "label": "Molecular", "label_off": (-0.4, +0.5)},
         # Climate
         {"center": (10.2, 8.1), "width": 1.0, "height": 2.0, "angle": 0, "color": 
-            "lightgreen", "text": "Climate", "label": "Molecular",
+            "orchid", "text": "Climate", "label": "Molecular",
             "label_off": (0.0, -0.5)},
         {"center": (10.2, 7.0), "width": 1.0, "height": 0.3, "angle": 0, "color": 
-            "lightgreen", "text": "Decadal\nOscillations", "label": "Molecular",
+            "orchid", "text": "Decadal\nOscillations", "label": "Molecular",
             "label_off": (0.0, 0.0)},
     ]
 
@@ -105,7 +107,8 @@ def fig_stommel():
         ax.add_patch(ellipse)
         
         # Add text to the center of each ellipse
-        fclr = 'black' if data["color"] in ['lightblue','lightgreen'] else 'gray'
+        #fclr = 'black' if data["color"] in ['lightblue','lightgreen'] else 'gray'
+        fclr = 'black' 
         ax.text(data["center"][0]+data['label_off'][0],
                 data["center"][1]+data['label_off'][1], 
                 data["text"], 
@@ -126,7 +129,7 @@ def fig_stommel():
             rotation=40, color=aclr, fontweight='bold')
 
     # Add an empty rectangle for Satellites
-    sat_clr = 'mediumorchid'
+    sat_clr = 'gold'
     x_sat = (5.7, 10.8)
     y_sat = (3.0, 7.3)
     xy_sat = (x_sat[0], y_sat[0])
@@ -140,7 +143,7 @@ def fig_stommel():
             color=sat_clr, fontweight='bold')
     
     # Calypso Monterey Bay
-    cmb_clr = 'gold'
+    cmb_clr = 'green'
     x_cmb = (4.0, 8.0)
     y_cmb = (1.8, 6.5)
     xy_cmb = (x_cmb[0], y_cmb[0])

@@ -62,7 +62,7 @@ def fig_stommel():
             "label_off": (0.2, +0.1)},
         {"text": "Internal\nTides", "center": (7.1, 2.8), "width": 1, "height": 0.5, "angle": 0, 
             "color": "lightblue", "label": "Molecular", "label_off": (0.0, -0.1)},
-        {"text": "Fronts\nEddies", "center": (7.2, 5.0), 
+        {"text": "Fronts\nEddies\nUpwelling", "center": (7.2, 5.0), 
          "width": 2.1, "height": 1.7, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
         {"text": "Coastal\nWaves", "center": (7.3, 4.1), 
          "width": 0.5, "height": 1.0, "angle": 0, "color": "lightblue", "label": "Molecular", "label_off": (0.0, +0.0)},
@@ -91,10 +91,10 @@ def fig_stommel():
          "label": "Molecular", "label_off": (-0.4, +0.5)},
         # Climate
         {"center": (10.2, 8.1), "width": 1.0, "height": 2.0, "angle": 0, "color": 
-            "orchid", "text": "Climate", "label": "Molecular",
+            "darkorchid", "text": "Climate", "label": "Molecular",
             "label_off": (0.0, -0.5)},
         {"center": (10.2, 7.0), "width": 1.0, "height": 0.3, "angle": 0, "color": 
-            "orchid", "text": "Decadal\nOscillations", "label": "Molecular",
+            "darkorchid", "text": "Decadal\nOscillations", "label": "Molecular",
             "label_off": (0.0, 0.0)},
     ]
 

@@ -11,6 +11,9 @@ import pandas
 def load_rsr_gsfc():
     """ Load the GSFC RSR table for water
 
+    Pope and Fry (1997) data from GSFC
+    No salt
+
     Returns:
         pandas.DataFrame: table of data with columns
             wavelength (nm), a_w, b_w

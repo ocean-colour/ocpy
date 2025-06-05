@@ -49,7 +49,7 @@ def fig_stommel():
             "lightblue", "text": "Molecular\nProcesses", "label": "Molecular",
             "label_off": (0.0, 0.0)},
         {"center": (2.7, 1.5), "width": 2, "height": 1.5, "angle": 0, "color": 
-            "lightblue", "text": "Tubulent\nPatches", "label": "Molecular",
+            "lightblue", "text": "Turbulent\nPatches", "label": "Molecular",
             "label_off": (0.0, -0.2)},
         {"center": (4.1, 1.7), "width": 2, "height": 1.5, "angle": 0, "color": 
             "lightblue", "text": "Langmuir\nCells", "label": "Molecular",

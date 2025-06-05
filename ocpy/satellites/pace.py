@@ -8,6 +8,10 @@ import pandas
 
 from IPython import embed
 
+def wave(wv_min=400., wv_max=700., step=5.):
+    return np.arange(wv_min, wv_max+1, step)
+
+
 def gen_noise_vector(wave:np.ndarray, include_sampling:bool=False):
     """
     Generate a noise vector based on PACE error.

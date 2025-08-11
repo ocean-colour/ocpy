@@ -23,7 +23,8 @@ setup_keywords['requires'] = ['Python (>3.8.0)']
 setup_keywords['install_requires'] = [
     'seaborn', 'pyarrow', 'healpy', 'cftime', 'bokeh', 
     'xarray', 'h5netcdf', 'importlib-metadata', 'scikit-learn',
-    'openpyxl', 'pyproj']
+    'openpyxl', 'pyproj', 'cartopy', 'netcdf4', 'geopy', 
+    'geopandas']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages()

@@ -1,5 +1,8 @@
 import numpy as np 
 
+from ocpy.water import absorption
+from ocpy.hydrolight import loisel23
+
 from IPython import embed
 
 def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
@@ -210,6 +213,20 @@ def PMH(n_wat):
 
     return n_density_derivative
 
+def bbw_from_l23(wave):
+
+    # TODO -- FIX THIS!
+    # THIS IS A HACK UNTIL I CAN RESOLVE bbw
+    ds = loisel23.load_ds(4,0)
+    l23_wave = ds.Lambda.data
+    idx = 170 # Random choie
+    l23_bb = ds.bb.data[idx] 
+    l23_bbnw = ds.bbnw.data[idx] 
+    l23_bbw = l23_bb - l23_bbnw
+    # Interpolate
+    bb_w = np.interp(wave, l23_wave, l23_bbw)
+
+    return bb_w
 
 if __name__ == '__main__':
     # Example usage

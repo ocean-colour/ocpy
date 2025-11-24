@@ -35,7 +35,8 @@ The codebase is organized into modules with distinct responsibilities:
   - `loisel23.py`: Interface to Loisel+2023 Hydrolight outputs (requires OS_COLOR environment variable)
 
 - **pace/**: PACE mission specific utilities
-  - `io.py`: PACE data I/O functions
+  - `io.py`: PACE data I/O functions for loading L2 OCI and IOP products
+  - `correlated_error.py`: Correlation and error covariance analysis for Rrs data
 
 - **insitu/**: In-situ measurement handling
   - `gloria.py`: GLORIA dataset processing
@@ -118,9 +119,39 @@ The package provides multiple sources for water absorption coefficients:
 
 Access via `ocpy.water.absorption.a_water(wavelengths, data='GSFC')`.
 
+### PACE Correlated Error Analysis
+
+The `ocpy.pace.correlated_error` module provides functionality for analyzing correlated errors in PACE Rrs data:
+
+**Key Functions:**
+- `calc_global_correlation()`: Calculate correlation matrix from entire granule (fast, recommended for most uses)
+- `calc_local_correlation()`: Calculate pixel-specific correlations using spatial neighborhoods
+- `calc_error_covariance_matrices()`: Generate error covariance matrices using Rrs_unc and correlations
+- `process_granule()`: Convenience function for complete processing pipeline
+
+**Workflow:**
+1. Load PACE L2 data using `pace.io.load_oci_l2()`
+2. Calculate correlation between Rrs wavelengths (global or local method)
+3. Generate pixel-by-pixel error covariance matrices: `Cov[i,j] = Corr[i,j] * sigma[i] * sigma[j]`
+
+**Usage:**
+```python
+from ocpy.pace import correlated_error as ce
+
+# Full pipeline with global correlation (recommended)
+results = ce.process_granule('PACE_file.nc', method='global')
+cov_matrices = results['covariance_matrices']  # Shape: (x, y, n_wl, n_wl)
+
+# Extract covariance for specific pixel
+pixel_cov = ce.extract_pixel_covariance(cov_matrices, x=100, y=200)
+```
+
+See `examples/pace_correlated_error_example.py` for detailed usage examples.
+
 ### Environment Variables
 
 - `OS_COLOR`: Required for accessing Hydrolight simulation data (ocpy/hydrolight/loisel23.py). If not set, falls back to current directory with a warning.
+- `OS_COLOR`: Also used in some example scripts for PACE data paths
 
 ## Data Directory Structure
 

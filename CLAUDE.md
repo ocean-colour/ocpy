@@ -71,7 +71,11 @@ Note: Tests import from `oceancolor` namespace (e.g., `from oceancolor.water.sca
 - **`hydrolight/`**: Radiative transfer simulation data
   - `loisel23.py`: Load Loisel+2023 Hydrolight datasets (requires OS_COLOR env var)
 
-- **`hyper-a/`**: Hyper-spectral-a instrument processing (includes MATLAB reference code)
+- **`hyper_a/`**: Hyper-a integrating cavity absorption meter processing (Sequoia Scientific)
+  - `io.py`: Binary file reader, calibration loading
+  - `lib.py`: Core processing functions (IOCCG water absorption, transmission, absorption computation)
+  - `process.py`: Main processing workflow (`process()`, `rho_from_nd_spot()`)
+  - `matlab/`: Original MATLAB reference code
 
 ### Data Files
 

@@ -16,6 +16,10 @@ Data I/O
 
 .. autofunction:: oceancolor.pace.io.load_oci_l2
 
+.. autofunction:: oceancolor.pace.io.load_oci_l2_spectrum
+
+.. autofunction:: oceancolor.pace.io.load_oci_l2_spectrum_pixel
+
 .. autofunction:: oceancolor.pace.io.load_iop_l2
 
 PACE OCI Level 2 Products
@@ -85,7 +89,29 @@ PACE L2 data is provided as xarray Datasets with:
 Example Workflow
 ----------------
 
-Complete workflow for PACE data analysis:
+**Fast single-spectrum extraction** (recommended for point lookups):
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+   from oceancolor.pace import io as pace_io
+
+   # Extract single spectrum at a location (fast - avoids loading full granule)
+   lat_target, lon_target = 35.0, -70.0
+   wls, rrs, rrs_unc, flag, pixel_coords = pace_io.load_oci_l2_spectrum(
+       'PACE_OCI_L2.nc', lat_target, lon_target
+   )
+   ix, iy, actual_lat, actual_lon = pixel_coords
+
+   # Plot spectrum with uncertainty
+   fig, ax = plt.subplots(figsize=(10, 6))
+   ax.plot(wls, rrs)
+   ax.fill_between(wls, rrs - rrs_unc, rrs + rrs_unc, alpha=0.3)
+   ax.set_xlabel('Wavelength (nm)')
+   ax.set_ylabel('Rrs (sr⁻¹)')
+   ax.set_title(f'PACE OCI Rrs at ({actual_lat:.2f}, {actual_lon:.2f})')
+
+**Full granule analysis** (when processing many pixels):
 
 .. code-block:: python
 
@@ -95,8 +121,8 @@ Complete workflow for PACE data analysis:
    from oceancolor.chl import band_ratios
    from oceancolor.satellites import pace
 
-   # Load PACE data
-   Rrs, Rrs_unc, FLH = pace_io.load_oci_l2('PACE_OCI_L2.nc')
+   # Load full PACE granule
+   xds, flags = pace_io.load_oci_l2('PACE_OCI_L2.nc')
 
    # Generate standard wavelength array
    wave = pace.wave(wv_min=400, wv_max=700, step=5)
@@ -104,28 +130,24 @@ Complete workflow for PACE data analysis:
    # Extract Rrs at a specific location
    lat_target, lon_target = 35.0, -70.0
 
-   # Find nearest pixel (example function)
-   def find_nearest(lat_arr, lon_arr, lat_t, lon_t):
-       dist = np.sqrt((lat_arr - lat_t)**2 + (lon_arr - lon_t)**2)
-       return np.unravel_index(np.argmin(dist), dist.shape)
-
-   row, col = find_nearest(
-       Rrs.latitude.values,
-       Rrs.longitude.values,
-       lat_target, lon_target
-   )
+   # Find nearest pixel
+   lat_arr = xds.latitude.values
+   lon_arr = xds.longitude.values
+   dist = np.sqrt((lat_arr - lat_target)**2 + (lon_arr - lon_target)**2)
+   row, col = np.unravel_index(np.argmin(dist), dist.shape)
 
    # Get spectrum at location
-   Rrs_spectrum = Rrs.isel(number_of_lines=row, pixels_per_line=col)
-   wavelengths = Rrs.wavelength.values
+   Rrs_spectrum = xds.Rrs.values[row, col, :]
+   Rrs_unc_spectrum = xds.Rrs_unc.values[row, col, :]
+   wavelengths = xds.wavelength.values
 
    # Plot spectrum
    fig, ax = plt.subplots(figsize=(10, 6))
-   ax.plot(wavelengths, Rrs_spectrum.values)
+   ax.plot(wavelengths, Rrs_spectrum)
    ax.fill_between(
        wavelengths,
-       Rrs_spectrum.values - Rrs_unc.isel(number_of_lines=row, pixels_per_line=col).values,
-       Rrs_spectrum.values + Rrs_unc.isel(number_of_lines=row, pixels_per_line=col).values,
+       Rrs_spectrum - Rrs_unc_spectrum,
+       Rrs_spectrum + Rrs_unc_spectrum,
        alpha=0.3
    )
    ax.set_xlabel('Wavelength (nm)')

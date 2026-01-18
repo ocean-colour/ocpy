@@ -15,6 +15,7 @@ Examples:
 """
 
 import argparse
+import os
 import sys
 import numpy as np
 
@@ -109,7 +110,7 @@ def extract_spectrum(xds, x: int, y: int, flags: np.ndarray) -> tuple[np.ndarray
 
 def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarray,
                       x: int, y: int, lat: float = None, lon: float = None,
-                      output_html: str = None):
+                      output_html: str = None, filename: str = None):
     """
     Create an interactive Bokeh plot of Rrs spectrum with error bars.
 
@@ -131,6 +132,8 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         Longitude of pixel
     output_html : str, optional
         Path to save HTML file (if None, uses temp file)
+    filename : str, optional
+        Name of the source data file to display in title
     """
     # Filter to valid data
     valid = np.isfinite(rrs) & np.isfinite(rrs_unc)
@@ -152,6 +155,8 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         title = f"PACE OCI Rrs Spectrum - Pixel ({x}, {y}) at ({lat:.3f}°, {lon:.3f}°)"
     else:
         title = f"PACE OCI Rrs Spectrum - Pixel ({x}, {y})"
+    if filename:
+        title = f"{filename}\n{title}"
 
     # Set output file
     if output_html:
@@ -182,8 +187,7 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
     whisker.lower_head.size = 0
     p.add_layout(whisker)
 
-    # Add line and points
-    p.line("wavelength", "rrs", source=source, line_width=1.5, color="navy", alpha=0.8)
+    # Add points (no connecting line)
     p.scatter("wavelength", "rrs", source=source, size=5, color="navy", alpha=0.8)
 
     # Add hover tool
@@ -199,10 +203,10 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
 
     # Style adjustments
     p.title.text_font_size = "14pt"
-    p.xaxis.axis_label_text_font_size = "12pt"
-    p.yaxis.axis_label_text_font_size = "12pt"
-    p.xaxis.major_label_text_font_size = "10pt"
-    p.yaxis.major_label_text_font_size = "10pt"
+    p.xaxis.axis_label_text_font_size = "17pt"
+    p.yaxis.axis_label_text_font_size = "17pt"
+    p.xaxis.major_label_text_font_size = "14pt"
+    p.yaxis.major_label_text_font_size = "14pt"
 
     # Show in browser
     show(p)
@@ -321,7 +325,8 @@ def main(args: argparse.Namespace = None):
         wavelength, rrs, rrs_unc,
         x_idx, y_idx,
         lat=lat_val, lon=lon_val,
-        output_html=args.output
+        output_html=args.output,
+        filename=os.path.basename(args.granule)
     )
 
 

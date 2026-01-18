@@ -20,92 +20,11 @@ import sys
 import numpy as np
 
 from bokeh.plotting import figure, show
-from bokeh.models import Whisker, ColumnDataSource, HoverTool
+from bokeh.models import Whisker, ColumnDataSource, HoverTool, Span, Button, CustomJS
+from bokeh.layouts import column
 from bokeh.io import output_file
 
 from ocpy.pace import io as pace_io
-
-
-def find_nearest_pixel(xds, lat: float, lon: float) -> tuple[int, int]:
-    """
-    Find the nearest pixel indices (x, y) to the given lat/lon.
-
-    Parameters
-    ----------
-    xds : xarray.Dataset
-        PACE dataset with latitude and longitude coordinates
-    lat : float
-        Target latitude
-    lon : float
-        Target longitude
-
-    Returns
-    -------
-    tuple[int, int]
-        (x, y) pixel indices
-    """
-    lat_arr = xds.latitude.values
-    lon_arr = xds.longitude.values
-
-    # Calculate distance to target location
-    dist = np.sqrt((lat_arr - lat)**2 + (lon_arr - lon)**2)
-
-    # Find minimum distance index
-    min_idx = np.unravel_index(np.nanargmin(dist), dist.shape)
-    x_idx, y_idx = int(min_idx[0]), int(min_idx[1])
-
-    # Report actual lat/lon at found pixel
-    actual_lat = lat_arr[x_idx, y_idx]
-    actual_lon = lon_arr[x_idx, y_idx]
-    distance_deg = dist[x_idx, y_idx]
-
-    print(f"Requested: lat={lat:.4f}, lon={lon:.4f}")
-    print(f"Found pixel ({x_idx}, {y_idx}): lat={actual_lat:.4f}, lon={actual_lon:.4f}")
-    print(f"Distance: {distance_deg:.4f} degrees")
-
-    return x_idx, y_idx
-
-
-def extract_spectrum(xds, x: int, y: int, flags: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Extract Rrs spectrum and uncertainty at a pixel location.
-
-    Parameters
-    ----------
-    xds : xarray.Dataset
-        PACE dataset
-    x : int
-        x pixel index
-    y : int
-        y pixel index
-    flags : np.ndarray
-        L2 quality flags
-
-    Returns
-    -------
-    tuple[np.ndarray, np.ndarray, np.ndarray]
-        (wavelength, Rrs, Rrs_unc) arrays
-    """
-    # Check flag at this location
-    flag_val = flags[x, y]
-    if flag_val != 0:
-        print(f"Warning: Pixel has non-zero quality flag: {flag_val}")
-
-    wavelength = xds.wavelength.values
-    rrs = xds.Rrs.values[x, y, :]
-    rrs_unc = xds.Rrs_unc.values[x, y, :]
-
-    # Check for fill values / NaNs
-    valid = np.isfinite(rrs) & np.isfinite(rrs_unc)
-    n_valid = np.sum(valid)
-
-    if n_valid == 0:
-        print("Error: No valid Rrs data at this location")
-        sys.exit(1)
-    elif n_valid < len(wavelength):
-        print(f"Note: {len(wavelength) - n_valid} wavelengths have invalid data")
-
-    return wavelength, rrs, rrs_unc
 
 
 def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarray,
@@ -162,8 +81,22 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
     if output_html:
         output_file(output_html, title="PACE Rrs Spectrum")
 
-    # Create figure
-    p = figure(
+    # Compute y-axis ranges for linear and log modes
+    y_min_linear = float(np.min(r - r_unc))
+    y_max_linear = float(np.max(r + r_unc))
+    y_padding = (y_max_linear - y_min_linear) * 0.05
+
+    # For log scale, find min/max of positive values only
+    positive_mask = r > 0
+    if np.any(positive_mask):
+        y_min_log = float(np.min(r[positive_mask]))
+        y_max_log = float(np.max(r[positive_mask]))
+    else:
+        y_min_log = 1e-6
+        y_max_log = 1e-2
+
+    # Common figure properties
+    fig_kwargs = dict(
         title=title,
         x_axis_label="Wavelength (nm)",
         y_axis_label="Rrs (sr⁻¹)",
@@ -172,7 +105,15 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         tools="pan,wheel_zoom,box_zoom,reset,save",
     )
 
-    # Add error bars using Whisker
+    # Create LINEAR figure
+    p_linear = figure(**fig_kwargs)
+
+    # Add horizontal line at Rrs=0 (linear only)
+    zero_line = Span(location=0, dimension='width', line_color='black',
+                     line_dash='dashed', line_width=1)
+    p_linear.add_layout(zero_line)
+
+    # Add error bars (linear only)
     whisker = Whisker(
         source=source,
         base="wavelength",
@@ -183,15 +124,15 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         line_alpha=0.6,
         line_width=1,
     )
-    whisker.upper_head.size = 0  # No caps on whiskers for cleaner look
+    whisker.upper_head.size = 0
     whisker.lower_head.size = 0
-    p.add_layout(whisker)
+    p_linear.add_layout(whisker)
 
-    # Add points (no connecting line)
-    p.scatter("wavelength", "rrs", source=source, size=5, color="navy", alpha=0.8)
+    # Add points
+    p_linear.scatter("wavelength", "rrs", source=source, size=5, color="navy", alpha=0.8)
 
     # Add hover tool
-    hover = HoverTool(
+    hover_linear = HoverTool(
         tooltips=[
             ("Wavelength", "@wavelength{0.0} nm"),
             ("Rrs", "@rrs{0.0000} sr⁻¹"),
@@ -199,17 +140,82 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         ],
         mode="vline",
     )
-    p.add_tools(hover)
+    p_linear.add_tools(hover_linear)
 
-    # Style adjustments
-    p.title.text_font_size = "14pt"
-    p.xaxis.axis_label_text_font_size = "17pt"
-    p.yaxis.axis_label_text_font_size = "17pt"
-    p.xaxis.major_label_text_font_size = "14pt"
-    p.yaxis.major_label_text_font_size = "14pt"
+    # Create LOG figure
+    p_log = figure(y_axis_type="log", **fig_kwargs)
+    p_log.y_range.start = y_min_log * 0.5
+    p_log.y_range.end = y_max_log * 2.0
+    p_log.visible = False  # Start hidden
+
+    # Create separate data source for log plot error bars (only where lower bound > 0)
+    log_err_mask = (r - r_unc) > 0
+    source_log_err = ColumnDataSource(data=dict(
+        wavelength=wl[log_err_mask],
+        rrs=r[log_err_mask],
+        rrs_unc=r_unc[log_err_mask],
+        upper=(r + r_unc)[log_err_mask],
+        lower=(r - r_unc)[log_err_mask],
+    ))
+
+    # Add error bars to log plot (only for positive lower bounds)
+    whisker_log = Whisker(
+        source=source_log_err,
+        base="wavelength",
+        upper="upper",
+        lower="lower",
+        level="underlay",
+        line_color="gray",
+        line_alpha=0.6,
+        line_width=1,
+    )
+    whisker_log.upper_head.size = 0
+    whisker_log.lower_head.size = 0
+    p_log.add_layout(whisker_log)
+
+    # Add points to log plot (use full source for all positive Rrs)
+    p_log.scatter("wavelength", "rrs", source=source, size=5, color="navy", alpha=0.8)
+
+    # Add hover tool to log plot
+    hover_log = HoverTool(
+        tooltips=[
+            ("Wavelength", "@wavelength{0.0} nm"),
+            ("Rrs", "@rrs{0.0000} sr⁻¹"),
+            ("Uncertainty", "±@rrs_unc{0.0000} sr⁻¹"),
+        ],
+        mode="vline",
+    )
+    p_log.add_tools(hover_log)
+
+    # Style adjustments for both figures
+    for p in [p_linear, p_log]:
+        p.title.text_font_size = "14pt"
+        p.xaxis.axis_label_text_font_size = "17pt"
+        p.yaxis.axis_label_text_font_size = "17pt"
+        p.xaxis.major_label_text_font_size = "14pt"
+        p.yaxis.major_label_text_font_size = "14pt"
+
+    # Create toggle button with JavaScript callback
+    toggle_button = Button(label="Toggle Linear/Log Y-axis", button_type="default")
+    toggle_callback = CustomJS(args=dict(
+        p_linear=p_linear,
+        p_log=p_log,
+    ), code="""
+        if (p_linear.visible) {
+            p_linear.visible = false;
+            p_log.visible = true;
+        } else {
+            p_linear.visible = true;
+            p_log.visible = false;
+        }
+    """)
+    toggle_button.js_on_click(toggle_callback)
+
+    # Create layout with button and both plots
+    layout = column(toggle_button, p_linear, p_log)
 
     # Show in browser
-    show(p)
+    show(layout)
 
     print(f"\nPlot displayed in browser")
     if output_html:
@@ -281,41 +287,42 @@ def main(args: argparse.Namespace = None):
     if (args.x is None) != (args.y is None):
         p.error("Both --x and --y must be specified together")
 
-    # Load the granule
-    print(f"Loading: {args.granule}")
+    # Load only the single spectrum (much faster than loading full granule)
+    print(f"Loading spectrum from: {args.granule}")
     try:
-        xds, flags = pace_io.load_oci_l2(args.granule)
+        if have_latlon:
+            wavelength, rrs, rrs_unc, flag, pixel_coords = pace_io.load_oci_l2_spectrum(
+                args.granule, args.lat, args.lon
+            )
+            x_idx, y_idx, lat_val, lon_val = pixel_coords
+            print(f"Requested: lat={args.lat:.4f}, lon={args.lon:.4f}")
+            print(f"Found pixel ({x_idx}, {y_idx}): lat={lat_val:.4f}, lon={lon_val:.4f}")
+        else:
+            wavelength, rrs, rrs_unc, flag, pixel_coords = pace_io.load_oci_l2_spectrum_pixel(
+                args.granule, args.x, args.y
+            )
+            x_idx, y_idx, lat_val, lon_val = pixel_coords
+            print(f"Pixel ({x_idx}, {y_idx}): lat={lat_val:.4f}, lon={lon_val:.4f}")
     except Exception as e:
         print(f"Error loading file: {e}")
         sys.exit(1)
 
-    print(f"Data dimensions: {dict(xds.dims)}")
-    print(f"Wavelength range: {xds.wavelength.values[0]}-{xds.wavelength.values[-1]} nm")
+    print(f"Wavelength range: {wavelength[0]:.1f}-{wavelength[-1]:.1f} nm")
 
-    # Determine pixel location
-    if have_latlon:
-        x_idx, y_idx = find_nearest_pixel(xds, args.lat, args.lon)
-        lat_val = float(xds.latitude.values[x_idx, y_idx])
-        lon_val = float(xds.longitude.values[x_idx, y_idx])
-    else:
-        x_idx, y_idx = args.x, args.y
-        # Validate indices
-        if x_idx < 0 or x_idx >= xds.dims['x']:
-            print(f"Error: x index {x_idx} out of range [0, {xds.dims['x']-1}]")
-            sys.exit(1)
-        if y_idx < 0 or y_idx >= xds.dims['y']:
-            print(f"Error: y index {y_idx} out of range [0, {xds.dims['y']-1}]")
-            sys.exit(1)
-        lat_val = float(xds.latitude.values[x_idx, y_idx])
-        lon_val = float(xds.longitude.values[x_idx, y_idx])
-        print(f"Pixel ({x_idx}, {y_idx}): lat={lat_val:.4f}, lon={lon_val:.4f}")
-
-    # Extract spectrum
-    wavelength, rrs, rrs_unc = extract_spectrum(xds, x_idx, y_idx, flags)
+    # Check flag at this location
+    if flag != 0:
+        print(f"Warning: Pixel has non-zero quality flag: {flag}")
 
     # Print summary statistics
     valid = np.isfinite(rrs)
-    print(f"\nRrs statistics (valid wavelengths: {np.sum(valid)}):")
+    n_valid = np.sum(valid)
+    if n_valid == 0:
+        print("Error: No valid Rrs data at this location")
+        sys.exit(1)
+    elif n_valid < len(wavelength):
+        print(f"Note: {len(wavelength) - n_valid} wavelengths have invalid data")
+
+    print(f"\nRrs statistics (valid wavelengths: {n_valid}):")
     print(f"  Min: {np.nanmin(rrs):.6f} sr⁻¹")
     print(f"  Max: {np.nanmax(rrs):.6f} sr⁻¹")
     print(f"  Mean uncertainty: {np.nanmean(rrs_unc):.6f} sr⁻¹")

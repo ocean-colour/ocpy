@@ -20,7 +20,7 @@ import sys
 import numpy as np
 
 from bokeh.plotting import figure, show
-from bokeh.models import Whisker, ColumnDataSource, HoverTool, Span, Button, CustomJS
+from bokeh.models import Whisker, ColumnDataSource, HoverTool, Span, Button, CustomJS, Spacer
 from bokeh.layouts import column
 from bokeh.io import output_file
 
@@ -196,23 +196,32 @@ def plot_rrs_spectrum(wavelength: np.ndarray, rrs: np.ndarray, rrs_unc: np.ndarr
         p.yaxis.major_label_text_font_size = "14pt"
 
     # Create toggle button with JavaScript callback
-    toggle_button = Button(label="Toggle Linear/Log Y-axis", button_type="default")
+    toggle_button = Button(
+        label="⇅  Toggle Linear / Log Y-axis",
+        button_type="primary",
+        width=250,
+        height=40,
+        styles={'font-size': '14px', 'font-weight': 'bold'}
+    )
     toggle_callback = CustomJS(args=dict(
         p_linear=p_linear,
         p_log=p_log,
+        button=toggle_button,
     ), code="""
         if (p_linear.visible) {
             p_linear.visible = false;
             p_log.visible = true;
+            button.label = "⇅  Toggle Log / Linear Y-axis";
         } else {
             p_linear.visible = true;
             p_log.visible = false;
+            button.label = "⇅  Toggle Linear / Log Y-axis";
         }
     """)
     toggle_button.js_on_click(toggle_callback)
 
     # Create layout with button and both plots
-    layout = column(toggle_button, p_linear, p_log)
+    layout = column(Spacer(height=10), toggle_button, Spacer(height=10), p_linear, p_log)
 
     # Show in browser
     show(layout)

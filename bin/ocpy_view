@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+#
+# See top-level LICENSE file for Copyright information
+#
+# -*- coding: utf-8 -*-
+
+"""
+This script displays ocean color granule scenes in multi-panel view
+"""
+
+import ocpy.scripts.plot_oc_scene as plot_oc_scene
+
+if __name__ == '__main__':
+    psr = plot_oc_scene.parser()
+    args = psr.parse_args()
+    plot_oc_scene.main(args)

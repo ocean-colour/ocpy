@@ -83,6 +83,7 @@ Documentation Contents
    user_guide/chlorophyll
    user_guide/phytoplankton
    user_guide/satellites
+   user_guide/visualization
    user_guide/tara_data
    user_guide/hydrolight
    user_guide/hypera

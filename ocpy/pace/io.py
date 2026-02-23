@@ -38,6 +38,7 @@ def load_oci_l2(fn, full_flag:bool=False):
 
     # create the dataset, now we're only adding in Rrs, Rrs_unc
     # but the options are: ['Rrs', 'Rrs_unc', 'aot_865', 'angstrom', 'avw', 'l2_flags']
+    #embed(header='41 of io.py')
     rrs_xds = xr.Dataset(
         {'Rrs':(('x', 'y', 'wl'),gd.variables['Rrs'][:].data)},
                coords = {'latitude': (('x', 'y'), lats),
@@ -50,11 +51,17 @@ def load_oci_l2(fn, full_flag:bool=False):
                                   'longitude': (('x', 'y'), lons),
                                   'wavelength' : ('wl', wls)},
                attrs={'variable':'Remote sensing reflectance error'})
+    nflh_xds = xr.Dataset(
+        {'nflh':(('x', 'y'),gd.variables['nflh'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'Normalized Fluorescence Line Height'})
     
 
     # merge back into the xarray dataset with all the attributes
     xds['Rrs'] = rrs_xds.Rrs
     xds['Rrs_unc'] = rrsu_xds.Rrs_unc
+    xds['FLH'] = nflh_xds.nflh
 
     # replace nodata areas with nan
     #xds = xds.where(xds['Rrs'] != -32767.0)
@@ -92,8 +99,7 @@ def load_iop_l2(fn:str):
     flags = gd.variables["l2_flags"][:]
     wls = dataset.groups['sensor_band_parameters']['wavelength_3d'][:].data
 
-    # create the dataset, now we're only adding in Rrs, Rrs_unc
-    # but the options are: ['Rrs', 'Rrs_unc', 'aot_865', 'angstrom', 'avw', 'l2_flags']
+    #embed(header='95 of io.py')
     rrs_xds = xr.Dataset(
         {'a':(('x', 'y', 'wl'),gd.variables['a'][:].data)},
                coords = {'latitude': (('x', 'y'), lats),
@@ -105,7 +111,7 @@ def load_iop_l2(fn:str):
                coords = {'latitude': (('x', 'y'), lats),
                                   'longitude': (('x', 'y'), lons),
                                   'wavelength' : ('wl', wls)},
-               attrs={'variable':'Total? backscatter coefficient'})
+               attrs={'variable':'Total backscatter coefficient'})
     aph_xds = xr.Dataset(
         {'aph':(('x', 'y', 'wl'),gd.variables['aph'][:].data)},
                coords = {'latitude': (('x', 'y'), lats),
@@ -122,6 +128,21 @@ def load_iop_l2(fn:str):
                coords = {'latitude': (('x', 'y'), lats),
                                   'longitude': (('x', 'y'), lons)},
                attrs={'variable':'adg 442 value'})
+    bbp442_xds = xr.Dataset(
+        {'bbp_442':(('x', 'y'),gd.variables['bbp_442'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'bbp 442 value'})
+    bbpunc442_xds = xr.Dataset(
+        {'bbp_unc_442':(('x', 'y'),gd.variables['bbp_unc_442'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'bbp 442 uncertainty'})
+    bbps_xds = xr.Dataset(
+        {'bbp_s':(('x', 'y'),gd.variables['bbp_s'][:].data)},
+               coords = {'latitude': (('x', 'y'), lats),
+                                  'longitude': (('x', 'y'), lons)},
+               attrs={'variable':'bbp spectral shape value'})
     
 
     # merge back into the xarray dataset with all the attributes
@@ -130,6 +151,9 @@ def load_iop_l2(fn:str):
     xds['aph'] = aph_xds.aph
     xds['adg_s'] = adgs_xds.adg_s
     xds['adg_442'] = adg_xds.adg_442
+    xds['bbp_442'] = bbp442_xds.bbp_442
+    xds['bbp_unc_442'] = bbpunc442_xds.bbp_unc_442
+    xds['bbp_s'] = bbps_xds.bbp_s
 
     # replace nodata areas with nan
     #xds = xds.where(xds['Rrs'] != -32767.0)

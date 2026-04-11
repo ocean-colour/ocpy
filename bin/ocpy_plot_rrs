@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+#
+# See top-level LICENSE file for Copyright information
+#
+# -*- coding: utf-8 -*-
+
+"""
+This script runs BING on an input table of Rrs values
+"""
+
+import ocpy.scripts.plot_rrs as plot_rrs
+
+if __name__ == '__main__':
+    psr = plot_rrs.parser()
+    args = psr.parse_args()
+    plot_rrs.main(args)

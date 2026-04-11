@@ -4,9 +4,8 @@ import numpy as np
 import xarray as xr
 from netCDF4 import Dataset
 
-from IPython import embed
 
-def load_oci_l2(fn, full_flag:bool=False):
+def load_oci_l2(fn, full_flag: bool = False):
     """
     Load OCI L2 data from a netCDF file.
 
@@ -22,58 +21,130 @@ def load_oci_l2(fn, full_flag:bool=False):
 
     """
     # Kindly provided by Patrick Gray
+    with Dataset(fn) as dataset:
+        # Get attributes from root group
+        attrs = {k: dataset.getncattr(k) for k in dataset.ncattrs()}
 
-    # create the initial dataset so that we have all the attributes
-    xds = xr.open_dataset(fn)
-    # open the file with netCDF to get all the actual data
-    dataset = Dataset(fn)
-    
-    # grab the necessary group data
-    gd    = dataset.groups['geophysical_data']
-    nav   = dataset.groups['navigation_data']
-    lons  = nav.variables["longitude"][:]
-    lats  = nav.variables["latitude"][:]
-    flags = gd.variables["l2_flags"][:]
-    wls = dataset.groups['sensor_band_parameters']['wavelength_3d'][:].data
+        # Grab group references
+        gd = dataset.groups['geophysical_data']
+        nav = dataset.groups['navigation_data']
+        sbp = dataset.groups['sensor_band_parameters']
 
-    # create the dataset, now we're only adding in Rrs, Rrs_unc
-    # but the options are: ['Rrs', 'Rrs_unc', 'aot_865', 'angstrom', 'avw', 'l2_flags']
-    #embed(header='41 of io.py')
-    rrs_xds = xr.Dataset(
-        {'Rrs':(('x', 'y', 'wl'),gd.variables['Rrs'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons),
-                                  'wavelength' : ('wl', wls)},
-               attrs={'variable':'Remote sensing reflectance'})
-    rrsu_xds = xr.Dataset(
-        {'Rrs_unc':(('x', 'y', 'wl'),gd.variables['Rrs_unc'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons),
-                                  'wavelength' : ('wl', wls)},
-               attrs={'variable':'Remote sensing reflectance error'})
-    nflh_xds = xr.Dataset(
-        {'nflh':(('x', 'y'),gd.variables['nflh'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'Normalized Fluorescence Line Height'})
-    
+        # Load coordinates once
+        lons = nav.variables["longitude"][:]
+        lats = nav.variables["latitude"][:]
+        wls = sbp['wavelength_3d'][:]
+        flags = gd.variables["l2_flags"][:]
 
-    # merge back into the xarray dataset with all the attributes
-    xds['Rrs'] = rrs_xds.Rrs
-    xds['Rrs_unc'] = rrsu_xds.Rrs_unc
-    xds['FLH'] = nflh_xds.nflh
+        # Load data variables
+        # Options are: ['Rrs', 'Rrs_unc', 'aot_865', 'angstrom', 'avw', 'l2_flags']
+        rrs = gd.variables['Rrs'][:]
+        rrs_unc = gd.variables['Rrs_unc'][:]
+        nflh = gd.variables['nflh'][:]
 
-    # replace nodata areas with nan
-    #xds = xds.where(xds['Rrs'] != -32767.0)
+    # Build dataset directly with all variables
+    xds = xr.Dataset(
+        {
+            'Rrs': (['x', 'y', 'wl'], rrs),
+            'Rrs_unc': (['x', 'y', 'wl'], rrs_unc),
+            'FLH': (['x', 'y'], nflh),
+        },
+        coords={
+            'latitude': (['x', 'y'], lats),
+            'longitude': (['x', 'y'], lons),
+            'wavelength': ('wl', wls),
+        },
+        attrs=attrs,
+    )
 
-    # eliminate everything that isn't a flag bit of 0 (meaning no flags)
+    # Eliminate everything that isn't a flag bit of 0 (meaning no flags)
     if full_flag:
-        xds['Rrs'] = xr.where(xr.DataArray(flags.data, dims=['x', 'y'])==0, xds['Rrs'], np.nan)
-        
+        xds['Rrs'] = xds['Rrs'].where(flags == 0)
+
     return xds, flags
 
 
-def load_iop_l2(fn:str):
+def load_oci_l2_spectrum(fn, target_lat: float, target_lon: float):
+    """
+    Load a single Rrs spectrum at the nearest pixel to a target lat/lon.
+
+    Much faster than load_oci_l2() when only one spectrum is needed,
+    as it avoids loading the full Rrs data cube.
+
+    Parameters:
+        fn (str): The file path of the netCDF file.
+        target_lat (float): Target latitude in degrees.
+        target_lon (float): Target longitude in degrees.
+
+    Returns:
+        wls (numpy.ndarray): Wavelengths in nm.
+        rrs (numpy.ndarray): Rrs spectrum at the nearest pixel (sr^-1).
+        rrs_unc (numpy.ndarray): Rrs uncertainty spectrum (sr^-1).
+        flag (int): The l2_flag value at the pixel.
+        pixel_coords (tuple): The (ix, iy) pixel indices and actual (lat, lon).
+    """
+    with Dataset(fn) as dataset:
+        nav = dataset.groups['navigation_data']
+        gd = dataset.groups['geophysical_data']
+        sbp = dataset.groups['sensor_band_parameters']
+
+        # Load only lat/lon arrays (much smaller than Rrs cube)
+        lats = nav.variables["latitude"][:]
+        lons = nav.variables["longitude"][:]
+
+        # Find nearest pixel using squared distance
+        dist = (lats - target_lat)**2 + (lons - target_lon)**2
+        ix, iy = np.unravel_index(np.argmin(dist), dist.shape)
+
+        # Load only the single spectrum (slicing happens on disk)
+        rrs = gd.variables['Rrs'][ix, iy, :]
+        rrs_unc = gd.variables['Rrs_unc'][ix, iy, :]
+        wls = sbp['wavelength_3d'][:]
+        flag = gd.variables["l2_flags"][ix, iy]
+
+    pixel_coords = (int(ix), int(iy), float(lats[ix, iy]), float(lons[ix, iy]))
+
+    return wls, rrs, rrs_unc, flag, pixel_coords
+
+
+def load_oci_l2_spectrum_pixel(fn, ix: int, iy: int):
+    """
+    Load a single Rrs spectrum at a specific pixel index.
+
+    Much faster than load_oci_l2() when only one spectrum is needed,
+    as it avoids loading the full Rrs data cube.
+
+    Parameters:
+        fn (str): The file path of the netCDF file.
+        ix (int): X pixel index (along-track).
+        iy (int): Y pixel index (cross-track).
+
+    Returns:
+        wls (numpy.ndarray): Wavelengths in nm.
+        rrs (numpy.ndarray): Rrs spectrum at the pixel (sr^-1).
+        rrs_unc (numpy.ndarray): Rrs uncertainty spectrum (sr^-1).
+        flag (int): The l2_flag value at the pixel.
+        pixel_coords (tuple): The (ix, iy) pixel indices and actual (lat, lon).
+    """
+    with Dataset(fn) as dataset:
+        nav = dataset.groups['navigation_data']
+        gd = dataset.groups['geophysical_data']
+        sbp = dataset.groups['sensor_band_parameters']
+
+        # Load only the single spectrum (slicing happens on disk)
+        rrs = gd.variables['Rrs'][ix, iy, :]
+        rrs_unc = gd.variables['Rrs_unc'][ix, iy, :]
+        wls = sbp['wavelength_3d'][:]
+        flag = gd.variables["l2_flags"][ix, iy]
+        lat = nav.variables["latitude"][ix, iy]
+        lon = nav.variables["longitude"][ix, iy]
+
+    pixel_coords = (int(ix), int(iy), float(lat), float(lon))
+
+    return wls, rrs, rrs_unc, flag, pixel_coords
+
+
+def load_iop_l2(fn: str):
     """
     Load IOP (Inherent Optical Properties) Level 2 data from a netCDF file.
 
@@ -86,80 +157,51 @@ def load_iop_l2(fn:str):
             Coordinates include 'latitude', 'longitude', 'wavelength'.
         flags (numpy.ndarray): The l2_flags data from the netCDF file.
     """
-    # create the initial dataset so that we have all the attributes
-    xds = xr.open_dataset(fn)
-    # open the file with netCDF to get all the actual data
-    dataset = Dataset(fn)
-    
-    # grab the necessary group data
-    gd    = dataset.groups['geophysical_data']
-    nav   = dataset.groups['navigation_data']
-    lons  = nav.variables["longitude"][:]
-    lats  = nav.variables["latitude"][:]
-    flags = gd.variables["l2_flags"][:]
-    wls = dataset.groups['sensor_band_parameters']['wavelength_3d'][:].data
+    with Dataset(fn) as dataset:
+        # Get attributes from root group
+        attrs = {k: dataset.getncattr(k) for k in dataset.ncattrs()}
 
-    #embed(header='95 of io.py')
-    rrs_xds = xr.Dataset(
-        {'a':(('x', 'y', 'wl'),gd.variables['a'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons),
-                                  'wavelength' : ('wl', wls)},
-               attrs={'variable':'Total absorption coefficient'})
-    rrsu_xds = xr.Dataset(
-        {'bb':(('x', 'y', 'wl'),gd.variables['bb'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons),
-                                  'wavelength' : ('wl', wls)},
-               attrs={'variable':'Total backscatter coefficient'})
-    aph_xds = xr.Dataset(
-        {'aph':(('x', 'y', 'wl'),gd.variables['aph'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons),
-                                  'wavelength' : ('wl', wls)},
-               attrs={'variable':'Phytoplankton absorption spectrum'})
-    adgs_xds = xr.Dataset(
-        {'adg_s':(('x', 'y'),gd.variables['adg_s'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'adg spectral parameter'})
-    adg_xds = xr.Dataset(
-        {'adg_442':(('x', 'y'),gd.variables['adg_442'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'adg 442 value'})
-    bbp442_xds = xr.Dataset(
-        {'bbp_442':(('x', 'y'),gd.variables['bbp_442'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'bbp 442 value'})
-    bbpunc442_xds = xr.Dataset(
-        {'bbp_unc_442':(('x', 'y'),gd.variables['bbp_unc_442'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'bbp 442 uncertainty'})
-    bbps_xds = xr.Dataset(
-        {'bbp_s':(('x', 'y'),gd.variables['bbp_s'][:].data)},
-               coords = {'latitude': (('x', 'y'), lats),
-                                  'longitude': (('x', 'y'), lons)},
-               attrs={'variable':'bbp spectral shape value'})
-    
+        # Grab group references
+        gd = dataset.groups['geophysical_data']
+        nav = dataset.groups['navigation_data']
+        sbp = dataset.groups['sensor_band_parameters']
 
-    # merge back into the xarray dataset with all the attributes
-    xds['a'] = rrs_xds.a
-    xds['bb'] = rrsu_xds.bb
-    xds['aph'] = aph_xds.aph
-    xds['adg_s'] = adgs_xds.adg_s
-    xds['adg_442'] = adg_xds.adg_442
-    xds['bbp_442'] = bbp442_xds.bbp_442
-    xds['bbp_unc_442'] = bbpunc442_xds.bbp_unc_442
-    xds['bbp_s'] = bbps_xds.bbp_s
+        # Load coordinates once
+        lons = nav.variables["longitude"][:]
+        lats = nav.variables["latitude"][:]
+        wls = sbp['wavelength_3d'][:]
+        flags = gd.variables["l2_flags"][:]
 
-    # replace nodata areas with nan
-    #xds = xds.where(xds['Rrs'] != -32767.0)
+        # Load spectral variables (x, y, wl)
+        a = gd.variables['a'][:]
+        bb = gd.variables['bb'][:]
+        aph = gd.variables['aph'][:]
 
-    # eliminate everything that isn't a flag bit of 0 (meaning no flags)
-    #if full_flag:
-    #    xds['Rrs'] = xr.where(xr.DataArray(flags.data, dims=['x', 'y'])==0, xds['Rrs'], np.nan)
-        
+        # Load scalar variables (x, y)
+        adg_s = gd.variables['adg_s'][:]
+        adg_442 = gd.variables['adg_442'][:]
+        bbp_442 = gd.variables['bbp_442'][:]
+        bbp_unc_442 = gd.variables['bbp_unc_442'][:]
+        bbp_s = gd.variables['bbp_s'][:]
+
+    # Build dataset directly with all variables
+    xds = xr.Dataset(
+        {
+            'a': (['x', 'y', 'wl'], a),
+            'bb': (['x', 'y', 'wl'], bb),
+            'aph': (['x', 'y', 'wl'], aph),
+            'adg_s': (['x', 'y'], adg_s),
+            'adg_442': (['x', 'y'], adg_442),
+            'bbp_442': (['x', 'y'], bbp_442),
+            'bbp_unc_442': (['x', 'y'], bbp_unc_442),
+            'bbp_s': (['x', 'y'], bbp_s),
+        },
+        coords={
+            'latitude': (['x', 'y'], lats),
+            'longitude': (['x', 'y'], lons),
+            'wavelength': ('wl', wls),
+        },
+        attrs=attrs,
+    )
+
     return xds, flags

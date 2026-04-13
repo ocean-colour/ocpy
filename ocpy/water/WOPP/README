@@ -1,0 +1,30 @@
+WOPP_gui.py 
+a simple graphical user interface to compute the
+optical properties of pure water
+
+Content:
+	README: this file
+	WOPP_gui.py: 			the GUI
+	WOPP.py: 		the model to compute the optical properties of pure water
+	computed_refri_T27_S0.dat: 		basic data to compute refraction index
+	purewater_abs_coefficients.dat: basic data to compute pure water absorption in 3 versions (see ATBD)
+	water_radiance5.gif: the logo
+
+Running the programme:
+	Simply doubleclick on on WOPP_gui.py (Windows)
+	or type 'WOPP_gui.py' at the command prompt (Linux).
+	The 'WOPP.py' programme can also run standalone; 
+	this requires some basic knowledge of the python language.
+Note: before saving an IOP, it must be plottet on the canvas.
+
+Installation of python(requires administrator rights):
+	This programme requires the free available python programming language
+	and some additional python-modules(libraries):
+	python: http://www.python.org
+	numpy: http://new.scipy.org/download.html
+	matplotlib: http://matplotlib.sourceforge.net/
+	TKinter (if not already installed): http://www.effbot.org/zone/wck.htm
+
+	Please follow the installation instructions on the websites for your operating system.
+
+March 2011, Schoenfeld,HZG

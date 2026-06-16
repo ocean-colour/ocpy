@@ -446,3 +446,59 @@ def test_stack_from_tara_subset():
     assert len(stack) <= 20
     # The ap grid is shared across rows -> gridded.
     assert stack.is_gridded is True
+
+
+# --------------------------------------------------------------------
+# Edge cases / gap-fillers
+# --------------------------------------------------------------------
+def test_align_to_grid_with_errors():
+    wv1 = np.array([400., 500., 600.])
+    v1 = np.array([1., 2., 3.])
+    e1 = np.array([0.1, 0.2, 0.3])
+    vals, errs = utils.align_to_grid([wv1], [v1], np.array([450., 550.]),
+                                     list_of_err=[e1])
+    assert np.allclose(vals[0], [1.5, 2.5])
+    assert np.allclose(errs[0], [0.15, 0.25])
+
+
+def test_value_at_out_of_range_is_nan():
+    wv = np.array([400., 500., 600.])
+    val = np.array([1., 2., 3.])
+    assert np.isnan(utils.value_at(wv, val, 700.))
+
+
+def test_spectrum_rebin_interp_keeps_none_errors():
+    s = _simple_spectrum(errors=None)
+    out = s.rebin(np.array([450., 550.]))
+    assert out.errors is None
+    assert np.allclose(out.values, [1.5, 2.5])
+
+
+def test_spectrum_metadata_not_shared():
+    # dataclass default_factory must give each instance its own dict.
+    a = Spectrum(wavelength=np.array([1., 2.]), values=np.array([1., 2.]))
+    b = Spectrum(wavelength=np.array([1., 2.]), values=np.array([1., 2.]))
+    a.metadata['x'] = 1
+    assert b.metadata == {}
+
+
+def test_empty_stack_as_array():
+    stack = SpectrumStack([])
+    assert len(stack) == 0
+    assert stack.is_gridded is True
+    wv, vals, errs = stack.as_array()
+    assert wv.size == 0
+    assert vals.shape == (0, 0)
+
+
+def test_stack_netcdf_roundtrip_ragged(tmp_path):
+    a = _simple_spectrum()
+    b = Spectrum(wavelength=np.array([400., 450., 500., 600.]),
+                 values=np.array([1., 1.5, 2., 3.]), source='ragged')
+    stack = SpectrumStack([a, b])
+    path = str(tmp_path / 'ragged.nc')
+    stack.to_netcdf(path)
+    back = SpectrumStack.read_netcdf(path)
+    assert len(back) == 2
+    assert len(back[1]) == 4  # NaN pad stripped on read
+    assert back[1].source == 'ragged'

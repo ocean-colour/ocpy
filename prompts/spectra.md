@@ -74,6 +74,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 9. Read this doc.  Execute the 4th task under "Implement".
 10. Read this doc.  Execute the 5th task under "Implement".
 11. Read this doc.  Execute the 6th task under "Implement".
+12. Read this doc.  Execute the 7th task under "Implement".
 
 ## Implement
 
@@ -86,6 +87,9 @@ If you need to run Python, use the "ocean14" Conda environment.
 
 5. I have made the Tara data available to you.  Please complete Phase 3.
 6. Read the Plan and proceed with Phase 4.  If any issues arise, ask them in the Q&A section below.  Log your work
+7. Read the Plan and proceed with Phase 5.  If any issues arise, ask them in the Q&A section below.  Log your work
+
+
 
 ### Q&A
 
@@ -204,6 +208,15 @@ refactor):**
   input but is unrelated to the migration (needs a `.copy()`).
 - `tests/test_plot_oc_scene.py` has 4 failures (MODIS scene mock signature)
   unrelated to spectra/tara.
+
+**Phase 5 — no blocking issues.** The suite was built incrementally across
+Phases 1–4, so this phase was mostly review + gap-filling against the Plan's
+checklist (all items already covered). Added 6 edge-case tests (44 total):
+`align_to_grid` with errors, `value_at` out-of-range NaN, interp rebin
+preserving `None` errors, dataclass `metadata` not shared between instances,
+empty-stack `as_array`, and a **ragged-stack netCDF round trip**. Full
+`test_spectra` + `test_tara` run: **44 passed, 5 skipped** in `ocean14`
+(test_tara skips — green — since the bundled parquet is absent locally).
 
 ## Planning
 
@@ -999,4 +1012,25 @@ read-only-array bug in `spectbl_from_keys`; MODIS scene test failures).
 Changed files: `ocpy/tara/explore.py`, `ocpy/tara/measures.py`,
 `ocpy/tara/io.py`, `ocpy/tara/spectra.py`, `ocpy/hydrolight/loisel23.py`,
 `ocpy/tests/test_tara.py`, `runs/Tara/Figures/py/figs_explore_tara.py`. Git
+left to the user.
+
+### 2026-06-16 (Implement Phase 5: tests)
+
+The `test_spectra.py` suite was grown alongside Phases 1–4, so Phase 5 was a
+review of coverage against the Plan's checklist followed by gap-filling. Every
+checklist item was already present (utils helpers incl. the `rebin_to_grid`
+shape regression; Spectrum construction/validation/sorting/len/repr, rebin
+interp+bin, value_at, xarray + netCDF round trips, plot smoke; SpectrumStack
+container protocol, gridded/ragged detection, `as_array` raising, rebin →
+gridded, provenance arrays, gridded + ragged + netCDF round trips; skip-guarded
+PANAGEA/Loisel23/Tara adapter tests).
+
+Added 6 edge-case tests (38 → 44): `align_to_grid` with errors, `value_at`
+out-of-range → NaN, interp rebin preserving `None` errors, `metadata` not
+shared between instances (default_factory check), empty-stack `as_array`, and
+a ragged-stack netCDF round trip.
+
+Result: `pytest test_spectra test_tara` → **44 passed, 5 skipped** in
+`ocean14`; `test_tara` collects and skips cleanly (green) per the Plan's
+"keep test_tara green" goal. Changed file: `ocpy/tests/test_spectra.py`. Git
 left to the user.

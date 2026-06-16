@@ -420,3 +420,29 @@ def test_stack_from_loisel23_is_gridded():
     assert stack.is_gridded is True
     wv, vals, errs = stack.as_array()
     assert vals.shape == (4, ds['Lambda'].size)
+
+
+@needs_tara
+def test_from_tara():
+    import pandas
+    tbl = pandas.read_parquet(_tara_path())
+    s = spectra_io.from_tara(tbl.iloc[0], flavor='ap')
+    assert isinstance(s, Spectrum)
+    assert len(s) > 0
+    assert s.units == '1/m'
+    assert s.source == 'Tara'
+    # Provenance from real columns.
+    assert s.lat is not None and s.lon is not None
+    assert s.date is not None  # parsed from the 'datetime' column
+    assert 'cruise' in s.metadata
+
+
+@needs_tara
+def test_stack_from_tara_subset():
+    import pandas
+    tbl = pandas.read_parquet(_tara_path())
+    stack = spectra_io.stack_from_tara(tbl.iloc[:20], flavor='ap')
+    assert isinstance(stack, SpectrumStack)
+    assert len(stack) <= 20
+    # The ap grid is shared across rows -> gridded.
+    assert stack.is_gridded is True

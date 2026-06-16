@@ -154,6 +154,19 @@ you disagree):
   date/lat/lon/depth from the row, QF flags into `quality`, and
   dataset/subdataset/contributor into `metadata`.
 
+**Phase 3 completion (Tara data now available) — no blocking issues.**
+
+- Inspected `$OS_COLOR/Tara/Tara_APCP.parquet` (302,779 × 2,332). Real
+  provenance columns: `lat`, `lon` (floats), `datetime` (proper Timestamp),
+  `date` (int `YYYYMMDD`), `time`, plus `cruise` / `sal` / `Wt`.
+- **Bug fixed:** my defensive lookup checked `date` (the *integer* YYYYMMDD)
+  before `datetime`, and `np.datetime64(20101127)` misreads the int.
+  `from_tara` now prefers the `datetime` column and only falls back to
+  parsing the integer `date` via `pandas.to_datetime(..., format='%Y%m%d')`.
+- `from_tara` now also stashes `cruise`/`sal`/`Wt` into `metadata`.
+- Verified on real rows: 81-band `ap`/`cp` spectra, correct date
+  (2010-11-27), lat/lon, gridded 20-row stack, clean xarray round trip.
+
 ## Planning
 
 ### Tasks
@@ -899,3 +912,22 @@ Deviations logged in Implement Q&A: `from_tara(row, ...)` instead of
 `(tbl, row, ...)`; Loisel23 units left None by default (files carry none).
 New file: `ocpy/spectra/io.py`; updated `ocpy/tests/test_spectra.py`. Git
 left to the user.
+
+### 2026-06-16 (Implement Phase 3 completion: Tara verified on real data)
+
+With Tara data now available (`$OS_COLOR/Tara/Tara_APCP.parquet`), inspected
+its columns and validated the adapters against the real table.
+
+- Real provenance columns: `lat`/`lon` floats, `datetime` Timestamp, `date`
+  int `YYYYMMDD`, `time`, `cruise`/`sal`/`Wt`.
+- **Fixed a date-parsing bug:** `from_tara` was checking the integer `date`
+  column before `datetime`; `np.datetime64` misreads that integer. It now
+  prefers `datetime` and only parses the integer `date` as an explicit
+  fallback. Also folds `cruise`/`sal`/`Wt` into `metadata`.
+- Verified: 81-band `ap` and `cp` spectra, date 2010-11-27, lat/lon present,
+  20-row stack is gridded, xarray round trip clean.
+- Tests: added 2 skip-guarded Tara tests; suite now **38 tests, all passing**
+  in `ocean14` (PANAGEA + Loisel23 + Tara all exercised against real data).
+
+Updated files: `ocpy/spectra/io.py`, `ocpy/tests/test_spectra.py`. Phase 3 is
+fully complete across all three sources. Git left to the user.

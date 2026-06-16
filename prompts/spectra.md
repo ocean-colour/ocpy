@@ -76,6 +76,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 11. Read this doc.  Execute the 6th task under "Implement".
 12. Read this doc.  Execute the 7th task under "Implement".
 13. Read this doc.  Execute the 8th task under "Implement".
+14. Read this doc.  Execute the 9th task under "Implement".
 
 ## Implement
 
@@ -90,6 +91,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 6. Read the Plan and proceed with Phase 4.  If any issues arise, ask them in the Q&A section below.  Log your work
 7. Read the Plan and proceed with Phase 5.  If any issues arise, ask them in the Q&A section below.  Log your work
 8. Read the Plan and proceed with Phase 6.  If any issues arise, ask them in the Q&A section below.  Log your work
+9. Read the Plan and proceed with Phase 7.  If any issues arise, ask them in the Q&A section below.  Log your work
 
 
 
@@ -227,6 +229,29 @@ It loads a PANAGEA Rrs spectrum and a Loisel+2023 Rrs spectrum, rebins both to
 a common grid, builds a `SpectrumStack` (plus a 50-spectrum gridded stack from
 Loisel23), and demonstrates the xarray (wavelength-as-variable) and netCDF
 round trips.
+
+**Phase 7 — no blocking issues.** Created the docs and wired them in:
+
+- `docs/api/spectra.rst` — autodoc for the `Spectrum`/`SpectrumStack`
+  classes, the five `utils` helpers, and the six `io` adapters. Verified all
+  13 autodoc targets resolve as importable symbols.
+- `docs/spectra.rst` — narrative user guide (design philosophy, attribute
+  table, quick start, array-level helpers, gridded-vs-ragged stacks, dataset
+  adapters, xarray/netCDF interop). Uses the modern `ocpy.` namespace (as
+  `panagea.rst` does).
+- `docs/index.rst` — added `spectra` to the User Guide toctree and
+  `api/spectra` to the API Reference toctree.
+- `docs/changelog.rst` — added the new-package entry plus a "Changed" note
+  for the `utils.spectra` → `spectra.utils` move and the `rebin_to_grid`
+  shape change.
+
+Note: a full Sphinx build is **pre-broken** independent of this work — most
+existing `docs/api/*.rst` autodoc against the non-existent `oceancolor.*`
+namespace (the unfinished rename). I therefore validated the new pages by
+confirming every autodoc target imports; the prose pages use only standard
+rST. The stale `docs/api/utils.rst` still documents the now-moved
+`oceancolor.utils.spectra` — left as part of the broader rename cleanup, not
+this refactor.
 
 ## Planning
 
@@ -1059,3 +1084,27 @@ Executed it end-to-end in `ocean14` with `jupyter nbconvert --execute
 rendered — verified by re-reading the executed notebook with nbformat. Only a
 benign `MissingIDFieldWarning` from nbformat. New file:
 `nb/Spectra/Spectra_demo.ipynb`. Git left to the user.
+
+### 2026-06-16 (Implement Phase 7: docs)
+
+Added Sphinx docs for the new package and linked them from the master
+toctree:
+- `docs/api/spectra.rst` — autodoc for `Spectrum`/`SpectrumStack`, the
+  `utils` helpers, and the `io` adapters (matches the `api/` layout, modern
+  `ocpy.` namespace). Confirmed all 13 autodoc targets are importable.
+- `docs/spectra.rst` — narrative user guide (design philosophy + attribute
+  table, quick start, array helpers, gridded/ragged stacks, dataset
+  adapters, xarray/netCDF interop), styled after `panagea.rst`.
+- `docs/index.rst` — `spectra` in the User Guide toctree, `api/spectra` in
+  the API Reference toctree.
+- `docs/changelog.rst` — Added (new package) + Changed (utils move and
+  `rebin_to_grid` shape) entries.
+
+Did not run a full Sphinx build: it is pre-broken because most existing
+`docs/api/*.rst` autodoc against the non-existent `oceancolor.*` namespace
+(unfinished rename). Validated the new pages by importing every autodoc
+target instead. New files: `docs/api/spectra.rst`, `docs/spectra.rst`;
+edited `docs/index.rst`, `docs/changelog.rst`. Git left to the user.
+
+This completes Phases 0–7 of the Plan. (Phase 8 "Verify" has effectively been
+performed incrementally: 44 tests pass + the demo notebook executes clean.)

@@ -88,6 +88,7 @@ Documentation Contents
    user_guide/hydrolight
    user_guide/hypera
    panagea
+   spectra
 
 .. toctree::
    :maxdepth: 2
@@ -104,6 +105,7 @@ Documentation Contents
    api/hypera
    api/pace
    api/utils
+   api/spectra
 
 .. toctree::
    :maxdepth: 1

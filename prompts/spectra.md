@@ -69,14 +69,66 @@ If you need to run Python, use the "ocean14" Conda environment.
 5. Read this doc.  Execute the 5th task under "Planning".
 
 6. Read this doc.  Execute the 1st task under "Implement".
+7. Read this doc.  Execute the 2nd task under "Implement".
+8. Read this doc.  Execute the 3rd task under "Implement".
 
 ## Implement
 
 ### Tasks
 
 1. Read the Plan and proceed with Phase 0.  If any issues arise, ask them in the Q&A section below.  Log your work
+2. Read the Plan and proceed with Phase 1.  If any issues arise, ask them in the Q&A section below.  Log your work
+3. Read the Plan and proceed with Phase 2.  If any issues arise, ask them in the Q&A section below.  Log your work
 
 ### Q&A
+
+**Phase 0 — no blocking issues.** Two scope notes (decisions I made; flag if
+you disagree):
+
+- I created only `ocpy/spectra/utils.py` and left `ocpy/spectra/__init__.py`
+  empty for now. The Plan lists `__init__.py` re-exporting `Spectrum` /
+  `SpectrumStack`, but those classes don't exist until Phase 2 — populating
+  the re-exports now would make `import ocpy.spectra` fail. I'll wire up
+  `__init__.py` in Phase 2.
+- Likewise I did **not** create empty `core.py` / `io.py` stubs; they'll be
+  created with real content in Phases 2–3. Empty modules add nothing and risk
+  confusing imports.
+
+- Confirmed the four `from oceancolor.tara import spectra` hits are importers
+  of `ocpy/tara/spectra.py` (a different module), **not** `ocpy.utils.spectra`
+  — so they belong to Phase 4, and Phase 0 needed no caller edits.
+
+**Phase 1 — no blocking issues.** Notes:
+
+- **`rebin_to_grid` API change (heads-up for Phase 4):** the input is now
+  spectrum-major `(nspec, nwave)` (was wavelength-major `(nwave, nspec)`).
+  Tara's `spectbl_from_keys` returns `(nwave, nspec)`, so the call in
+  `tara/explore.py` will need a transpose (or to pass `.T`) when migrated.
+- **One extra robustness fix beyond the shape change:** empty output bins now
+  fill **both** values and errors with NaN (the old code left values at 0.0,
+  a latent bug), and the all-NaN-bin division is wrapped in
+  `np.errstate(...)` to suppress warnings. Flag if you'd rather keep the old
+  zero-fill for values.
+
+**Phase 2 — no blocking issues.** One design deviation worth your sign-off:
+
+- **Stack provenance is stored as a single JSON attr, not as per-spectrum 1D
+  variables.** The Plan said `SpectrumStack.to_xarray()` would write `date`,
+  `lat`, `lon`, `depth`, `source` as 1D variables over `spectrum`. In
+  practice, netCDF string arrays (needed for `date`/`source`) are fragile
+  across engines, and per-spectrum `quality`/`metadata` dicts can't be 1D
+  vars at all. I instead store the full per-spectrum provenance as a JSON
+  list-of-dicts in `ds.attrs['provenance_json']` (reusing the single-spectrum
+  attrs builder). This is netCDF-safe and round-trips with full fidelity
+  (verified by tests). Trade-off: you can't `ds['lat']` to slice provenance
+  inside xarray — use the `SpectrumStack.lats` accessor instead. Say the word
+  if you want numeric `lat`/`lon`/`depth` promoted to real 1D variables (easy
+  to add alongside the JSON).
+- Wired up `ocpy/spectra/__init__.py` (the item deferred from Phase 0):
+  it now re-exports `Spectrum`, `SpectrumStack`, and the five helper
+  functions.
+- xarray/matplotlib imports are lazy (inside the methods) to keep the classes
+  lightweight to import.
 
 ## Planning
 
@@ -708,3 +760,90 @@ serialized to netCDF as an ISO-8601 string in `.attrs`. No structural changes
 needed; folded both into the "Decisions" block and marked the plan **ready to
 implement** (all questions answered). Planning is complete; implementation
 awaits the go-ahead.
+
+### 2026-06-16 (Implement Phase 0: module skeleton & relocation)
+
+Executed Phase 0 of the Plan.
+
+Done:
+- Created `ocpy/spectra/utils.py` with the `rebin` and `rebin_to_grid`
+  functions relocated verbatim from `ocpy/utils/spectra.py`, dropping only
+  the dead `from IPython import embed` line. (No behaviour change here; the
+  `rebin_to_grid` shape fix is Phase 1.)
+- Deleted `ocpy/utils/spectra.py`.
+- Verified in the `ocean14` env: `from ocpy.spectra import utils` imports and
+  `utils.rebin` runs correctly; `import ocpy.spectra` succeeds.
+
+Learned / decided:
+- A repo-wide grep found **no** importers of `ocpy.utils.spectra`, so the
+  relocation broke nothing. The four `from oceancolor.tara import spectra`
+  hits target `ocpy/tara/spectra.py`, a separate module — those are Phase 4.
+- Deferred populating `ocpy/spectra/__init__.py` (the planned `Spectrum` /
+  `SpectrumStack` re-exports) and creating `core.py` / `io.py` until their
+  phases, to avoid broken imports of not-yet-existing classes. Noted in the
+  Implement Q&A.
+- Git left to the user (per CLAUDE.md): the change is one new file
+  (`ocpy/spectra/utils.py`) and one deletion (`ocpy/utils/spectra.py`).
+
+### 2026-06-16 (Implement Phase 1: array-level helpers)
+
+Built out `ocpy/spectra/utils.py` as pure numpy free functions (per the
+"methods on basic objects" requirement), each with a "Generated by JXP and
+Claude" docstring and <80-char lines.
+
+Done:
+- `rebin` — kept; added a docstring note that errors are interpolated as a
+  co-located 1-sigma curve, not formally propagated (matches Q7).
+- `rebin_to_grid` — **rewrote to the consistent spectrum-major
+  `(nspec, nwave)` shape** (the planned behavioural change). 1D input is
+  promoted to a 1-row stack. Also fixed empty-bin handling (values+errors →
+  NaN; was a 0.0 latent bug) and suppressed all-NaN-bin divide warnings.
+- New helpers: `value_at` (scalar-in/scalar-out interpolation),
+  `common_grid` (tolerant equality test that drives `is_gridded`), and
+  `align_to_grid` (rebin a ragged collection onto one grid → stacked 2D).
+- Created `ocpy/tests/test_spectra.py` with 14 data-independent tests,
+  including the `rebin_to_grid` shape regression test the Plan called for.
+  All 14 pass in `ocean14`.
+
+Learned / flagged:
+- The `rebin_to_grid` shape flip means the Tara caller
+  (`tara/explore.py`, which feeds `(nwave, nspec)` from `spectbl_from_keys`)
+  will need a transpose at Phase 4. Recorded in the Implement Q&A.
+- New file: `ocpy/spectra/utils.py` (rewritten) and
+  `ocpy/tests/test_spectra.py`. Git left to the user.
+
+### 2026-06-16 (Implement Phase 2: core classes)
+
+Created `ocpy/spectra/core.py` with `Spectrum` and `SpectrumStack`
+(both `@dataclass`), and wired up `ocpy/spectra/__init__.py`.
+
+`Spectrum`: fields wavelength/values/errors + units/source/date/lat/lon/
+depth/quality(dict)/metadata(dict). `__post_init__` coerces to float arrays,
+validates lengths, and sorts ascending by wavelength. Methods (thin wrappers
+over `utils`): `rebin` (interp/bin), `value_at`, `__len__`, `__repr__`,
+`to_xarray`/`from_xarray`, `to_netcdf`/`read_netcdf`, and a matplotlib
+`plot`. xarray layout puts **wavelength as a data variable** on a bare
+`channel` dim; provenance goes to `.attrs` (None omitted, date as ISO string,
+quality/metadata as JSON, `has_errors` flag so None errors round-trip).
+
+`SpectrumStack`: list-backed, container protocol (`len`/`iter`/`getitem`),
+`is_gridded` (via `utils.common_grid`), lazy `as_array()` (raises on ragged),
+`rebin` → gridded stack, provenance accessors (`dates`/`lats`/`lons`/
+`depths`/`sources`), and `to_xarray`/`from_xarray`/`to_netcdf`/`read_netcdf`.
+The xarray form NaN-pads ragged members to the longest row (dims
+`(spectrum, channel)`); the per-row wavelength variable makes the pad
+unambiguous on read.
+
+Tests: extended `test_spectra.py` to 32 tests (was 14). New coverage: Spectrum
+construction/validation/sorting, rebin (interp+bin), value_at, xarray
+round-trip (asserting wavelength is a variable not a coord), no-errors case,
+netCDF round-trip via tmp_path, plot smoke test; SpectrumStack container
+protocol, gridded/ragged detection, as_array raising, rebin→gridded,
+provenance arrays, and gridded + ragged + netCDF round-trips. **All 32 pass
+in `ocean14`.**
+
+Decisions/deviations (logged in Implement Q&A): stack provenance stored as a
+JSON attr rather than per-spectrum 1D variables (netCDF-safe, full fidelity;
+trade-off is no in-xarray slicing of provenance). New files:
+`ocpy/spectra/core.py`, updated `ocpy/spectra/__init__.py`,
+`ocpy/tests/test_spectra.py`. Git left to the user.

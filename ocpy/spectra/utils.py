@@ -3,11 +3,10 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-from IPython import embed
 
-def rebin(wv_nm:np.ndarray, values:np.ndarray, 
+def rebin(wv_nm:np.ndarray, values:np.ndarray,
           wv_grid:np.ndarray,
-          err_vals:np.ndarray=None): 
+          err_vals:np.ndarray=None):
     """ Rebin a spectrum to a new wavelength grid.
 
     This uses interpolation.
@@ -23,10 +22,10 @@ def rebin(wv_nm:np.ndarray, values:np.ndarray,
         tuple: values, error [np.ndarray, np.ndarray]
     """
     # Interpolate
-    f_values = interp1d(wv_nm, values, 
+    f_values = interp1d(wv_nm, values,
         bounds_error=False, fill_value=np.nan)
     if err_vals is not None:
-        f_err = interp1d(wv_nm, err_vals, 
+        f_err = interp1d(wv_nm, err_vals,
             bounds_error=False, fill_value=np.nan)
 
     # Evaluate
@@ -40,7 +39,7 @@ def rebin(wv_nm:np.ndarray, values:np.ndarray,
     return new_values, new_err
 
 
-def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray, 
+def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
                   err_vals:np.ndarray, wv_grid:np.ndarray):
     """ Rebin spectra to a new wavelength grid.
 
@@ -62,7 +61,7 @@ def rebin_to_grid(wv_nm:np.ndarray, values:np.ndarray,
     rebin_values = np.zeros((values.shape[1], wv_grid.size-1))
     rebin_err = np.zeros((values.shape[1], wv_grid.size-1))
     rebin_wave = np.zeros(wv_grid.size-1)
-    
+
     for iwv in range(wv_grid.size-1):
         w0 = wv_grid[iwv]
         w1 = wv_grid[iwv+1]

@@ -67,10 +67,12 @@ If you need to run Python, use the "ocean14" Conda environment.
 
 4. There will be a premium on extracting hyperspectral Rrs spectra from the dataset.  Devise a method that:
 
-    - Grabs all the Rrs spectra that have more than an input Nband wavelength values
+    - Grabs all the Rrs spectra that have more than an input Nband wavelength values.  Use the new tools in ocpy/spectra to do so.
     - Grabs all associated IOP data
-    - Packages them up into a dictionary of np.array's, floats, ints, etc. one for each observation, indexed by the observation ID
-    - The spectra (Rrs, a, bb, etc) 
+    - Packages them up into a neat dictionary of Spectrum/SpectrumStack objects, floats, ints, etc. one for each observation, indexed by the observation ID
+    - Show its usage in a new Notebook in nb/PANAGEA.
+    - Log your work in the Logs section below.
+
 
 ## Explore
 

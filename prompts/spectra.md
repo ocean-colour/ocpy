@@ -77,6 +77,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 12. Read this doc.  Execute the 7th task under "Implement".
 13. Read this doc.  Execute the 8th task under "Implement".
 14. Read this doc.  Execute the 9th task under "Implement".
+15. Read this doc.  Execute the 10th task under "Implement".
 
 ## Implement
 
@@ -92,6 +93,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 7. Read the Plan and proceed with Phase 5.  If any issues arise, ask them in the Q&A section below.  Log your work
 8. Read the Plan and proceed with Phase 6.  If any issues arise, ask them in the Q&A section below.  Log your work
 9. Read the Plan and proceed with Phase 7.  If any issues arise, ask them in the Q&A section below.  Log your work
+10. Read the Plan and proceed with Phase 8.  If any issues arise, ask them in the Q&A section below.  Log your work
 
 
 
@@ -252,6 +254,20 @@ confirming every autodoc target imports; the prose pages use only standard
 rST. The stale `docs/api/utils.rst` still documents the now-moved
 `oceancolor.utils.spectra` — left as part of the broader rename cleanup, not
 this refactor.
+
+**Phase 8 — verification passed.** Ran the plan's verification:
+
+- `pytest ocpy/tests/test_spectra.py ocpy/tests/test_tara.py` →
+  **44 passed, 5 skipped** in `ocean14` (the 5 skips are `test_tara`'s
+  remote-data tests; bundled parquet absent locally).
+- Re-executed `nb/Spectra/Spectra_demo.ipynb` end-to-end via
+  `jupyter nbconvert --execute` → **0 error outputs**.
+
+No issues. Implementation of Phases 0–8 is complete. The pre-existing,
+out-of-scope items remain open for a future pass (broad `oceancolor`→`ocpy`
+rename across other subsystems; the read-only-array bug in
+`tara.spectra.spectbl_from_keys`; the 4 unrelated `test_plot_oc_scene`
+failures).
 
 ## Planning
 
@@ -1108,3 +1124,20 @@ edited `docs/index.rst`, `docs/changelog.rst`. Git left to the user.
 
 This completes Phases 0–7 of the Plan. (Phase 8 "Verify" has effectively been
 performed incrementally: 44 tests pass + the demo notebook executes clean.)
+
+### 2026-06-16 (Implement Phase 8: verification)
+
+Ran the Plan's verification step in `ocean14`:
+- `pytest test_spectra test_tara` → **44 passed, 5 skipped** (the skips are
+  test_tara's remote-data cases).
+- Re-executed `nb/Spectra/Spectra_demo.ipynb` via `jupyter nbconvert
+  --execute --inplace` → **0 error outputs**.
+
+No code changes this phase. **The spectra refactor (Plan Phases 0–8) is
+complete.** Deliverables: `ocpy/spectra/{__init__,utils,core,io}.py`,
+`ocpy/tests/test_spectra.py` (44 tests), migrated Tara callers +
+`oceancolor`/`embed` cleanup, `nb/Spectra/Spectra_demo.ipynb`, and docs
+(`docs/spectra.rst`, `docs/api/spectra.rst`, index + changelog). Remaining
+flagged items are pre-existing and out of scope (broad rename debt; the
+`spectbl_from_keys` read-only bug; unrelated MODIS scene test failures). Git
+left to the user.

@@ -75,6 +75,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 10. Read this doc.  Execute the 5th task under "Implement".
 11. Read this doc.  Execute the 6th task under "Implement".
 12. Read this doc.  Execute the 7th task under "Implement".
+13. Read this doc.  Execute the 8th task under "Implement".
 
 ## Implement
 
@@ -88,6 +89,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 5. I have made the Tara data available to you.  Please complete Phase 3.
 6. Read the Plan and proceed with Phase 4.  If any issues arise, ask them in the Q&A section below.  Log your work
 7. Read the Plan and proceed with Phase 5.  If any issues arise, ask them in the Q&A section below.  Log your work
+8. Read the Plan and proceed with Phase 6.  If any issues arise, ask them in the Q&A section below.  Log your work
 
 
 
@@ -217,6 +219,14 @@ preserving `None` errors, dataclass `metadata` not shared between instances,
 empty-stack `as_array`, and a **ragged-stack netCDF round trip**. Full
 `test_spectra` + `test_tara` run: **44 passed, 5 skipped** in `ocean14`
 (test_tara skips — green — since the bundled parquet is absent locally).
+
+**Phase 6 — no blocking issues.** Created `nb/Spectra/Spectra_demo.ipynb`
+(mirrors the `nb/PANAGEA/` style) and **executed it end-to-end in `ocean14`**
+via `jupyter nbconvert --execute`: 10 code cells, 0 errors, 3 plots rendered.
+It loads a PANAGEA Rrs spectrum and a Loisel+2023 Rrs spectrum, rebins both to
+a common grid, builds a `SpectrumStack` (plus a 50-spectrum gridded stack from
+Loisel23), and demonstrates the xarray (wavelength-as-variable) and netCDF
+round trips.
 
 ## Planning
 
@@ -1034,3 +1044,18 @@ Result: `pytest test_spectra test_tara` → **44 passed, 5 skipped** in
 `ocean14`; `test_tara` collects and skips cleanly (green) per the Plan's
 "keep test_tara green" goal. Changed file: `ocpy/tests/test_spectra.py`. Git
 left to the user.
+
+### 2026-06-16 (Implement Phase 6: demo notebook)
+
+Created `nb/Spectra/Spectra_demo.ipynb` following the `nb/PANAGEA/` layout
+(markdown narration + code cells). It walks through: loading a PANAGEA Rrs
+spectrum (`from_panagea`) and a Loisel+2023 Rrs spectrum (`from_loisel23`),
+plotting, rebinning both onto a common grid, building a `SpectrumStack` and a
+50-member gridded Loisel23 stack with `as_array()`, and the xarray
+(wavelength-as-data-variable) plus netCDF round trips.
+
+Executed it end-to-end in `ocean14` with `jupyter nbconvert --execute
+--inplace` (180s timeout): 10 code cells, **0 error outputs**, 3 plots
+rendered — verified by re-reading the executed notebook with nbformat. Only a
+benign `MissingIDFieldWarning` from nbformat. New file:
+`nb/Spectra/Spectra_demo.ipynb`. Git left to the user.

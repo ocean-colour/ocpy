@@ -4,11 +4,49 @@ These tests are data-independent: they use small synthetic arrays so they
 run everywhere. Class-level and data-backed adapter tests are added in later
 phases of the refactor.
 """
+import os
+
 import numpy as np
 import pytest
 
 from ocpy.spectra import utils
 from ocpy.spectra import Spectrum, SpectrumStack
+from ocpy.spectra import io as spectra_io
+
+
+def _panagea_available():
+    """ True if the PANAGEA V3 directory can be resolved. """
+    try:
+        from ocpy.insitu import panagea
+        panagea.panagea_path()
+        return True
+    except Exception:
+        return False
+
+
+def _loisel23_available():
+    """ True if a Loisel+2023 Hydrolight file is present. """
+    oc = os.getenv('OS_COLOR')
+    if oc is None:
+        return False
+    return os.path.isfile(os.path.join(oc, 'Loisel2023', 'Hydrolight100.nc'))
+
+
+def _tara_path():
+    """ Path to the Tara APCP parquet, or None. """
+    oc = os.getenv('OS_COLOR')
+    if oc is None:
+        return None
+    path = os.path.join(oc, 'Tara', 'Tara_APCP.parquet')
+    return path if os.path.isfile(path) else None
+
+
+needs_panagea = pytest.mark.skipif(
+    not _panagea_available(), reason='requires the PANAGEA V3 data')
+needs_loisel23 = pytest.mark.skipif(
+    not _loisel23_available(), reason='requires the Loisel2023 data')
+needs_tara = pytest.mark.skipif(
+    _tara_path() is None, reason='requires the Tara APCP data')
 
 
 def _simple_spectrum(**kw):
@@ -328,3 +366,57 @@ def test_stack_netcdf_roundtrip(tmp_path):
     back = SpectrumStack.read_netcdf(path)
     assert len(back) == 2
     assert back[0].source == 'a'
+
+
+# --------------------------------------------------------------------
+# Source adapters (data-dependent; skip-guarded)
+# --------------------------------------------------------------------
+@needs_panagea
+def test_from_panagea():
+    from ocpy.insitu import panagea
+    df = panagea.load('rrs')
+    obs = df.index[0]
+    s = spectra_io.from_panagea(df, obs, kind='rrs')
+    assert isinstance(s, Spectrum)
+    assert len(s) > 0
+    assert s.units == '1/sr'
+    assert s.source == 'PANAGEA'
+    # Wavelengths sorted ascending.
+    assert np.all(np.diff(s.wavelength) > 0)
+    # xarray round trip works on a real spectrum.
+    back = Spectrum.from_xarray(s.to_xarray())
+    assert np.allclose(back.values, s.values)
+
+
+@needs_panagea
+def test_stack_from_panagea_subset():
+    from ocpy.insitu import panagea
+    df = panagea.load('rrs')
+    ids = df.index[:5]
+    stack = spectra_io.stack_from_panagea(df, kind='rrs', ids=ids)
+    assert isinstance(stack, SpectrumStack)
+    assert len(stack) <= 5
+
+
+@needs_loisel23
+def test_from_loisel23():
+    from ocpy.hydrolight import loisel23
+    ds = loisel23.load_ds(1, 0)
+    s = spectra_io.from_loisel23(ds, 0, var='Rrs', units='1/sr')
+    assert isinstance(s, Spectrum)
+    assert len(s) == ds['Lambda'].size
+    assert s.source == 'Loisel2023'
+    assert s.units == '1/sr'
+    assert s.errors is None
+
+
+@needs_loisel23
+def test_stack_from_loisel23_is_gridded():
+    from ocpy.hydrolight import loisel23
+    ds = loisel23.load_ds(1, 0)
+    stack = spectra_io.stack_from_loisel23(ds, var='Rrs', indices=range(4))
+    assert len(stack) == 4
+    # All share the Lambda grid -> gridded.
+    assert stack.is_gridded is True
+    wv, vals, errs = stack.as_array()
+    assert vals.shape == (4, ds['Lambda'].size)

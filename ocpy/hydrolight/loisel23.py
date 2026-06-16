@@ -6,8 +6,6 @@ import warnings
 
 import xarray
 
-from IPython import embed
-
 if os.getenv('OS_COLOR') is not None:
     l23_path = os.path.join(os.getenv('OS_COLOR'),
                         'Loisel2023')

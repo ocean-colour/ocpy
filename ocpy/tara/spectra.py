@@ -4,8 +4,6 @@ import numpy as np
 import pandas
 from scipy.interpolate import interp1d
 
-from IPython import embed
-
 def parse_wavelengths(inp, flavor:str='ap'):
     """ Parse wavelengths from a row/table of the Tara Oceans database. 
 

@@ -73,6 +73,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 8. Read this doc.  Execute the 3rd task under "Implement".
 9. Read this doc.  Execute the 4th task under "Implement".
 10. Read this doc.  Execute the 5th task under "Implement".
+11. Read this doc.  Execute the 6th task under "Implement".
 
 ## Implement
 
@@ -84,6 +85,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 4. Read the Plan and proceed with Phase 3.  Regarding your concern from Phase 2, it is ok if the user cannot access ds['lat'] for now. If any issues arise, ask them in the Q&A section below.  Log your work
 
 5. I have made the Tara data available to you.  Please complete Phase 3.
+6. Read the Plan and proceed with Phase 4.  If any issues arise, ask them in the Q&A section below.  Log your work
 
 ### Q&A
 
@@ -166,6 +168,42 @@ you disagree):
 - `from_tara` now also stashes `cruise`/`sal`/`Wt` into `metadata`.
 - Verified on real rows: 81-band `ap`/`cp` spectra, correct date
   (2010-11-27), lat/lon, gridded 20-row stack, clean xarray round trip.
+
+**Phase 4 — migration done; some out-of-scope items flagged.**
+
+Migrated (oceancolor → ocpy) and verified importable: `tara/explore.py`,
+`tara/measures.py`, `tests/test_tara.py`,
+`runs/Tara/Figures/py/figs_explore_tara.py`. In `explore.py` the broken
+`spectra.rebin_to_grid` call (that method never existed in
+`ocpy.tara.spectra`) now calls `ocpy.spectra.utils.rebin_to_grid` with inputs
+transposed to `(nspec, nwave)` — verified on real Tara data that the output
+is `(nspec, nbin)`, matching the downstream axis usage. Dropped dead
+`from IPython import embed` from `tara/spectra.py`, `hydrolight/loisel23.py`,
+and `tara/io.py` (kept it in `measures.py`, which actually calls `embed()` at
+line 38 — a separate debug landmine, left untouched).
+
+**Extra fix beyond the named files (flag if unwanted):** the migrated
+`test_tara.py`/`explore.py` use `io.db_name` and `io.load_tara_db()`, which
+the rename had left missing in `ocpy.tara.io` (function-local / renamed to
+`load_db`). I added a module-level `db_name` and a `load_tara_db` alias so the
+migrated callers collect and run. `test_tara` now collects and **skips** (the
+bundled `ocpy/data/Tara/Tara_APCP.parquet` isn't present locally; the real
+data is under `$OS_COLOR/Tara`).
+
+**Pre-existing issues found, NOT fixed (out of scope for the spectra
+refactor):**
+- Broader `oceancolor` imports remain across other subsystems — `ls2/`,
+  `ph`, `polarize/`, `water` tests, `tara/ingest.py`, `runs/Tara/run_*.py`,
+  and `resource_filename('oceancolor', ...)` in `polarize`/`ls2`/`ingest`.
+  These cause 5 test-collection errors (test_ls2, test_ls2_kd, test_ph,
+  test_polarize, test_water) that predate this work. Want a separate pass to
+  finish the `oceancolor`→`ocpy` rename repo-wide? (see
+  [[ocpy-package-rename]])
+- `tara.spectra.spectbl_from_keys` does `val[mask] = np.nan` on a read-only
+  array from parquet → `ValueError`. Blocks `explore.prep_spectra` on parquet
+  input but is unrelated to the migration (needs a `.copy()`).
+- `tests/test_plot_oc_scene.py` has 4 failures (MODIS scene mock signature)
+  unrelated to spectra/tara.
 
 ## Planning
 
@@ -931,3 +969,34 @@ its columns and validated the adapters against the real table.
 
 Updated files: `ocpy/spectra/io.py`, `ocpy/tests/test_spectra.py`. Phase 3 is
 fully complete across all three sources. Git left to the user.
+
+### 2026-06-16 (Implement Phase 4: migrate callers & fix stale imports)
+
+Repointed `from oceancolor.tara import ...` → `from ocpy.tara import ...` in
+the four scoped files (`tara/explore.py`, `tara/measures.py`,
+`tests/test_tara.py`, `runs/Tara/Figures/py/figs_explore_tara.py`), and the
+two `oceancolor.utils` imports in the runs script. In `explore.py`, repointed
+the (always-broken) `rebin_to_grid` call to `ocpy.spectra.utils` and
+transposed the `spectra_from_table` output `(nwave, nspec)` → `(nspec, nwave)`
+for the new shape convention; confirmed on real Tara data that the result is
+`(nspec, nbin)` and the downstream `np.nansum(..., axis=-1)` still works.
+
+Dropped the dead `from IPython import embed` lines in `tara/spectra.py`,
+`hydrolight/loisel23.py`, and `tara/io.py`. Left `measures.py`'s import alone
+— it genuinely calls `embed()` at line 38.
+
+Added a small back-compat shim to `ocpy/tara/io.py` (module-level `db_name` +
+`load_tara_db` alias) so the migrated `test_tara`/`explore` resolve the
+pre-rename API. Flagged this as an extra beyond the named files.
+
+Verified: all migrated modules import; `pytest test_tara test_spectra` →
+38 passed, 5 skipped (test_tara skips with no local parquet); full suite shows
+no new regressions (the 5 collection errors and 4 `test_plot_oc_scene`
+failures are pre-existing and unrelated). Logged three pre-existing
+out-of-scope issues in the Implement Q&A (broad oceancolor rename debt;
+read-only-array bug in `spectbl_from_keys`; MODIS scene test failures).
+
+Changed files: `ocpy/tara/explore.py`, `ocpy/tara/measures.py`,
+`ocpy/tara/io.py`, `ocpy/tara/spectra.py`, `ocpy/hydrolight/loisel23.py`,
+`ocpy/tests/test_tara.py`, `runs/Tara/Figures/py/figs_explore_tara.py`. Git
+left to the user.

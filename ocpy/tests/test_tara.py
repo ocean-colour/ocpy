@@ -4,8 +4,8 @@ import os
 import numpy as np
 import pandas
 
-from oceancolor.tara import io 
-from oceancolor.tara import spectra
+from ocpy.tara import io
+from ocpy.tara import spectra
 
 import pytest
 

@@ -190,3 +190,24 @@ def test_load_rrs_satband_spectrum():
     if len(spec) > 0:
         assert spec.index.min() > 300.0
         assert spec.index.max() < 1200.0
+
+
+@needs_data
+def test_extract_hyperspectral():
+    from ocpy.spectra import Spectrum, SpectrumStack
+    # A high threshold keeps the selection small and fast.
+    data = panagea.extract_hyperspectral(nband=150)
+    assert isinstance(data, dict) and len(data) > 0
+    # Every record must have a hyperspectral Rrs Spectrum and a stack.
+    for obs_id, rec in data.items():
+        assert isinstance(rec['rrs'], Spectrum)
+        assert rec['n_rrs'] > 150
+        assert len(rec['rrs']) == rec['n_rrs']
+        assert rec['rrs'].units == '1/sr'
+        assert isinstance(rec['iops'], SpectrumStack)
+        assert rec['id'] == obs_id
+    # The IOP members (when present) should be 1/m absorption/scatter.
+    for rec in data.values():
+        for s in rec['iops']:
+            assert s.units == '1/m'
+            assert s.metadata.get('kind') in ('aph', 'acdom', 'bbp', 'kd')

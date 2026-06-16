@@ -47,6 +47,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 4. Read this doc.  Execute the 2nd task under "Implement".
 5. Read this doc.  Execute the 3rd task under "Implement".
 6. Read this doc.  Execute the 3rd task under "Explore".
+7. Read this doc.  Execute the 4th task under "Implement".
 
 ## Implement
 
@@ -639,3 +640,36 @@ The strong, physically-expected cross-dataset relationships (band ratio,
 aph-chl) also serve as an independent validation that the API's `ID`-based
 joins and wavelength parsing are correct. The earlier `PANAGEA_demo.ipynb`
 remains as the how-to-use-the-API reference.
+
+### 2026-06-16 (Hyperspectral Rrs + IOP extractor using ocpy.spectra)
+
+Executed Implement task 4. First explored the new `ocpy/spectra` package
+(`Spectrum`, `SpectrumStack`, and `ocpy.spectra.io.from_panagea` /
+`stack_from_panagea` adapters) and built on those tools rather than
+re-reading files.
+
+Added two methods to `ocpy/insitu/panagea.py`:
+- `n_spectral(df, kind)` — count valid spectral points per observation.
+- `extract_hyperspectral(nband, ...)` — the deliverable. Selects every
+  observation whose Rrs spectrum has **more than `nband`** valid
+  wavelengths, builds an `ocpy.spectra.Spectrum` for each via
+  `from_panagea`, gathers any co-located IOP spectra (`aph`/`acdom`/`bbp`/
+  `kd`) into a `SpectrumStack`, and attaches scalars. Returns a **dict keyed
+  by observation `ID`**, each value a record of Spectrum / SpectrumStack /
+  float / int: `id`, `rrs`, `n_rrs`, `iops`, `iop_kinds`, `tss`, `lat`,
+  `lon`, `depth`, `date`, `chla`.
+
+Notebook: `nb/PANAGEA/20_hyperspectral_extract.ipynb` — anatomy of a record,
+Rrs + companion IOP plots, collection summary, and building a gridded Rrs
+"library" via `SpectrumStack.rebin(...).as_array()`. Runs clean (3 plots,
+0 errors).
+
+Tests: added `test_extract_hyperspectral` (record types, units, n_rrs
+threshold, IOP member units/kinds). Full suite: **15 passed**.
+
+Key data finding (surfaced in the notebook): at `nband=50` there are **338**
+hyperspectral Rrs observations. Although 170 share an `ID` with the IOP
+table, only **3** carry spectral IOP data (all `aph`); the other 167 IOP
+rows hold only TSM — now captured as the scalar `tss`. So hyperspectral-Rrs
++ spectral-IOP match-ups are the scarcest, most valuable subset of PANAGEA.
+163 of the 338 do carry a chlorophyll value.

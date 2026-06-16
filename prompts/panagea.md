@@ -65,6 +65,13 @@ If you need to run Python, use the "ocean14" Conda environment.
     - Fix the gloria import
     - Log your work in the Logs section below.
 
+4. There will be a premium on extracting hyperspectral Rrs spectra from the dataset.  Devise a method that:
+
+    - Grabs all the Rrs spectra that have more than an input Nband wavelength values
+    - Grabs all associated IOP data
+    - Packages them up into a dictionary of np.array's, floats, ints, etc. one for each observation, indexed by the observation ID
+    - The spectra (Rrs, a, bb, etc) 
+
 ## Explore
 
 1. Begin by exploring the dataset.  Write a report of your findings in the Report section below.  If you have any questions, write them in the Q&A section below. Log your work.

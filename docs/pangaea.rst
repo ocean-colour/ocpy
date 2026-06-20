@@ -1,9 +1,9 @@
 =======================
-PANAGEA in situ dataset
+PANGAEA in situ dataset
 =======================
 
-The :mod:`ocpy.insitu.panagea` module provides a small, friendly API for the
-**PANAGEA** version-3 compilation of global bio-optical in situ data
+The :mod:`ocpy.insitu.pangaea` module provides a small, friendly API for the
+**PANGAEA** version-3 compilation of global bio-optical in situ data
 (Valente et al. 2022).
 
 * PANGAEA dataset: https://doi.org/10.1594/PANGAEA.941318
@@ -16,7 +16,7 @@ in coverage. It is distributed under CC-BY-4.0.
 Overview
 ========
 
-PANAGEA ships as **seven** tab-separated ``.tab`` files. Each file has a
+PANGAEA ships as **seven** tab-separated ``.tab`` files. Each file has a
 PANGAEA header block delimited by ``/* ... */``, then a single column-name
 line, then the data. Every file shares a global integer observation key
 ``ID``, so observations can be matched across files.
@@ -42,10 +42,10 @@ The data files are large and are **not** packaged with ``ocpy``. The loader
 resolves the ``V3`` directory in this order:
 
 #. an explicit ``path=`` argument, then
-#. ``$OS_COLOR/PANAGEA/V3``.
+#. ``$OS_COLOR/PANGAEA/V3``.
 
 The seven files are expected under ``<V3>/datasets/``. If neither candidate
-exists, :func:`~ocpy.insitu.panagea.panagea_path` raises ``FileNotFoundError``
+exists, :func:`~ocpy.insitu.pangaea.pangaea_path` raises ``FileNotFoundError``
 with the paths it tried.
 
 Loading a dataset
@@ -53,15 +53,15 @@ Loading a dataset
 
 .. code-block:: python
 
-   from ocpy.insitu import panagea
+   from ocpy.insitu import pangaea
 
    # List the available datasets.
-   panagea.file_catalog()
+   pangaea.file_catalog()
 
    # Load remote-sensing reflectance (native wavelengths).
-   df = panagea.load('rrs')          # indexed by observation ID
+   df = pangaea.load('rrs')          # indexed by observation ID
 
-Each :func:`~ocpy.insitu.panagea.load` call returns a
+Each :func:`~ocpy.insitu.pangaea.load` call returns a
 :class:`pandas.DataFrame`:
 
 * **indexed by** the global observation ``ID``;
@@ -72,23 +72,23 @@ Each :func:`~ocpy.insitu.panagea.load` call returns a
 * with **chlorophyll methods kept separate** (``chla_hplc``, ``chla_fluor``);
 * carrying the full per-column metadata in ``df.attrs['columns']`` (original
   PANGAEA name, unit, parsed wavelength, sensor and band), accessible via
-  :func:`~ocpy.insitu.panagea.column_metadata`.
+  :func:`~ocpy.insitu.pangaea.column_metadata`.
 
 The PANGAEA header length is detected automatically
-(:func:`~ocpy.insitu.panagea.find_header_end`), so no per-file ``skiprows``
+(:func:`~ocpy.insitu.pangaea.find_header_end`), so no per-file ``skiprows``
 is hard-coded.
 
 Extracting a spectrum
 =====================
 
 The primary use case is generating an individual spectrum for one
-observation. :func:`~ocpy.insitu.panagea.spectrum` returns a
+observation. :func:`~ocpy.insitu.pangaea.spectrum` returns a
 wavelength-indexed :class:`pandas.Series` with missing wavelengths dropped:
 
 .. code-block:: python
 
    obs_id = df.index[0]
-   spec = panagea.spectrum(df, obs_id, kind='rrs')
+   spec = pangaea.spectrum(df, obs_id, kind='rrs')
 
    import matplotlib.pyplot as plt
    plt.plot(spec.index, spec.values)
@@ -110,13 +110,13 @@ The ``kind`` argument selects the variable family:
 Long-format reshape
 ====================
 
-For cross-observation analysis, :func:`~ocpy.insitu.panagea.to_long`
+For cross-observation analysis, :func:`~ocpy.insitu.pangaea.to_long`
 reshapes one variable family into a tidy frame with columns ``ID``,
 ``wavelength``, ``value`` and (for sat-band data) ``sensor`` and ``band``:
 
 .. code-block:: python
 
-   long = panagea.to_long(df, kind='rrs')
+   long = pangaea.to_long(df, kind='rrs')
 
 API summary
 ===========
@@ -125,7 +125,7 @@ API summary
 Function                                      Purpose
 ============================================  ===============================================
 ``file_catalog()``                            Map short keys to filenames
-``panagea_path(path=None)``                   Resolve the ``V3`` data directory
+``pangaea_path(path=None)``                   Resolve the ``V3`` data directory
 ``dataset_file(key, path=None)``              Full path to one ``.tab`` file
 ``find_header_end(filename)``                 Detect the ``*/`` header terminator
 ``load(key, path=None)``                      Load a dataset into a tidy DataFrame
@@ -134,4 +134,5 @@ Function                                      Purpose
 ``column_metadata(df)``                       Per-column metadata mapping
 ============================================  ===============================================
 
-See also the demonstration notebook ``nb/PANAGEA/PANAGEA_demo.ipynb``.
+See also the demonstration notebook ``nb/PANAGEA/PANAGEA_demo.ipynb`` (kept under
+its original directory name; its code uses the former ``panagea`` import).

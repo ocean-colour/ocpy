@@ -14,7 +14,7 @@ Added
 ^^^^^
 
 * New ``spectra`` package: lightweight ``Spectrum`` / ``SpectrumStack``
-  classes, array-level helpers, PANAGEA / Loisel+2023 / Tara adapters, and
+  classes, array-level helpers, PANGAEA / Loisel+2023 / Tara adapters, and
   xarray / netCDF interop (``docs/spectra.rst``, ``api/spectra``).
 * Initial documentation with Sphinx and ReadTheDocs support
 * Comprehensive API reference documentation

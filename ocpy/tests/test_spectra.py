@@ -14,11 +14,11 @@ from ocpy.spectra import Spectrum, SpectrumStack
 from ocpy.spectra import io as spectra_io
 
 
-def _panagea_available():
-    """ True if the PANAGEA V3 directory can be resolved. """
+def _pangaea_available():
+    """ True if the PANGAEA V3 directory can be resolved. """
     try:
-        from ocpy.insitu import panagea
-        panagea.panagea_path()
+        from ocpy.insitu import pangaea
+        pangaea.pangaea_path()
         return True
     except Exception:
         return False
@@ -41,8 +41,8 @@ def _tara_path():
     return path if os.path.isfile(path) else None
 
 
-needs_panagea = pytest.mark.skipif(
-    not _panagea_available(), reason='requires the PANAGEA V3 data')
+needs_pangaea = pytest.mark.skipif(
+    not _pangaea_available(), reason='requires the PANGAEA V3 data')
 needs_loisel23 = pytest.mark.skipif(
     not _loisel23_available(), reason='requires the Loisel2023 data')
 needs_tara = pytest.mark.skipif(
@@ -371,16 +371,16 @@ def test_stack_netcdf_roundtrip(tmp_path):
 # --------------------------------------------------------------------
 # Source adapters (data-dependent; skip-guarded)
 # --------------------------------------------------------------------
-@needs_panagea
-def test_from_panagea():
-    from ocpy.insitu import panagea
-    df = panagea.load('rrs')
+@needs_pangaea
+def test_from_pangaea():
+    from ocpy.insitu import pangaea
+    df = pangaea.load('rrs')
     obs = df.index[0]
-    s = spectra_io.from_panagea(df, obs, kind='rrs')
+    s = spectra_io.from_pangaea(df, obs, kind='rrs')
     assert isinstance(s, Spectrum)
     assert len(s) > 0
     assert s.units == '1/sr'
-    assert s.source == 'PANAGEA'
+    assert s.source == 'PANGAEA'
     # Wavelengths sorted ascending.
     assert np.all(np.diff(s.wavelength) > 0)
     # xarray round trip works on a real spectrum.
@@ -388,12 +388,12 @@ def test_from_panagea():
     assert np.allclose(back.values, s.values)
 
 
-@needs_panagea
-def test_stack_from_panagea_subset():
-    from ocpy.insitu import panagea
-    df = panagea.load('rrs')
+@needs_pangaea
+def test_stack_from_pangaea_subset():
+    from ocpy.insitu import pangaea
+    df = pangaea.load('rrs')
     ids = df.index[:5]
-    stack = spectra_io.stack_from_panagea(df, kind='rrs', ids=ids)
+    stack = spectra_io.stack_from_pangaea(df, kind='rrs', ids=ids)
     assert isinstance(stack, SpectrumStack)
     assert len(stack) <= 5
 

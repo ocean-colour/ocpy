@@ -8,7 +8,7 @@ Spectra
 The ``spectra`` package provides two lightweight, numpy-backed containers --
 :class:`~ocpy.spectra.core.Spectrum` and
 :class:`~ocpy.spectra.core.SpectrumStack` -- together with array-level helper
-functions and adapters that build them from the PANAGEA, Loisel+2023, and
+functions and adapters that build them from the PANGAEA, Loisel+2023, and
 Tara Oceans datasets.
 
 Core classes
@@ -50,9 +50,9 @@ Source adapters
 .. module:: ocpy.spectra.io
    :synopsis: Build Spectrum / SpectrumStack from ocpy datasets
 
-.. autofunction:: ocpy.spectra.io.from_panagea
+.. autofunction:: ocpy.spectra.io.from_pangaea
 
-.. autofunction:: ocpy.spectra.io.stack_from_panagea
+.. autofunction:: ocpy.spectra.io.stack_from_pangaea
 
 .. autofunction:: ocpy.spectra.io.from_loisel23
 

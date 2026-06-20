@@ -1,7 +1,7 @@
-""" Tests for the PANAGEA dataset API (ocpy.insitu.panagea).
+""" Tests for the PANGAEA dataset API (ocpy.insitu.pangaea).
 
 The data files are large and not packaged, so the data-dependent tests are
-skipped automatically when the PANAGEA V3 directory is unavailable. The
+skipped automatically when the PANGAEA V3 directory is unavailable. The
 parsing/header tests run everywhere using synthetic inputs.
 """
 import os
@@ -10,13 +10,13 @@ import numpy as np
 import pandas
 import pytest
 
-from ocpy.insitu import panagea
+from ocpy.insitu import pangaea
 
 
 def _data_available():
-    """ Return True if the PANAGEA V3 directory can be resolved. """
+    """ Return True if the PANGAEA V3 directory can be resolved. """
     try:
-        panagea.panagea_path()
+        pangaea.pangaea_path()
         return True
     except FileNotFoundError:
         return False
@@ -24,19 +24,19 @@ def _data_available():
 
 data_present = _data_available()
 needs_data = pytest.mark.skipif(
-    not data_present, reason='requires the PANAGEA V3 data directory')
+    not data_present, reason='requires the PANGAEA V3 data directory')
 
 
 # --------------------------------------------------------------------
 # Data-independent tests (always run)
 # --------------------------------------------------------------------
 def test_file_catalog():
-    cat = panagea.file_catalog()
+    cat = pangaea.file_catalog()
     assert len(cat) == 7
     assert cat['rrs'] == 'insitudb_rrs_V3.tab'
     # Should be a copy: mutating it must not affect the module dict.
     cat['rrs'] = 'x'
-    assert panagea.FILE_CATALOG['rrs'] == 'insitudb_rrs_V3.tab'
+    assert pangaea.FILE_CATALOG['rrs'] == 'insitudb_rrs_V3.tab'
 
 
 def test_find_header_end(tmp_path):
@@ -48,14 +48,14 @@ def test_find_header_end(tmp_path):
         '*/\n'
         'ID (idx)\tDate/Time\tRRS [1/sr] (at 443nm)\n'
         '1\t1997-01-02T12:48\t0.01\n', encoding='utf-8')
-    n = panagea.find_header_end(str(p))
+    n = pangaea.find_header_end(str(p))
     assert n == 3
     df = pandas.read_csv(p, sep='\t', skiprows=n)
     assert list(df.columns)[0] == 'ID (idx)'
 
 
 def test_parse_native_spectral():
-    m = panagea._parse_column('RRS [1/sr] (at 349.01nm)')
+    m = pangaea._parse_column('RRS [1/sr] (at 349.01nm)')
     assert m['role'] == 'spectral'
     assert m['variable'] == 'rrs'
     assert m['wavelength'] == pytest.approx(349.01)
@@ -64,12 +64,12 @@ def test_parse_native_spectral():
 
 
 def test_parse_satband_pair():
-    val = panagea._parse_column('RRS [1/sr] (at +-2nm of OLCI-S3A band 11)')
+    val = pangaea._parse_column('RRS [1/sr] (at +-2nm of OLCI-S3A band 11)')
     assert val['role'] == 'spectral_band'
     assert val['variable'] == 'rrs'
     assert val['sensor'] == 'OLCI-S3A'
     assert val['band'] == '11'
-    lam = panagea._parse_column('Lambda [nm] (assigned to OLCI-S3A band 11)')
+    lam = pangaea._parse_column('Lambda [nm] (assigned to OLCI-S3A band 11)')
     assert lam['role'] == 'lambda'
     assert (lam['sensor'], lam['band']) == ('OLCI-S3A', '11')
     # The value and lambda columns must produce the same band token,
@@ -78,27 +78,27 @@ def test_parse_satband_pair():
 
 
 def test_parse_iop_satband_lambda_with_prefix():
-    lam = panagea._parse_column(
+    lam = pangaea._parse_column(
         'Lambda [nm] (aph, assigned to MERIS band MER1)')
     assert lam['role'] == 'lambda'
     assert (lam['sensor'], lam['band']) == ('MERIS', 'MER1')
 
 
 def test_parse_metadata_and_provenance():
-    assert panagea._parse_column('ID (idx)')['role'] == 'id'
-    assert panagea._parse_column('Date/Time')['friendly'] == 'date_time'
-    assert panagea._parse_column('Latitude')['friendly'] == 'lat'
-    assert panagea._parse_column('Depth water [m] (...)')['friendly'] \
+    assert pangaea._parse_column('ID (idx)')['role'] == 'id'
+    assert pangaea._parse_column('Date/Time')['friendly'] == 'date_time'
+    assert pangaea._parse_column('Latitude')['friendly'] == 'lat'
+    assert pangaea._parse_column('Depth water [m] (...)')['friendly'] \
         == 'depth_m'
-    prov = panagea._parse_column('Comment (chla_hplc_dataset)')
+    prov = pangaea._parse_column('Comment (chla_hplc_dataset)')
     assert prov['role'] == 'provenance'
     assert prov['friendly'] == 'chla_hplc_dataset'
 
 
 def test_parse_chla_methods_kept_separate():
-    hplc = panagea._parse_column(
+    hplc = pangaea._parse_column(
         'Chl a [mg/m**3] (High Performance Liquid Chrom...)')
-    fluor = panagea._parse_column(
+    fluor = pangaea._parse_column(
         'Chl a [mg/m**3] (Chlorophyll a, fluorometric o...)')
     assert hplc['friendly'] == 'chla_hplc'
     assert fluor['friendly'] == 'chla_fluor'
@@ -109,7 +109,7 @@ def test_build_columns_unique():
     # (this really happens in the IOP file's provenance comments).
     raw = ['Comment (dataset)',
            'Comment (dataset (tss = tsm in article))']
-    rename, meta = panagea._build_columns(raw)
+    rename, meta = pangaea._build_columns(raw)
     # Friendly names must be disambiguated to stay unique.
     assert len(set(rename.values())) == 2
 
@@ -117,8 +117,8 @@ def test_build_columns_unique():
 def test_pair_lambda_columns():
     raw = ['RRS [1/sr] (at +-2nm of OLCI-S3A band 11)',
            'Lambda [nm] (assigned to OLCI-S3A band 11)']
-    rename, meta = panagea._build_columns(raw)
-    meta = panagea._pair_lambda_columns(meta)
+    rename, meta = pangaea._build_columns(raw)
+    meta = pangaea._pair_lambda_columns(meta)
     val_name = rename[raw[0]]
     lam_name = rename[raw[1]]
     assert meta[val_name]['lambda_col'] == lam_name
@@ -134,7 +134,7 @@ def test_spectrum_native_synthetic():
         'rrs_490': {'variable': 'rrs', 'role': 'spectral',
                     'wavelength': 490.0},
     }
-    spec = panagea.spectrum(df, 5, kind='rrs')
+    spec = pangaea.spectrum(df, 5, kind='rrs')
     assert list(spec.index) == [443.0, 490.0]
     assert spec.loc[490.0] == pytest.approx(0.02)
 
@@ -151,7 +151,7 @@ def test_spectrum_satband_synthetic():
         'lambda_S_band1': {'variable': None, 'role': 'lambda',
                            'sensor': 'S', 'band': '1'},
     }
-    spec = panagea.spectrum(df, 9, kind='rrs')
+    spec = pangaea.spectrum(df, 9, kind='rrs')
     assert list(spec.index) == [444.2]
     assert spec.iloc[0] == pytest.approx(0.05)
 
@@ -161,7 +161,7 @@ def test_spectrum_satband_synthetic():
 # --------------------------------------------------------------------
 @needs_data
 def test_load_chla():
-    df = panagea.load('chla')
+    df = pangaea.load('chla')
     assert isinstance(df, pandas.DataFrame)
     assert df.index.name == 'ID'
     # Friendly names present.
@@ -172,9 +172,9 @@ def test_load_chla():
 
 @needs_data
 def test_load_rrs_and_spectrum():
-    df = panagea.load('rrs')
+    df = pangaea.load('rrs')
     obs = df.index[0]
-    spec = panagea.spectrum(df, obs, kind='rrs')
+    spec = pangaea.spectrum(df, obs, kind='rrs')
     assert isinstance(spec, pandas.Series)
     assert spec.index.is_monotonic_increasing
     assert np.all(np.isfinite(spec.values))
@@ -182,10 +182,10 @@ def test_load_rrs_and_spectrum():
 
 @needs_data
 def test_load_rrs_satband_spectrum():
-    df = panagea.load('rrs_sat2')
+    df = pangaea.load('rrs_sat2')
     assert df.attrs['is_satband'] is True
     obs = df.index[0]
-    spec = panagea.spectrum(df, obs, kind='rrs')
+    spec = pangaea.spectrum(df, obs, kind='rrs')
     # Wavelengths should fall in a sensible optical range.
     if len(spec) > 0:
         assert spec.index.min() > 300.0
@@ -196,7 +196,7 @@ def test_load_rrs_satband_spectrum():
 def test_extract_hyperspectral():
     from ocpy.spectra import Spectrum, SpectrumStack
     # A high threshold keeps the selection small and fast.
-    data = panagea.extract_hyperspectral(nband=150)
+    data = pangaea.extract_hyperspectral(nband=150)
     assert isinstance(data, dict) and len(data) > 0
     # Every record must have a hyperspectral Rrs Spectrum and a stack.
     for obs_id, rec in data.items():

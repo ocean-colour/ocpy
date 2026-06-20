@@ -103,12 +103,12 @@ the classes:
 .. code-block:: python
 
    from ocpy.spectra import io as spectra_io
-   from ocpy.insitu import panagea
+   from ocpy.insitu import pangaea
    from ocpy.hydrolight import loisel23
 
-   # PANAGEA
-   df = panagea.load('rrs')
-   rrs = spectra_io.from_panagea(df, df.index[0], kind='rrs')
+   # PANGAEA
+   df = pangaea.load('rrs')
+   rrs = spectra_io.from_pangaea(df, df.index[0], kind='rrs')
 
    # Loisel+2023 (one Lambda grid; units passed explicitly)
    ds = loisel23.load_ds(1, 0)

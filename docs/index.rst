@@ -87,7 +87,7 @@ Documentation Contents
    user_guide/tara_data
    user_guide/hydrolight
    user_guide/hypera
-   panagea
+   pangaea
    spectra
 
 .. toctree::

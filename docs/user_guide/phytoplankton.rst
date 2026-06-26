@@ -27,7 +27,7 @@ The standard model relating chlorophyll to phytoplankton absorption:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ph.absorption import load_bricaud1998
+   from ocpy.ph.absorption import load_bricaud1998
 
    # Load the Bricaud 1998 dataset
    bricaud = load_bricaud1998()
@@ -59,7 +59,7 @@ Other Datasets
 
 .. code-block:: python
 
-   from oceancolor.ph import load_data
+   from ocpy.ph import load_data
 
    # Stramski 2001 - single cell measurements
    stramski = load_data.stramski2001()
@@ -79,7 +79,7 @@ The relationship between chlorophyll and absorption varies with phytoplankton co
 
    import numpy as np
    import matplotlib.pyplot as plt
-   from oceancolor.ph.absorption import load_bricaud1998
+   from ocpy.ph.absorption import load_bricaud1998
 
    bricaud = load_bricaud1998()
    wavelengths = bricaud['wavelength']
@@ -160,7 +160,7 @@ Phytoplankton absorption can be decomposed into Gaussian pigment peaks:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ph import pigments
+   from ocpy.ph import pigments
 
    wavelengths = np.arange(400, 701, 2)
 
@@ -187,7 +187,7 @@ Fit measured absorption spectra to extract pigment information:
 
 .. code-block:: python
 
-   from oceancolor.ph import pigments
+   from ocpy.ph import pigments
    import numpy as np
 
    # Measured phytoplankton absorption
@@ -324,7 +324,7 @@ Estimate chlorophyll from phytoplankton absorption:
 
        Inverts the Bricaud relationship.
        """
-       from oceancolor.ph.absorption import load_bricaud1998
+       from ocpy.ph.absorption import load_bricaud1998
 
        if method == 'bricaud':
            bricaud = load_bricaud1998()
@@ -366,16 +366,16 @@ Integrate phytoplankton absorption with LS2 retrievals:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2 import ls2_main, io as ls2_io
-   from oceancolor.iop import cdom
+   from ocpy.ls2 import ls2_main, io as ls2_io
+   from ocpy.iop import cdom
 
    def retrieve_a_ph(wavelengths, Rrs, sza):
        """Retrieve phytoplankton absorption from Rrs.
 
        Uses LS2 for total absorption, then partitions.
        """
-       from oceancolor.water import absorption
-       from oceancolor.ls2.kd_nn import Kd_NN_MODIS
+       from ocpy.water import absorption
+       from ocpy.ls2.kd_nn import Kd_NN_MODIS
 
        # Load LUT
        LUT = ls2_io.load_LUT()

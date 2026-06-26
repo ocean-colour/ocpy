@@ -496,8 +496,8 @@ References
 ----------
 
 * Bokeh Documentation: https://docs.bokeh.org/
-* PACE Data User Guide: https://oceancolor.gsfc.nasa.gov/data/pace/
-* MODIS Ocean Color: https://oceancolor.gsfc.nasa.gov/data/aqua/
+* PACE Data User Guide: https://ocpy.gsfc.nasa.gov/data/pace/
+* MODIS Ocean Color: https://ocpy.gsfc.nasa.gov/data/aqua/
 
 See Also
 --------

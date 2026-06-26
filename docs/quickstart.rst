@@ -28,7 +28,7 @@ Get absorption and scattering coefficients for pure seawater:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water import absorption, scattering
+   from ocpy.water import absorption, scattering
 
    # Define wavelengths
    wavelengths = np.arange(400, 701, 10)  # 400-700 nm in 10 nm steps
@@ -52,7 +52,7 @@ Estimate chlorophyll-a concentration from Rrs using band-ratio algorithms:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.chl import band_ratios
+   from ocpy.chl import band_ratios
 
    # Example Rrs at standard wavelengths
    wave = np.array([443, 490, 510, 555, 670])
@@ -74,8 +74,8 @@ Derive inherent optical properties from Rrs using the LS2 model:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2 import ls2_main, io as ls2_io
-   from oceancolor.water import absorption
+   from ocpy.ls2 import ls2_main, io as ls2_io
+   from ocpy.water import absorption
 
    # Load the LS2 look-up tables
    LUT = ls2_io.load_LUT()
@@ -121,8 +121,8 @@ Work with phytoplankton absorption spectra:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ph import absorption as ph_abs
-   from oceancolor.ph import pigments
+   from ocpy.ph import absorption as ph_abs
+   from ocpy.ph import pigments
 
    # Load Bricaud 1998 reference data
    bricaud_data = ph_abs.load_bricaud1998()
@@ -145,7 +145,7 @@ Model CDOM (colored dissolved organic matter) absorption:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.iop import cdom
+   from ocpy.iop import cdom
 
    wavelengths = np.arange(350, 701, 5)
 
@@ -170,8 +170,8 @@ Load and work with PACE satellite data:
 
 .. code-block:: python
 
-   from oceancolor.pace import io as pace_io
-   from oceancolor.satellites import pace
+   from ocpy.pace import io as pace_io
+   from ocpy.satellites import pace
 
    # Generate PACE wavelength array
    wave = pace.wave(wv_min=400, wv_max=700, step=5)
@@ -189,7 +189,7 @@ Work with satellite matchup data:
 
 .. code-block:: python
 
-   from oceancolor.satellites import modis, seawifs
+   from ocpy.satellites import modis, seawifs
 
    # Load MODIS matchup dataset
    modis_data = modis.load_matchups()
@@ -204,8 +204,8 @@ Load and analyze Tara Oceans expedition data:
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra, measures
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra, measures
 
    # Load the Tara database
    tara_db = tara_io.load_db(dataset='pg')  # Patrick Gray database
@@ -227,7 +227,7 @@ Access Loisel+2023 Hydrolight radiative transfer simulations:
    # First, ensure OS_COLOR environment variable is set
    # os.environ['OS_COLOR'] = '/path/to/loisel2023/data'
 
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    # Load dataset
    # X: 1=no inelastic, 2=Raman, 4=Raman+fluorescence
@@ -248,8 +248,8 @@ Process Hyper-a integrating cavity absorption meter data:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import io as hypera_io
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import io as hypera_io
+   from ocpy.hyper_a import process
 
    # Load calibration and data
    cal = hypera_io.load_calibration('path/to/calibration.mat')
@@ -276,8 +276,8 @@ Create publication-quality plots:
 
    import numpy as np
    import matplotlib.pyplot as plt
-   from oceancolor.water import absorption
-   from oceancolor.utils import plotting
+   from ocpy.water import absorption
+   from ocpy.utils import plotting
 
    wavelengths = np.arange(400, 701, 5)
    a_w = absorption.a_water(wavelengths, data='IOCCG')

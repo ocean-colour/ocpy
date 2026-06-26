@@ -2,7 +2,7 @@
 Satellites
 ==========
 
-.. module:: oceancolor.satellites
+.. module:: ocpy.satellites
    :synopsis: Satellite sensor utilities
 
 The ``satellites`` module provides utilities for working with ocean color satellite
@@ -11,14 +11,14 @@ data from various sensors.
 PACE
 ----
 
-.. module:: oceancolor.satellites.pace
+.. module:: ocpy.satellites.pace
    :synopsis: PACE satellite utilities
 
 Functions for the Plankton, Aerosol, Cloud, ocean Ecosystem (PACE) mission.
 
-.. autofunction:: oceancolor.satellites.pace.wave
+.. autofunction:: ocpy.satellites.pace.wave
 
-.. autofunction:: oceancolor.satellites.pace.gen_noise_vector
+.. autofunction:: ocpy.satellites.pace.gen_noise_vector
 
 PACE Overview
 ^^^^^^^^^^^^^
@@ -37,7 +37,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.satellites import pace
+   from ocpy.satellites import pace
 
    # Generate PACE OCI wavelength array
    wavelengths = pace.wave(wv_min=400, wv_max=700, step=5)
@@ -58,14 +58,14 @@ Example Usage
 MODIS
 -----
 
-.. module:: oceancolor.satellites.modis
+.. module:: ocpy.satellites.modis
    :synopsis: MODIS satellite utilities
 
 Functions for the Moderate Resolution Imaging Spectroradiometer (MODIS).
 
-.. autofunction:: oceancolor.satellites.modis.load_matchups
+.. autofunction:: ocpy.satellites.modis.load_matchups
 
-.. autofunction:: oceancolor.satellites.modis.calc_errors
+.. autofunction:: ocpy.satellites.modis.calc_errors
 
 MODIS Specifications
 ^^^^^^^^^^^^^^^^^^^^
@@ -109,7 +109,7 @@ Example Usage
 
 .. code-block:: python
 
-   from oceancolor.satellites import modis
+   from ocpy.satellites import modis
 
    # Load in-situ matchup data
    matchups = modis.load_matchups()
@@ -122,14 +122,14 @@ Example Usage
 SeaWiFS
 -------
 
-.. module:: oceancolor.satellites.seawifs
+.. module:: ocpy.satellites.seawifs
    :synopsis: SeaWiFS satellite utilities
 
 Functions for the Sea-viewing Wide Field-of-view Sensor (SeaWiFS).
 
-.. autofunction:: oceancolor.satellites.seawifs.load_matchups
+.. autofunction:: ocpy.satellites.seawifs.load_matchups
 
-.. autofunction:: oceancolor.satellites.seawifs.calc_errors
+.. autofunction:: ocpy.satellites.seawifs.calc_errors
 
 SeaWiFS Legacy
 ^^^^^^^^^^^^^^
@@ -152,7 +152,7 @@ Example Usage
 
 .. code-block:: python
 
-   from oceancolor.satellites import seawifs
+   from ocpy.satellites import seawifs
 
    # Load matchup data
    matchups = seawifs.load_matchups()
@@ -163,22 +163,22 @@ Example Usage
 SBG
 ---
 
-.. module:: oceancolor.satellites.sbg
+.. module:: ocpy.satellites.sbg
    :synopsis: SBG satellite utilities
 
 Functions for the Surface Biology and Geology (SBG) mission.
 
-.. autofunction:: oceancolor.satellites.sbg.gen_noise_vector
+.. autofunction:: ocpy.satellites.sbg.gen_noise_vector
 
 Utilities
 ---------
 
-.. module:: oceancolor.satellites.utils
+.. module:: ocpy.satellites.utils
    :synopsis: Satellite utility functions
 
 Common utility functions for satellite data processing.
 
-.. autofunction:: oceancolor.satellites.utils.calc_stats
+.. autofunction:: ocpy.satellites.utils.calc_stats
 
 Error Characterization
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -187,7 +187,7 @@ Understanding satellite uncertainties is crucial for algorithm development:
 
 .. code-block:: python
 
-   from oceancolor.satellites import utils
+   from ocpy.satellites import utils
 
    # Calculate statistics from matchup data
    stats = utils.calc_stats(

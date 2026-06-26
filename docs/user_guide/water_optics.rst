@@ -28,7 +28,7 @@ ocpy provides two standard reference datasets:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water import absorption
+   from ocpy.water import absorption
 
    # Define wavelengths
    wavelengths = np.arange(400, 701, 5)
@@ -92,7 +92,7 @@ The standard model for pure seawater scattering:
 
 .. code-block:: python
 
-   from oceancolor.water.scattering import betasw_ZHH2009
+   from ocpy.water.scattering import betasw_ZHH2009
 
    wavelengths = np.arange(400, 701, 10)
 
@@ -115,7 +115,7 @@ Water scattering varies with environmental conditions:
 
 .. code-block:: python
 
-   from oceancolor.water.scattering import betasw_ZHH2009
+   from ocpy.water.scattering import betasw_ZHH2009
    import numpy as np
    import matplotlib.pyplot as plt
 
@@ -155,7 +155,7 @@ The refractive index of seawater is needed for scattering calculations:
 
 .. code-block:: python
 
-   from oceancolor.water.scattering import RInw
+   from ocpy.water.scattering import RInw
 
    wavelengths = np.array([400, 500, 600, 700])
    n_water = RInw(wavelengths, Tc=20, S=35)
@@ -177,7 +177,7 @@ For ocean color modeling, you often need both properties together:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water import absorption, scattering
+   from ocpy.water import absorption, scattering
 
    def get_water_iops(wavelengths, T=20, S=35):
        """Get pure water inherent optical properties.

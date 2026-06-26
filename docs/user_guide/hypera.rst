@@ -39,7 +39,7 @@ Loading Data
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import io as hypera_io
+   from ocpy.hyper_a import io as hypera_io
 
    # Load calibration file
    calibration = hypera_io.load_calibration('path/to/calibration.mat')
@@ -64,8 +64,8 @@ Basic Processing
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import io as hypera_io
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import io as hypera_io
+   from ocpy.hyper_a import process
 
    # Load calibration and data
    cal = hypera_io.load_calibration('calibration.mat')
@@ -104,7 +104,7 @@ Linearity Correction
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import linearity_correct_pixels
+   from ocpy.hyper_a.lib import linearity_correct_pixels
 
    # Apply detector linearity correction
    corrected_data = linearity_correct_pixels(raw_data)
@@ -114,7 +114,7 @@ Dark Correction
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import dark_correct_spectrum
+   from ocpy.hyper_a.lib import dark_correct_spectrum
 
    # Remove dark current
    corrected_spectrum = dark_correct_spectrum(data)
@@ -124,7 +124,7 @@ Pure Water Absorption
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import get_ioccg_aw
+   from ocpy.hyper_a.lib import get_ioccg_aw
 
    # Get pure water absorption for subtraction
    wavelengths = np.arange(380, 711, 2)
@@ -137,7 +137,7 @@ Transmission and Absorption
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import compute_transmission, compute_absorption
+   from ocpy.hyper_a.lib import compute_transmission, compute_absorption
 
    # Calculate transmission
    transmission = compute_transmission(
@@ -160,7 +160,7 @@ Chlorophyll fluorescence near 685 nm can artificially lower apparent absorption:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import compute_chl_fluorescence_correction
+   from ocpy.hyper_a.lib import compute_chl_fluorescence_correction
 
    # Calculate fluorescence correction
    correction = compute_chl_fluorescence_correction(
@@ -182,7 +182,7 @@ Sphere reflectivity is determined using neutral density filters:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import process
 
    # Calculate reflectivity from ND spot measurement
    rho = process.rho_from_nd_spot(
@@ -199,7 +199,7 @@ Pure water absorption changes with temperature:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import get_ioccg_aw
+   from ocpy.hyper_a.lib import get_ioccg_aw
    import numpy as np
    import matplotlib.pyplot as plt
 
@@ -225,7 +225,7 @@ For depth profiles with varying temperature and salinity:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import process
    import numpy as np
 
    # CTD data
@@ -310,8 +310,8 @@ Batch Processing
    import glob
    import numpy as np
    import pandas as pd
-   from oceancolor.hyper_a import io as hypera_io
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import io as hypera_io
+   from ocpy.hyper_a import process
 
    def batch_process_hypera(data_dir, cal_file, output_file,
                             T=20.0, S=35.0):
@@ -370,9 +370,9 @@ Combining Hyper-a data with other ocpy functions:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import process
-   from oceancolor.iop import cdom
-   from oceancolor.ph import pigments
+   from ocpy.hyper_a import process
+   from ocpy.iop import cdom
+   from ocpy.ph import pigments
    import numpy as np
 
    # Get Hyper-a particulate absorption

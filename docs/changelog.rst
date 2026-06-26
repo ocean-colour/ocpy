@@ -13,10 +13,20 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 Added
 ^^^^^
 
+* New ``spectra`` package: lightweight ``Spectrum`` / ``SpectrumStack``
+  classes, array-level helpers, PANGAEA / Loisel+2023 / Tara adapters, and
+  xarray / netCDF interop (``docs/spectra.rst``, ``api/spectra``).
 * Initial documentation with Sphinx and ReadTheDocs support
 * Comprehensive API reference documentation
 * User guides for all major modules
 * Installation and quickstart guides
+
+Changed
+^^^^^^^
+
+* Moved the spectral rebinning helpers from ``ocpy.utils.spectra`` to
+  ``ocpy.spectra.utils``; ``rebin_to_grid`` now uses a consistent
+  spectrum-major ``(nspec, nwave)`` shape.
 
 [0.1.dev0] - Development
 ------------------------

@@ -3,8 +3,9 @@
 import numpy as np
 import warnings
 
-from oceancolor.tara import io 
-from oceancolor.tara import  spectra
+from ocpy.tara import io
+from ocpy.tara import spectra
+from ocpy.spectra import utils as spectra_utils
 
 try:
     import sequencer
@@ -22,9 +23,13 @@ def prep_spectra(wv_grid:np.ndarray=None, min_sn:float=1.,
     # Load the data
     tara_db = io.load_tara_db()
 
-    # Process to common wavelengths
+    # Process to common wavelengths.
+    # spectra_from_table returns values as (nwave, nspec); rebin_to_grid now
+    # expects spectrum-major (nspec, nwave), so transpose the inputs. The
+    # output is (nspec, nbin), matching the downstream axis usage below.
     wv_nm, all_a_ph, all_a_ph_sig = spectra.spectra_from_table(tara_db)
-    rwv_nm, r_aph, r_sig = spectra.rebin_to_grid(wv_nm, all_a_ph, all_a_ph_sig, wv_grid) 
+    rwv_nm, r_aph, r_sig = spectra_utils.rebin_to_grid(
+        wv_nm, all_a_ph.T, all_a_ph_sig.T, wv_grid)
 
     # Cull bad spectra
     tot_spec = np.nansum(r_aph, axis=-1)

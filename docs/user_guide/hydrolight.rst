@@ -45,7 +45,7 @@ Loading Data
    import os
    os.environ['OS_COLOR'] = '/path/to/data'  # Set your path
 
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    # Load dataset
    # X: inelastic scattering scenario
@@ -124,7 +124,7 @@ Parameter Distributions
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    ds = loisel23.load_ds(X=2, Y=30)
    chl = loisel23.calc_Chl(ds)
@@ -177,8 +177,8 @@ Use simulations to test retrieval algorithms:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.hydrolight import loisel23
-   from oceancolor.chl.band_ratios import oc4
+   from ocpy.hydrolight import loisel23
+   from ocpy.chl.band_ratios import oc4
 
    ds = loisel23.load_ds(X=2, Y=30)
    chl_true = loisel23.calc_Chl(ds).values
@@ -238,7 +238,7 @@ Study the effects of inelastic scattering:
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    # Load scenarios
    ds_no_inelastic = loisel23.load_ds(X=1, Y=30)
@@ -283,7 +283,7 @@ Sun Angle Effects
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -306,7 +306,7 @@ Working with subsets for specific water types:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    ds = loisel23.load_ds(X=2, Y=30)
    chl = loisel23.calc_Chl(ds)
@@ -333,7 +333,7 @@ Use the simulations for training ML models:
    import numpy as np
    from sklearn.model_selection import train_test_split
    from sklearn.ensemble import RandomForestRegressor
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    ds = loisel23.load_ds(X=2, Y=30)
    chl = loisel23.calc_Chl(ds).values

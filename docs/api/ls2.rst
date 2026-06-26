@@ -2,7 +2,7 @@
 LS2 Inversion Model
 ===================
 
-.. module:: oceancolor.ls2
+.. module:: ocpy.ls2
    :synopsis: LS2 model for IOP retrieval from Rrs
 
 The ``ls2`` module implements the LS2 (Loisel-Stramski version 2) semi-analytical algorithm
@@ -29,14 +29,14 @@ to relate Rrs to IOPs, accounting for:
 Main Algorithm
 --------------
 
-.. module:: oceancolor.ls2.ls2_main
+.. module:: ocpy.ls2.ls2_main
    :synopsis: Core LS2 inversion algorithm
 
-.. autofunction:: oceancolor.ls2.ls2_main.LS2_main
+.. autofunction:: ocpy.ls2.ls2_main.LS2_main
 
-.. autofunction:: oceancolor.ls2.ls2_main.LS2_seek_pos
+.. autofunction:: ocpy.ls2.ls2_main.LS2_seek_pos
 
-.. autofunction:: oceancolor.ls2.ls2_main.LS2_calc_kappa
+.. autofunction:: ocpy.ls2.ls2_main.LS2_calc_kappa
 
 Algorithm Details
 ^^^^^^^^^^^^^^^^^
@@ -67,8 +67,8 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2 import ls2_main, io as ls2_io
-   from oceancolor.water import absorption
+   from ocpy.ls2 import ls2_main, io as ls2_io
+   from ocpy.water import absorption
 
    # Load LUTs
    LUT = ls2_io.load_LUT()
@@ -100,12 +100,12 @@ Example Usage
 I/O Functions
 -------------
 
-.. module:: oceancolor.ls2.io
+.. module:: ocpy.ls2.io
    :synopsis: LS2 look-up table loading
 
-.. autofunction:: oceancolor.ls2.io.load_LUT
+.. autofunction:: ocpy.ls2.io.load_LUT
 
-.. autofunction:: oceancolor.ls2.io.load_Kd_tables
+.. autofunction:: ocpy.ls2.io.load_Kd_tables
 
 Look-up Tables
 ^^^^^^^^^^^^^^
@@ -121,7 +121,7 @@ Loading the LUTs:
 
 .. code-block:: python
 
-   from oceancolor.ls2.io import load_LUT, load_Kd_tables
+   from ocpy.ls2.io import load_LUT, load_Kd_tables
 
    # Load main LS2 look-up tables
    LUT = load_LUT()
@@ -132,17 +132,17 @@ Loading the LUTs:
 Kd Neural Network
 -----------------
 
-.. module:: oceancolor.ls2.kd_nn
+.. module:: ocpy.ls2.kd_nn
    :synopsis: Neural network for Kd estimation
 
 The Kd neural network provides estimates of the diffuse attenuation coefficient (Kd)
 from Rrs, which is required as input to the LS2 algorithm.
 
-.. autofunction:: oceancolor.ls2.kd_nn.load_weights
+.. autofunction:: ocpy.ls2.kd_nn.load_weights
 
-.. autofunction:: oceancolor.ls2.kd_nn.Kd_NN_MODIS
+.. autofunction:: ocpy.ls2.kd_nn.Kd_NN_MODIS
 
-.. autofunction:: oceancolor.ls2.kd_nn.MLP_Kd
+.. autofunction:: ocpy.ls2.kd_nn.MLP_Kd
 
 Neural Network Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -161,7 +161,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2.kd_nn import Kd_NN_MODIS, load_weights
+   from ocpy.ls2.kd_nn import Kd_NN_MODIS, load_weights
 
    # Load weights
    weights_clear = load_weights('clear')

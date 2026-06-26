@@ -2,7 +2,7 @@
 Hydrolight Simulations
 ======================
 
-.. module:: oceancolor.hydrolight
+.. module:: ocpy.hydrolight
    :synopsis: Hydrolight radiative transfer data
 
 The ``hydrolight`` module provides access to Hydrolight radiative transfer simulation
@@ -11,15 +11,15 @@ datasets, particularly the Loisel+2023 compilation.
 Loisel+2023 Dataset
 -------------------
 
-.. module:: oceancolor.hydrolight.loisel23
+.. module:: ocpy.hydrolight.loisel23
    :synopsis: Loisel+2023 Hydrolight datasets
 
 The Loisel et al. (2023) dataset contains extensive Hydrolight simulations spanning
 a wide range of oceanic conditions.
 
-.. autofunction:: oceancolor.hydrolight.loisel23.load_ds
+.. autofunction:: ocpy.hydrolight.loisel23.load_ds
 
-.. autofunction:: oceancolor.hydrolight.loisel23.calc_Chl
+.. autofunction:: ocpy.hydrolight.loisel23.calc_Chl
 
 Dataset Organization
 ^^^^^^^^^^^^^^^^^^^^
@@ -63,7 +63,7 @@ Example Usage
    import os
    os.environ['OS_COLOR'] = '/path/to/data'
 
-   from oceancolor.hydrolight import loisel23
+   from ocpy.hydrolight import loisel23
 
    # Load dataset with Raman scattering, 30° solar zenith
    ds = loisel23.load_ds(X=2, Y=30)
@@ -204,8 +204,8 @@ Use the simulations to develop and test retrieval algorithms:
 
 .. code-block:: python
 
-   from oceancolor.hydrolight import loisel23
-   from oceancolor.chl import band_ratios
+   from ocpy.hydrolight import loisel23
+   from ocpy.chl import band_ratios
    import numpy as np
 
    # Load simulations

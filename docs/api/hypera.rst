@@ -2,7 +2,7 @@
 Hyper-a Absorption Meter
 =========================
 
-.. module:: oceancolor.hyper_a
+.. module:: ocpy.hyper_a
    :synopsis: Hyper-a integrating cavity absorption meter
 
 The ``hyper_a`` module provides tools for processing data from the Hyper-a integrating
@@ -25,41 +25,41 @@ Key features:
 Data I/O
 --------
 
-.. module:: oceancolor.hyper_a.io
+.. module:: ocpy.hyper_a.io
    :synopsis: Hyper-a file reading and calibration
 
 Data Classes
 ^^^^^^^^^^^^
 
-.. autoclass:: oceancolor.hyper_a.io.HyperaConfig
+.. autoclass:: ocpy.hyper_a.io.HyperaConfig
    :members:
    :undoc-members:
 
-.. autoclass:: oceancolor.hyper_a.io.HyperaCalibration
+.. autoclass:: ocpy.hyper_a.io.HyperaCalibration
    :members:
    :undoc-members:
 
-.. autoclass:: oceancolor.hyper_a.io.HyperaData
+.. autoclass:: ocpy.hyper_a.io.HyperaData
    :members:
    :undoc-members:
 
 I/O Functions
 ^^^^^^^^^^^^^
 
-.. autofunction:: oceancolor.hyper_a.io.read_bin
+.. autofunction:: ocpy.hyper_a.io.read_bin
 
-.. autofunction:: oceancolor.hyper_a.io.load_calibration
+.. autofunction:: ocpy.hyper_a.io.load_calibration
 
-.. autofunction:: oceancolor.hyper_a.io.load_mat_data
+.. autofunction:: ocpy.hyper_a.io.load_mat_data
 
-.. autofunction:: oceancolor.hyper_a.io.import_hypera_data
+.. autofunction:: ocpy.hyper_a.io.import_hypera_data
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import io as hypera_io
+   from ocpy.hyper_a import io as hypera_io
 
    # Load calibration file
    calibration = hypera_io.load_calibration('path/to/calibration.mat')
@@ -73,34 +73,34 @@ Example Usage
 Core Processing
 ---------------
 
-.. module:: oceancolor.hyper_a.lib
+.. module:: ocpy.hyper_a.lib
    :synopsis: Hyper-a core processing functions
 
 Optical Functions
 ^^^^^^^^^^^^^^^^^
 
-.. autofunction:: oceancolor.hyper_a.lib.get_ioccg_aw
+.. autofunction:: ocpy.hyper_a.lib.get_ioccg_aw
 
-.. autofunction:: oceancolor.hyper_a.lib.ps
+.. autofunction:: ocpy.hyper_a.lib.ps
 
-.. autofunction:: oceancolor.hyper_a.lib.compute_transmission
+.. autofunction:: ocpy.hyper_a.lib.compute_transmission
 
-.. autofunction:: oceancolor.hyper_a.lib.compute_absorption
+.. autofunction:: ocpy.hyper_a.lib.compute_absorption
 
-.. autofunction:: oceancolor.hyper_a.lib.compute_rho
+.. autofunction:: ocpy.hyper_a.lib.compute_rho
 
 Data Corrections
 ^^^^^^^^^^^^^^^^
 
-.. autofunction:: oceancolor.hyper_a.lib.linearity_correct_pixels
+.. autofunction:: ocpy.hyper_a.lib.linearity_correct_pixels
 
-.. autofunction:: oceancolor.hyper_a.lib.dark_correct_spectrum
+.. autofunction:: ocpy.hyper_a.lib.dark_correct_spectrum
 
-.. autofunction:: oceancolor.hyper_a.lib.interpolate_pixels_to_cal_wls
+.. autofunction:: ocpy.hyper_a.lib.interpolate_pixels_to_cal_wls
 
-.. autofunction:: oceancolor.hyper_a.lib.get_median_of_filter_runs
+.. autofunction:: ocpy.hyper_a.lib.get_median_of_filter_runs
 
-.. autofunction:: oceancolor.hyper_a.lib.compute_chl_fluorescence_correction
+.. autofunction:: ocpy.hyper_a.lib.compute_chl_fluorescence_correction
 
 Processing Theory
 ^^^^^^^^^^^^^^^^^
@@ -126,32 +126,32 @@ The absorption is computed from:
 Main Processing Workflow
 ------------------------
 
-.. module:: oceancolor.hyper_a.process
+.. module:: ocpy.hyper_a.process
    :synopsis: Hyper-a main processing workflow
 
 Result Container
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: oceancolor.hyper_a.process.HyperaResult
+.. autoclass:: ocpy.hyper_a.process.HyperaResult
    :members:
    :undoc-members:
 
 Processing Functions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: oceancolor.hyper_a.process.process
+.. autofunction:: ocpy.hyper_a.process.process
 
-.. autofunction:: oceancolor.hyper_a.process.rho_from_nd_spot
+.. autofunction:: ocpy.hyper_a.process.rho_from_nd_spot
 
-.. autofunction:: oceancolor.hyper_a.process.process_with_variable_ts
+.. autofunction:: ocpy.hyper_a.process.process_with_variable_ts
 
 Example Processing
 ^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import io as hypera_io
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import io as hypera_io
+   from ocpy.hyper_a import process
 
    # Load calibration and data
    cal = hypera_io.load_calibration('calibration.mat')
@@ -184,7 +184,7 @@ For variable temperature and salinity during a cast:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import process
    import numpy as np
 
    # CTD data along the cast
@@ -212,7 +212,7 @@ The integrating sphere reflectivity (ρ) is determined using neutral density fil
 
 .. code-block:: python
 
-   from oceancolor.hyper_a import process
+   from ocpy.hyper_a import process
 
    # Calculate reflectivity from ND spot calibration
    rho = process.rho_from_nd_spot(
@@ -226,7 +226,7 @@ The instrument is referenced against pure water absorption:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import get_ioccg_aw
+   from ocpy.hyper_a.lib import get_ioccg_aw
 
    # Get IOCCG pure water absorption
    wavelengths = np.arange(380, 711, 2)
@@ -241,7 +241,7 @@ Corrects for detector non-linearity at high signal levels:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import linearity_correct_pixels
+   from ocpy.hyper_a.lib import linearity_correct_pixels
 
    corrected_data = linearity_correct_pixels(raw_data)
 
@@ -251,7 +251,7 @@ Removes dark current and stray light:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import dark_correct_spectrum
+   from ocpy.hyper_a.lib import dark_correct_spectrum
 
    corrected_spectrum = dark_correct_spectrum(data)
 
@@ -261,7 +261,7 @@ Removes fluorescence emission near 685 nm:
 
 .. code-block:: python
 
-   from oceancolor.hyper_a.lib import compute_chl_fluorescence_correction
+   from ocpy.hyper_a.lib import compute_chl_fluorescence_correction
 
    correction = compute_chl_fluorescence_correction(
        wavelengths=wavelengths,

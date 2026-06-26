@@ -2,7 +2,7 @@
 Tara Oceans
 ===========
 
-.. module:: oceancolor.tara
+.. module:: ocpy.tara
    :synopsis: Tara Oceans expedition data
 
 The ``tara`` module provides tools for loading and analyzing data from the Tara Oceans
@@ -21,18 +21,18 @@ The Tara Oceans expedition (2009-2013) collected:
 Data I/O
 --------
 
-.. module:: oceancolor.tara.io
+.. module:: ocpy.tara.io
    :synopsis: Tara data loading functions
 
-.. autofunction:: oceancolor.tara.io.load_db
+.. autofunction:: ocpy.tara.io.load_db
 
-.. autofunction:: oceancolor.tara.io.load_ac_db
+.. autofunction:: ocpy.tara.io.load_ac_db
 
-.. autofunction:: oceancolor.tara.io.load_pg_db
+.. autofunction:: ocpy.tara.io.load_pg_db
 
-.. autofunction:: oceancolor.tara.io.load_tara_umap
+.. autofunction:: ocpy.tara.io.load_tara_umap
 
-.. autofunction:: oceancolor.tara.io.load_tara_sequencer
+.. autofunction:: ocpy.tara.io.load_tara_sequencer
 
 Available Datasets
 ^^^^^^^^^^^^^^^^^^
@@ -60,7 +60,7 @@ Example Usage
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
+   from ocpy.tara import io as tara_io
 
    # Load Patrick Gray database
    tara = tara_io.load_db(dataset='pg')
@@ -76,23 +76,23 @@ Example Usage
 Data Ingestion
 --------------
 
-.. module:: oceancolor.tara.ingest
+.. module:: ocpy.tara.ingest
    :synopsis: Tara data ingestion
 
 Functions for reading raw Tara data files.
 
-.. autofunction:: oceancolor.tara.ingest.read_one_file
+.. autofunction:: ocpy.tara.ingest.read_one_file
 
-.. autofunction:: oceancolor.tara.ingest.load_cruise
+.. autofunction:: ocpy.tara.ingest.load_cruise
 
-.. autofunction:: oceancolor.tara.ingest.load_all
+.. autofunction:: ocpy.tara.ingest.load_all
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.tara import ingest
+   from ocpy.tara import ingest
 
    # Read a single file
    data = ingest.read_one_file('path/to/tara_file.txt')
@@ -106,22 +106,22 @@ Example Usage
 Spectra Processing
 ------------------
 
-.. module:: oceancolor.tara.spectra
+.. module:: ocpy.tara.spectra
    :synopsis: Tara spectral data processing
 
 Functions for extracting and processing spectral data.
 
-.. autofunction:: oceancolor.tara.spectra.parse_wavelengths
+.. autofunction:: ocpy.tara.spectra.parse_wavelengths
 
-.. autofunction:: oceancolor.tara.spectra.spectbl_from_keys
+.. autofunction:: ocpy.tara.spectra.spectbl_from_keys
 
-.. autofunction:: oceancolor.tara.spectra.spectra_from_table
+.. autofunction:: ocpy.tara.spectra.spectra_from_table
 
-.. autofunction:: oceancolor.tara.spectra.average_spectrum
+.. autofunction:: ocpy.tara.spectra.average_spectrum
 
-.. autofunction:: oceancolor.tara.spectra.spectrum_from_row
+.. autofunction:: ocpy.tara.spectra.spectrum_from_row
 
-.. autofunction:: oceancolor.tara.spectra.single_value
+.. autofunction:: ocpy.tara.spectra.single_value
 
 Extracting Spectra
 ^^^^^^^^^^^^^^^^^^
@@ -131,8 +131,8 @@ These functions extract spectra into arrays:
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra
 
    # Load database
    tara = tara_io.load_db()
@@ -181,32 +181,32 @@ Available Spectral Types
 Analysis Functions
 ------------------
 
-.. module:: oceancolor.tara.analysis
+.. module:: ocpy.tara.analysis
    :synopsis: Tara data analysis
 
-.. autofunction:: oceancolor.tara.analysis.dist_coast
+.. autofunction:: ocpy.tara.analysis.dist_coast
 
 Derived Quantities
 ------------------
 
-.. module:: oceancolor.tara.measures
+.. module:: ocpy.tara.measures
    :synopsis: Tara derived measurements
 
 Functions for calculating derived biogeochemical quantities.
 
-.. autofunction:: oceancolor.tara.measures.chla_boss13
+.. autofunction:: ocpy.tara.measures.chla_boss13
 
-.. autofunction:: oceancolor.tara.measures.poc
+.. autofunction:: ocpy.tara.measures.poc
 
-.. autofunction:: oceancolor.tara.measures.add_derived
+.. autofunction:: ocpy.tara.measures.add_derived
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import measures
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import measures
 
    # Load database
    tara = tara_io.load_db()
@@ -224,22 +224,22 @@ Example Usage
 Exploration Tools
 -----------------
 
-.. module:: oceancolor.tara.explore
+.. module:: ocpy.tara.explore
    :synopsis: Tara data exploration
 
 Functions for exploring and clustering Tara data.
 
-.. autofunction:: oceancolor.tara.explore.prep_spectra
+.. autofunction:: ocpy.tara.explore.prep_spectra
 
-.. autofunction:: oceancolor.tara.explore.run_sequencer
+.. autofunction:: ocpy.tara.explore.run_sequencer
 
 Clustering and Dimensionality Reduction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import explore
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import explore
 
    # Load database
    tara = tara_io.load_db()
@@ -297,7 +297,7 @@ Example visualization of Tara data:
 
    import matplotlib.pyplot as plt
    import cartopy.crs as ccrs
-   from oceancolor.tara import io as tara_io
+   from ocpy.tara import io as tara_io
 
    # Load as GeoDataFrame
    tara = tara_io.load_pg_db(as_geo=True)

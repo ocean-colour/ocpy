@@ -6,7 +6,7 @@ import pandas
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-from oceancolor.tara import spectra
+from ocpy.tara import spectra
 
 from IPython import embed
 

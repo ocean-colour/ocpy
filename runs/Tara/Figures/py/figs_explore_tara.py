@@ -11,12 +11,12 @@ import cartopy
 
 import seaborn as sns
 
-from oceancolor.tara import io as tara_io
-from oceancolor.tara import measures
-from oceancolor.tara import spectra
-from oceancolor.tara import explore
-from oceancolor.utils import cat_utils
-from oceancolor.utils import fig_utils
+from ocpy.tara import io as tara_io
+from ocpy.tara import measures
+from ocpy.tara import spectra
+from ocpy.tara import explore
+from ocpy.utils import cat_utils
+from ocpy.utils import fig_utils
 
 from IPython import embed
 

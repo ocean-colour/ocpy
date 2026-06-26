@@ -1,0 +1,36 @@
+/* Custom CSS for ocpy documentation */
+
+/* Improve code block styling */
+.highlight {
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+
+/* Better table styling */
+table.docutils {
+    border-collapse: collapse;
+    border: 1px solid #e1e4e5;
+}
+
+table.docutils td, table.docutils th {
+    padding: 8px 12px;
+    border: 1px solid #e1e4e5;
+}
+
+/* Improve admonition styling */
+.admonition {
+    border-radius: 4px;
+}
+
+/* Better function signature display */
+.sig-name {
+    font-weight: bold;
+}
+
+/* Improve parameter list styling */
+dl.field-list > dt {
+    font-weight: bold;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+}

@@ -1,0 +1,52 @@
+name: Tests
+
+# Continuous integration for ocpy. Runs the data-independent unit tests on
+# every push and pull request. The large in situ / satellite datasets are not
+# available on CI, so the data-dependent tests skip automatically.
+#
+# NOTE: the test scope below is intentionally limited to the modules whose
+# import chains are clean (no data download and no stale ``oceancolor``
+# imports). Several other test modules (test_ls2, test_water, test_ph,
+# test_polarize, test_ls2_kd) still import the pre-rename ``oceancolor``
+# package and will be added here once that migration to ``ocpy`` is complete.
+
+on:
+  push:
+    branches: [main, develop, pangaea]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Lightweight scientific stack needed by the clean test modules.
+          # test_spectra exercises to_xarray / to_netcdf / plot, so xarray,
+          # a netCDF backend (netcdf4) and matplotlib are required too.
+          pip install numpy scipy pandas scikit-learn \
+                      xarray netcdf4 matplotlib pytest
+          # Register the package without pulling its heavy optional deps
+          # (cartopy, healpy, geopandas, ...), which the CI tests do not need.
+          pip install -e . --no-deps
+
+      - name: Run unit tests
+        run: |
+          pytest -q \
+            ocpy/tests/test_pangaea.py \
+            ocpy/tests/test_spectra.py \
+            ocpy/tests/test_coords.py

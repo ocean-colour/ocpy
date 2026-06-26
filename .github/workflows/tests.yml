@@ -36,7 +36,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Lightweight scientific stack needed by the clean test modules.
-          pip install numpy scipy pandas scikit-learn pytest
+          # test_spectra exercises to_xarray / to_netcdf / plot, so xarray,
+          # a netCDF backend (netcdf4) and matplotlib are required too.
+          pip install numpy scipy pandas scikit-learn \
+                      xarray netcdf4 matplotlib pytest
           # Register the package without pulling its heavy optional deps
           # (cartopy, healpy, geopandas, ...), which the CI tests do not need.
           pip install -e . --no-deps

@@ -49,6 +49,7 @@ If you need to run Python, use the "ocean14" Conda environment.
 6. Read this doc.  Execute the 3rd task under "Explore".
 7. Read this doc.  Execute the 4th task under "Implement".
 8. Read this doc.  Execute the 1st task under "Polishing".
+9. Read this doc.  Execute the 2nd task under "Polishing".
 
 ## Polishing
 
@@ -57,6 +58,8 @@ If you need to run Python, use the "ocean14" Conda environment.
     - Add new unit tests where sensible.  
     - Turn on CI on GitHub
     - Log your work
+
+2. The tests are failing on GitHub.  Please fix them.  Log your work.
 
 ## Implement
 
@@ -744,3 +747,36 @@ repo-wide refactor independent of the PANGAEA work, so it was left for a
 dedicated effort rather than folded in here. A few pre-existing docstring
 formatting warnings (`ls2_main`, `utils.coords`, `pace.io`) and "title
 overline too short" rst nits also remain.
+
+### 2026-06-26 (Fixed failing GitHub CI)
+
+Executed Polishing task 2. The CI workflow added in task 1 was failing on
+GitHub (run #15, all three Python versions): **8 failed, 51 passed, 10
+skipped**.
+
+**Diagnosis.** Pulled the run with `gh run view --log-failed`. Every failure
+was a missing optional dependency, not a code bug:
+`test_spectra.py`'s `to_xarray` / `to_netcdf` / `plot` tests raised
+`ModuleNotFoundError: No module named 'xarray'` (and one
+`'matplotlib'`). The task-1 workflow installed only
+`numpy scipy pandas scikit-learn pytest`, but the spectra serialization tests
+need `xarray` plus a netCDF backend, and the plot smoke test needs
+`matplotlib`. These passed locally only because the `ocean14` env already has
+them.
+
+**Fix.** Added `xarray netcdf4 matplotlib` to the workflow's pip install step
+(`.github/workflows/tests.yml`), with a comment explaining why.
+
+**Verification.** Reproduced the *exact* CI recipe in a throwaway virtualenv
+(`pip install numpy scipy pandas scikit-learn xarray netcdf4 matplotlib
+pytest` then `pip install -e . --no-deps`). Two lessons confirmed:
+- With `OS_COLOR` **set** locally, four extra adapter tests
+  (`from_loisel23`, `from_tara`) run and fail in the bare venv because that
+  data lives on a still-mounted disk while their heavier deps (e.g. pyarrow)
+  are absent — but these are skip-guarded on `OS_COLOR`/data presence.
+- Re-running with `env -u OS_COLOR` (the real GitHub environment, where no
+  data is present) gives the intended green result: **59 passed, 10 skipped,
+  0 failed**.
+
+So the data-dependent tests skip correctly on CI and the dependency fix makes
+the suite pass. JXP to push the updated workflow.

@@ -25,7 +25,7 @@ The OC4 algorithm uses the maximum of three blue/green band ratios:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.chl.band_ratios import oc4
+   from ocpy.chl.band_ratios import oc4
 
    # Standard wavelengths
    wavelengths = np.array([443, 490, 510, 555, 670])
@@ -50,7 +50,7 @@ The simpler OC2 algorithm uses only the 490/555 ratio:
 
 .. code-block:: python
 
-   from oceancolor.chl.band_ratios import oc2
+   from ocpy.chl.band_ratios import oc2
 
    chl = oc2(wavelengths, Rrs)
    print(f"Chlorophyll-a (OC2): {chl:.2f} mg/m³")
@@ -63,7 +63,7 @@ Here's how to apply the algorithms to satellite imagery:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.chl.band_ratios import oc4
+   from ocpy.chl.band_ratios import oc4
 
    def process_chlorophyll(Rrs_cube, wavelengths, flags=None):
        """Calculate chlorophyll for a satellite image.
@@ -125,7 +125,7 @@ Different satellites have different band centers. Here's how to handle this:
 
        Interpolates to standard OC4 wavelengths.
        """
-       from oceancolor.chl.band_ratios import oc4
+       from ocpy.chl.band_ratios import oc4
 
        # Sensor-specific wavelength mappings
        sensor_bands = {
@@ -259,8 +259,8 @@ For challenging conditions, consider:
 
        Uses different algorithms based on water type.
        """
-       from oceancolor.chl.band_ratios import oc4
-       from oceancolor.ls2 import ls2_main
+       from ocpy.chl.band_ratios import oc4
+       from ocpy.ls2 import ls2_main
 
        if water_type == 'auto':
            # Classify water type
@@ -295,7 +295,7 @@ Estimate chlorophyll uncertainties:
 
        Uses error propagation through the OC4 algorithm.
        """
-       from oceancolor.chl.band_ratios import oc4
+       from ocpy.chl.band_ratios import oc4
 
        # Monte Carlo approach
        n_samples = 100

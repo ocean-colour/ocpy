@@ -33,7 +33,7 @@ Loading the Database
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
+   from ocpy.tara import io as tara_io
 
    # Load Patrick Gray database (default)
    tara = tara_io.load_db(dataset='pg')
@@ -80,8 +80,8 @@ Extracting Spectra
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra
 
    # Load database
    tara = tara_io.load_db()
@@ -102,7 +102,7 @@ Single Station Spectra
 
 .. code-block:: python
 
-   from oceancolor.tara import spectra
+   from ocpy.tara import spectra
 
    # Get spectrum for a single row
    row = tara.iloc[0]  # First sample
@@ -127,7 +127,7 @@ Average Spectra
 
 .. code-block:: python
 
-   from oceancolor.tara import spectra
+   from ocpy.tara import spectra
 
    # Calculate average spectrum
    wave, ap_mean = spectra.average_spectrum(tara, flavor='ap')
@@ -141,7 +141,7 @@ Single Wavelength Values
 
 .. code-block:: python
 
-   from oceancolor.tara import spectra
+   from ocpy.tara import spectra
 
    # Extract value at specific wavelength
    ap_443 = spectra.single_value(tara, wv_cen=443, flavor='ap')
@@ -152,7 +152,7 @@ Derived Quantities
 
 .. code-block:: python
 
-   from oceancolor.tara import measures
+   from ocpy.tara import measures
 
    # Add derived quantities to the database
    tara = measures.add_derived(tara, quantities=['chl', 'poc'])
@@ -173,7 +173,7 @@ Distance to Coast
 
 .. code-block:: python
 
-   from oceancolor.tara import analysis
+   from ocpy.tara import analysis
 
    # Calculate distance to coast for all stations
    distances = analysis.dist_coast()
@@ -239,7 +239,7 @@ UMAP Projections
 
 .. code-block:: python
 
-   from oceancolor.tara import io as tara_io
+   from ocpy.tara import io as tara_io
 
    # Load pre-computed UMAP projection
    umap_coords = tara_io.load_tara_umap(utype='aph')
@@ -250,7 +250,7 @@ Clustering
 
 .. code-block:: python
 
-   from oceancolor.tara import explore
+   from ocpy.tara import explore
 
    # Prepare spectra for analysis
    wavelengths, spectra_clean = explore.prep_spectra(
@@ -271,8 +271,8 @@ Comparing Ocean Basins
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra
 
    tara = tara_io.load_db()
 
@@ -300,8 +300,8 @@ IOP Relationships
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra
 
    tara = tara_io.load_db()
 
@@ -376,8 +376,8 @@ Data Quality
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.tara import io as tara_io
-   from oceancolor.tara import spectra
+   from ocpy.tara import io as tara_io
+   from ocpy.tara import spectra
 
    tara = tara_io.load_db()
 

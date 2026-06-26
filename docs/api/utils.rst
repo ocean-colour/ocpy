@@ -2,7 +2,7 @@
 Utilities
 =========
 
-.. module:: oceancolor.utils
+.. module:: ocpy.utils
    :synopsis: Utility functions
 
 The ``utils`` module provides general utility functions for coordinate handling,
@@ -11,21 +11,21 @@ I/O operations, PCA analysis, plotting, and spectral processing.
 Coordinate Utilities
 --------------------
 
-.. module:: oceancolor.utils.coords
+.. module:: ocpy.utils.coords
    :synopsis: Geographic coordinate utilities
 
-.. autofunction:: oceancolor.utils.coords.dms_to_decimal
+.. autofunction:: ocpy.utils.coords.dms_to_decimal
 
-.. autofunction:: oceancolor.utils.coords.parse_dms_string
+.. autofunction:: ocpy.utils.coords.parse_dms_string
 
-.. autofunction:: oceancolor.utils.coords.distance_from_latlon
+.. autofunction:: ocpy.utils.coords.distance_from_latlon
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.utils.coords import dms_to_decimal, parse_dms_string, distance_from_latlon
+   from ocpy.utils.coords import dms_to_decimal, parse_dms_string, distance_from_latlon
    import numpy as np
 
    # Convert DMS to decimal degrees
@@ -50,21 +50,21 @@ Example Usage
 I/O Utilities
 -------------
 
-.. module:: oceancolor.utils.io
+.. module:: ocpy.utils.io
    :synopsis: Input/output utilities
 
-.. autofunction:: oceancolor.utils.io.jsonify
+.. autofunction:: ocpy.utils.io.jsonify
 
-.. autofunction:: oceancolor.utils.io.loadjson
+.. autofunction:: ocpy.utils.io.loadjson
 
-.. autofunction:: oceancolor.utils.io.savejson
+.. autofunction:: ocpy.utils.io.savejson
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.utils.io import loadjson, savejson, jsonify
+   from ocpy.utils.io import loadjson, savejson, jsonify
    import numpy as np
 
    # Save data to JSON
@@ -88,12 +88,12 @@ Example Usage
 PCA Analysis
 ------------
 
-.. module:: oceancolor.utils.pca
+.. module:: ocpy.utils.pca
    :synopsis: Principal Component Analysis utilities
 
-.. autofunction:: oceancolor.utils.pca.fit_normal
+.. autofunction:: ocpy.utils.pca.fit_normal
 
-.. autofunction:: oceancolor.utils.pca.reconstruct
+.. autofunction:: ocpy.utils.pca.reconstruct
 
 PCA for Spectral Data
 ^^^^^^^^^^^^^^^^^^^^^
@@ -102,7 +102,7 @@ PCA is useful for dimensionality reduction and pattern recognition in spectral d
 
 .. code-block:: python
 
-   from oceancolor.utils.pca import fit_normal, reconstruct
+   from ocpy.utils.pca import fit_normal, reconstruct
    import numpy as np
 
    # Example spectral dataset (N samples x M wavelengths)
@@ -126,15 +126,15 @@ PCA is useful for dimensionality reduction and pattern recognition in spectral d
 Plotting Utilities
 ------------------
 
-.. module:: oceancolor.utils.plotting
+.. module:: ocpy.utils.plotting
    :synopsis: Matplotlib plotting utilities
 
-.. autofunction:: oceancolor.utils.plotting.set_fontsize
+.. autofunction:: ocpy.utils.plotting.set_fontsize
 
-.. module:: oceancolor.utils.fig_utils
+.. module:: ocpy.utils.fig_utils
    :synopsis: Figure utilities
 
-.. autofunction:: oceancolor.utils.fig_utils.set_fontsize
+.. autofunction:: ocpy.utils.fig_utils.set_fontsize
 
 Example Usage
 ^^^^^^^^^^^^^
@@ -142,7 +142,7 @@ Example Usage
 .. code-block:: python
 
    import matplotlib.pyplot as plt
-   from oceancolor.utils.plotting import set_fontsize
+   from ocpy.utils.plotting import set_fontsize
 
    fig, ax = plt.subplots(figsize=(10, 6))
    ax.plot([1, 2, 3], [1, 4, 9])
@@ -158,12 +158,14 @@ Example Usage
 Spectral Utilities
 ------------------
 
-.. module:: oceancolor.utils.spectra
-   :synopsis: Spectral processing utilities
+The spectral rebinning helpers live in :mod:`ocpy.spectra.utils` (see the
+:doc:`spectra` page for their full reference):
 
-.. autofunction:: oceancolor.utils.spectra.rebin
+.. autofunction:: ocpy.spectra.utils.rebin
+   :no-index:
 
-.. autofunction:: oceancolor.utils.spectra.rebin_to_grid
+.. autofunction:: ocpy.spectra.utils.rebin_to_grid
+   :no-index:
 
 Spectral Rebinning
 ^^^^^^^^^^^^^^^^^^
@@ -172,7 +174,7 @@ Rebinning is essential when comparing data from different instruments:
 
 .. code-block:: python
 
-   from oceancolor.utils.spectra import rebin, rebin_to_grid
+   from ocpy.spectra.utils import rebin, rebin_to_grid
    import numpy as np
 
    # Original high-resolution spectrum
@@ -190,17 +192,17 @@ Rebinning is essential when comparing data from different instruments:
 Catalog Utilities
 -----------------
 
-.. module:: oceancolor.utils.cat_utils
+.. module:: ocpy.utils.cat_utils
    :synopsis: Catalog and ID matching utilities
 
-.. autofunction:: oceancolor.utils.cat_utils.match_ids
+.. autofunction:: ocpy.utils.cat_utils.match_ids
 
 Example Usage
 ^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   from oceancolor.utils.cat_utils import match_ids
+   from ocpy.utils.cat_utils import match_ids
    import numpy as np
 
    # Match station IDs between two datasets
@@ -220,7 +222,8 @@ Working with Multiple Datasets
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.utils import coords, spectra
+   from ocpy.utils import coords
+   from ocpy.spectra import utils as spectra
 
    def process_matchup(satellite_data, insitu_data, max_distance_km=10):
        """Match satellite and in-situ data by location."""

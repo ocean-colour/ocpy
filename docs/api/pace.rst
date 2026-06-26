@@ -2,7 +2,7 @@
 PACE Data Products
 ===================
 
-.. module:: oceancolor.pace
+.. module:: ocpy.pace
    :synopsis: PACE satellite data I/O
 
 The ``pace`` module provides functions for loading and processing PACE (Plankton,
@@ -11,16 +11,16 @@ Aerosol, Cloud, ocean Ecosystem) satellite data products.
 Data I/O
 --------
 
-.. module:: oceancolor.pace.io
+.. module:: ocpy.pace.io
    :synopsis: PACE Level 2 data loading
 
-.. autofunction:: oceancolor.pace.io.load_oci_l2
+.. autofunction:: ocpy.pace.io.load_oci_l2
 
-.. autofunction:: oceancolor.pace.io.load_oci_l2_spectrum
+.. autofunction:: ocpy.pace.io.load_oci_l2_spectrum
 
-.. autofunction:: oceancolor.pace.io.load_oci_l2_spectrum_pixel
+.. autofunction:: ocpy.pace.io.load_oci_l2_spectrum_pixel
 
-.. autofunction:: oceancolor.pace.io.load_iop_l2
+.. autofunction:: ocpy.pace.io.load_iop_l2
 
 PACE OCI Level 2 Products
 -------------------------
@@ -34,7 +34,7 @@ The primary product for ocean color applications:
 
 .. code-block:: python
 
-   from oceancolor.pace import io as pace_io
+   from ocpy.pace import io as pace_io
 
    # Load OCI L2 file
    Rrs, Rrs_unc, FLH = pace_io.load_oci_l2('PACE_OCI.20240401.L2_OC.nc')
@@ -52,7 +52,7 @@ Inherent optical property retrievals:
 
 .. code-block:: python
 
-   from oceancolor.pace import io as pace_io
+   from ocpy.pace import io as pace_io
 
    # Load IOP products
    iop_data = pace_io.load_iop_l2('PACE_OCI.20240401.L2_IOP.nc')
@@ -94,7 +94,7 @@ Example Workflow
 .. code-block:: python
 
    import matplotlib.pyplot as plt
-   from oceancolor.pace import io as pace_io
+   from ocpy.pace import io as pace_io
 
    # Extract single spectrum at a location (fast - avoids loading full granule)
    lat_target, lon_target = 35.0, -70.0
@@ -117,9 +117,9 @@ Example Workflow
 
    import numpy as np
    import matplotlib.pyplot as plt
-   from oceancolor.pace import io as pace_io
-   from oceancolor.chl import band_ratios
-   from oceancolor.satellites import pace
+   from ocpy.pace import io as pace_io
+   from ocpy.chl import band_ratios
+   from ocpy.satellites import pace
 
    # Load full PACE granule
    xds, flags = pace_io.load_oci_l2('PACE_OCI_L2.nc')
@@ -290,7 +290,7 @@ Data Access
 
 PACE data is available from NASA Earthdata:
 
-* **Ocean Color Web**: https://oceancolor.gsfc.nasa.gov/
+* **Ocean Color Web**: https://ocpy.gsfc.nasa.gov/
 * **Earthdata Search**: https://search.earthdata.nasa.gov/
 
 File naming convention:

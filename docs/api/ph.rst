@@ -2,7 +2,7 @@
 Phytoplankton
 =============
 
-.. module:: oceancolor.ph
+.. module:: ocpy.ph
    :synopsis: Phytoplankton optical properties
 
 The ``ph`` module provides functions for phytoplankton absorption spectra, pigment
@@ -11,12 +11,12 @@ analysis, and community composition.
 Absorption Spectra
 ------------------
 
-.. module:: oceancolor.ph.absorption
+.. module:: ocpy.ph.absorption
    :synopsis: Phytoplankton absorption coefficients
 
 Functions for loading and calculating phytoplankton absorption spectra.
 
-.. autofunction:: oceancolor.ph.absorption.load_bricaud1998
+.. autofunction:: ocpy.ph.absorption.load_bricaud1998
 
 Bricaud et al. (1998) Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -44,7 +44,7 @@ Example Usage
 
 .. code-block:: python
 
-   from oceancolor.ph.absorption import load_bricaud1998
+   from ocpy.ph.absorption import load_bricaud1998
    import numpy as np
 
    # Load Bricaud 1998 data
@@ -63,18 +63,18 @@ Example Usage
 Data Loading
 ------------
 
-.. module:: oceancolor.ph.load_data
+.. module:: ocpy.ph.load_data
    :synopsis: Load phytoplankton reference data
 
 Functions for loading various phytoplankton absorption datasets.
 
-.. autofunction:: oceancolor.ph.load_data.stramski2001
+.. autofunction:: ocpy.ph.load_data.stramski2001
 
-.. autofunction:: oceancolor.ph.load_data.clementson2019
+.. autofunction:: ocpy.ph.load_data.clementson2019
 
-.. autofunction:: oceancolor.ph.load_data.bricaud
+.. autofunction:: ocpy.ph.load_data.bricaud
 
-.. autofunction:: oceancolor.ph.load_data.moore1995
+.. autofunction:: ocpy.ph.load_data.moore1995
 
 Available Datasets
 ^^^^^^^^^^^^^^^^^^
@@ -101,7 +101,7 @@ Example Usage
 
 .. code-block:: python
 
-   from oceancolor.ph import load_data
+   from ocpy.ph import load_data
 
    # Load Stramski data
    stramski = load_data.stramski2001()
@@ -115,16 +115,16 @@ Example Usage
 Pigment Analysis
 ----------------
 
-.. module:: oceancolor.ph.pigments
+.. module:: ocpy.ph.pigments
    :synopsis: Pigment absorption and fitting
 
 Functions for pigment absorption spectra and spectral decomposition.
 
-.. autofunction:: oceancolor.ph.pigments.gauss_pigment
+.. autofunction:: ocpy.ph.pigments.gauss_pigment
 
-.. autofunction:: oceancolor.ph.pigments.a_chl
+.. autofunction:: ocpy.ph.pigments.a_chl
 
-.. autofunction:: oceancolor.ph.pigments.fit_a_chl
+.. autofunction:: ocpy.ph.pigments.fit_a_chl
 
 Gaussian Pigment Model
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -150,7 +150,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ph import pigments
+   from ocpy.ph import pigments
 
    wavelengths = np.arange(400, 701, 2)
 
@@ -179,7 +179,7 @@ Decompose phytoplankton absorption into pigment components:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ph import pigments
+   from ocpy.ph import pigments
 
    # Measured phytoplankton absorption
    wavelengths = np.arange(400, 701, 2)

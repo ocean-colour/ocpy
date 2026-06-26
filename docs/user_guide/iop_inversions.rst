@@ -40,9 +40,9 @@ Setting Up LS2
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2 import ls2_main, io as ls2_io
-   from oceancolor.ls2.kd_nn import Kd_NN_MODIS
-   from oceancolor.water import absorption
+   from ocpy.ls2 import ls2_main, io as ls2_io
+   from ocpy.ls2.kd_nn import Kd_NN_MODIS
+   from ocpy.water import absorption
 
    # Load the look-up tables (do this once)
    LUT = ls2_io.load_LUT()
@@ -121,7 +121,7 @@ a neural network for estimating Kd from Rrs.
 
 .. code-block:: python
 
-   from oceancolor.ls2.kd_nn import Kd_NN_MODIS, load_weights
+   from ocpy.ls2.kd_nn import Kd_NN_MODIS, load_weights
 
    # The neural network works with MODIS-like wavelengths
    wavelengths = np.array([412, 443, 488, 531, 551, 667])
@@ -144,9 +144,9 @@ For satellite imagery with many pixels:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.ls2 import ls2_main, io as ls2_io
-   from oceancolor.ls2.kd_nn import Kd_NN_MODIS
-   from oceancolor.water import absorption
+   from ocpy.ls2 import ls2_main, io as ls2_io
+   from ocpy.ls2.kd_nn import Kd_NN_MODIS
+   from ocpy.water import absorption
 
    # Load LUTs once
    LUT = ls2_io.load_LUT()
@@ -230,7 +230,7 @@ The ZLee suite provides alternative IOP retrieval methods:
 
 .. code-block:: python
 
-   from oceancolor.iop.zlee import Y_from_Rrs
+   from ocpy.iop.zlee import Y_from_Rrs
 
    wavelengths = np.array([412, 443, 490, 510, 555, 670])
    Rrs = np.array([0.003, 0.004, 0.005, 0.006, 0.007, 0.001])
@@ -246,8 +246,8 @@ Once you have total IOPs, you may want to partition them into components:
 
 .. code-block:: python
 
-   from oceancolor.iop import cdom
-   from oceancolor.ph import pigments
+   from ocpy.iop import cdom
+   from ocpy.ph import pigments
    import numpy as np
 
    def partition_absorption(wavelengths, a_nw, method='simple'):

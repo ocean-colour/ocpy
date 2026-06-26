@@ -2,7 +2,7 @@
 Chlorophyll Algorithms
 ======================
 
-.. module:: oceancolor.chl
+.. module:: ocpy.chl
    :synopsis: Chlorophyll-a estimation algorithms
 
 The ``chl`` module provides standard algorithms for estimating chlorophyll-a concentration
@@ -11,15 +11,15 @@ from remote sensing reflectance (Rrs).
 Band Ratio Algorithms
 ---------------------
 
-.. module:: oceancolor.chl.band_ratios
+.. module:: ocpy.chl.band_ratios
    :synopsis: OC2, OC4 band ratio algorithms
 
 Band ratio algorithms are empirical relationships between spectral band ratios and
 chlorophyll concentration, derived from global in-situ datasets.
 
-.. autofunction:: oceancolor.chl.band_ratios.oc4
+.. autofunction:: ocpy.chl.band_ratios.oc4
 
-.. autofunction:: oceancolor.chl.band_ratios.oc2
+.. autofunction:: ocpy.chl.band_ratios.oc2
 
 Algorithm Description
 ^^^^^^^^^^^^^^^^^^^^^
@@ -59,7 +59,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.chl.band_ratios import oc2, oc4
+   from ocpy.chl.band_ratios import oc2, oc4
 
    # Define wavelengths and Rrs
    wave = np.array([443, 490, 510, 555, 670])
@@ -80,7 +80,7 @@ The algorithms can process multiple spectra:
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.chl.band_ratios import oc4
+   from ocpy.chl.band_ratios import oc4
 
    # Multiple spectra (N x 5 array)
    wave = np.array([443, 490, 510, 555, 670])
@@ -172,7 +172,7 @@ Consider flagging unreliable retrievals:
 
    def oc4_with_flags(wave, Rrs):
        """OC4 with quality flags."""
-       from oceancolor.chl.band_ratios import oc4
+       from ocpy.chl.band_ratios import oc4
 
        chl = oc4(wave, Rrs)
 
@@ -200,4 +200,4 @@ References
   sensors - OC4, OC5 & OC6. Remote Sensing of Environment, 229, 32-47.
 
 * NASA Ocean Biology Processing Group (2022). Chlorophyll-a Algorithm Theoretical
-  Basis Document. https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/
+  Basis Document. https://ocpy.gsfc.nasa.gov/atbd/chlor_a/

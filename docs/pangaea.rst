@@ -118,21 +118,48 @@ reshapes one variable family into a tidy frame with columns ``ID``,
 
    long = pangaea.to_long(df, kind='rrs')
 
+Hyperspectral extraction
+========================
+
+For workflows that need richly-sampled spectra,
+:func:`~ocpy.insitu.pangaea.extract_hyperspectral` selects every observation
+whose Rrs spectrum has **more than** ``nband`` valid wavelengths, builds an
+:class:`ocpy.spectra.Spectrum` for each, gathers any co-located IOP spectra
+(``aph`` / ``acdom`` / ``bbp`` / ``kd``) into an
+:class:`ocpy.spectra.SpectrumStack`, and attaches scalar ancillaries
+(``tss``, ``lat`` / ``lon`` / ``depth``, ``date`` and ``chla``). The result is
+a dictionary keyed by observation ``ID``:
+
+.. code-block:: python
+
+   data = pangaea.extract_hyperspectral(nband=50)
+   rec = data[next(iter(data))]
+   rec['rrs']        # a Spectrum with > 50 wavelengths
+   rec['iops']       # a SpectrumStack of any co-located IOP spectra
+   rec['chla']       # merged chlorophyll (HPLC, then fluorometric)
+
+The companion helper :func:`~ocpy.insitu.pangaea.n_spectral` counts the valid
+spectral points per observation for a given variable family, which is what the
+``nband`` threshold is applied to.
+
 API summary
 ===========
 
-============================================  ===============================================
-Function                                      Purpose
-============================================  ===============================================
-``file_catalog()``                            Map short keys to filenames
-``pangaea_path(path=None)``                   Resolve the ``V3`` data directory
-``dataset_file(key, path=None)``              Full path to one ``.tab`` file
-``find_header_end(filename)``                 Detect the ``*/`` header terminator
-``load(key, path=None)``                      Load a dataset into a tidy DataFrame
-``spectrum(df, obs_id, kind='rrs')``          One observation's spectrum (Series)
-``to_long(df, kind='rrs')``                   Long/tidy reshape of a variable family
-``column_metadata(df)``                       Per-column metadata mapping
-============================================  ===============================================
+==================================================  ===========================================
+Function                                            Purpose
+==================================================  ===========================================
+``file_catalog()``                                  Map short keys to filenames
+``pangaea_path(path=None)``                         Resolve the ``V3`` data directory
+``dataset_file(key, path=None)``                    Full path to one ``.tab`` file
+``find_header_end(filename)``                       Detect the ``*/`` header terminator
+``load(key, path=None)``                            Load a dataset into a tidy DataFrame
+``spectrum(df, obs_id, kind='rrs')``                One observation's spectrum (Series)
+``to_long(df, kind='rrs')``                         Long/tidy reshape of a variable family
+``n_spectral(df, kind='rrs')``                      Valid spectral points per observation
+``extract_hyperspectral(nband, ...)``               Rrs + IOP records for rich spectra
+``column_metadata(df)``                             Per-column metadata mapping
+==================================================  ===========================================
 
-See also the demonstration notebook ``nb/PANAGEA/PANAGEA_demo.ipynb`` (kept under
-its original directory name; its code uses the former ``panagea`` import).
+See also the demonstration notebook ``nb/PANAGEA/PANAGEA_demo.ipynb`` and the
+exploratory / extraction notebooks (``10_coverage`` ... ``20_hyperspectral_extract``)
+in the same directory.

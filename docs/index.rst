@@ -49,8 +49,8 @@ Quick Example
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water import absorption, scattering
-   from oceancolor.chl import band_ratios
+   from ocpy.water import absorption, scattering
+   from ocpy.chl import band_ratios
 
    # Get pure water absorption at PACE wavelengths
    wavelengths = np.arange(400, 701, 5)  # nm
@@ -106,6 +106,7 @@ Documentation Contents
    api/pace
    api/utils
    api/spectra
+   api/insitu
 
 .. toctree::
    :maxdepth: 1

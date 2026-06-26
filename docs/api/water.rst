@@ -2,7 +2,7 @@
 Water Optical Properties
 =======================
 
-.. module:: oceancolor.water
+.. module:: ocpy.water
    :synopsis: Pure seawater optical properties
 
 The ``water`` module provides functions for calculating the optical properties of pure
@@ -11,16 +11,16 @@ seawater, including absorption and scattering coefficients.
 Absorption
 ----------
 
-.. module:: oceancolor.water.absorption
+.. module:: ocpy.water.absorption
    :synopsis: Pure water absorption coefficients
 
 Functions for calculating pure water absorption coefficients using various reference datasets.
 
-.. autofunction:: oceancolor.water.absorption.a_water
+.. autofunction:: ocpy.water.absorption.a_water
 
-.. autofunction:: oceancolor.water.absorption.load_rsr_gsfc
+.. autofunction:: ocpy.water.absorption.load_rsr_gsfc
 
-.. autofunction:: oceancolor.water.absorption.load_ioccg_2018
+.. autofunction:: ocpy.water.absorption.load_ioccg_2018
 
 Reference Data
 ^^^^^^^^^^^^^^
@@ -43,7 +43,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water.absorption import a_water, load_ioccg_2018
+   from ocpy.water.absorption import a_water, load_ioccg_2018
 
    # Get absorption at specific wavelengths
    wavelengths = np.array([412, 443, 490, 510, 555, 670])
@@ -57,24 +57,24 @@ Example Usage
 Scattering
 ----------
 
-.. module:: oceancolor.water.scattering
+.. module:: ocpy.water.scattering
    :synopsis: Pure water scattering coefficients
 
 Functions for calculating pure water scattering using the Zhang et al. (2009) model.
 
-.. autofunction:: oceancolor.water.scattering.betasw_ZHH2009
+.. autofunction:: ocpy.water.scattering.betasw_ZHH2009
 
-.. autofunction:: oceancolor.water.scattering.RInw
+.. autofunction:: ocpy.water.scattering.RInw
 
-.. autofunction:: oceancolor.water.scattering.BetaT
+.. autofunction:: ocpy.water.scattering.BetaT
 
-.. autofunction:: oceancolor.water.scattering.rhou_sw
+.. autofunction:: ocpy.water.scattering.rhou_sw
 
-.. autofunction:: oceancolor.water.scattering.dlnasw_ds
+.. autofunction:: ocpy.water.scattering.dlnasw_ds
 
-.. autofunction:: oceancolor.water.scattering.PMH
+.. autofunction:: ocpy.water.scattering.PMH
 
-.. autofunction:: oceancolor.water.scattering.bbw_from_l23
+.. autofunction:: ocpy.water.scattering.bbw_from_l23
 
 Zhang et al. (2009) Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -101,7 +101,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.water.scattering import betasw_ZHH2009, RInw
+   from ocpy.water.scattering import betasw_ZHH2009, RInw
 
    # Calculate scattering at 90 degrees (for backscattering)
    wavelengths = np.arange(400, 701, 10)

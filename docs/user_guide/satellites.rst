@@ -25,7 +25,7 @@ Wavelength Configuration
 
 .. code-block:: python
 
-   from oceancolor.satellites import pace
+   from ocpy.satellites import pace
 
    # Generate PACE OCI wavelength array
    wavelengths = pace.wave(wv_min=400, wv_max=700, step=5)
@@ -44,7 +44,7 @@ Understanding PACE uncertainties:
 
    import numpy as np
    import matplotlib.pyplot as plt
-   from oceancolor.satellites import pace
+   from ocpy.satellites import pace
 
    wavelengths = pace.wave(wv_min=400, wv_max=700, step=5)
 
@@ -64,7 +64,7 @@ Loading PACE Data
 
 .. code-block:: python
 
-   from oceancolor.pace import io as pace_io
+   from ocpy.pace import io as pace_io
 
    # Load Level 2 OC data
    Rrs, Rrs_unc, FLH = pace_io.load_oci_l2('PACE_OCI_L2.nc')
@@ -83,7 +83,7 @@ Matchup Datasets
 
 .. code-block:: python
 
-   from oceancolor.satellites import modis
+   from ocpy.satellites import modis
 
    # Load MODIS matchup dataset
    matchups = modis.load_matchups()
@@ -118,7 +118,7 @@ Working with SeaWiFS Data
 
 .. code-block:: python
 
-   from oceancolor.satellites import seawifs
+   from ocpy.satellites import seawifs
 
    # Load matchup data
    matchups = seawifs.load_matchups()
@@ -405,7 +405,7 @@ Common satellite file formats:
 References
 ----------
 
-* NASA Ocean Biology Processing Group: https://oceancolor.gsfc.nasa.gov/
+* NASA Ocean Biology Processing Group: https://ocpy.gsfc.nasa.gov/
 
 * Werdell, P.J., et al. (2019). The Plankton, Aerosol, Cloud, ocean Ecosystem
   mission. BAMS, 100(9), 1775-1794.

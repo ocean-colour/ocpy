@@ -156,6 +156,96 @@ def test_spectrum_satband_synthetic():
     assert spec.iloc[0] == pytest.approx(0.05)
 
 
+def _native_frame():
+    """ Build a small synthetic native-wavelength frame for two obs. """
+    df = pandas.DataFrame(
+        {'rrs_443': [0.01, np.nan], 'rrs_490': [0.02, 0.03]},
+        index=pandas.Index([5, 6], name='ID'))
+    df.attrs['columns'] = {
+        'rrs_443': {'variable': 'rrs', 'role': 'spectral',
+                    'wavelength': 443.0, 'orig': 'RRS [1/sr] (at 443nm)'},
+        'rrs_490': {'variable': 'rrs', 'role': 'spectral',
+                    'wavelength': 490.0, 'orig': 'RRS [1/sr] (at 490nm)'},
+    }
+    return df
+
+
+def test_to_long_native_synthetic():
+    long = pangaea.to_long(_native_frame(), kind='rrs')
+    # The single NaN value (obs 5 @ 490? no, obs 6 @ 443) must be dropped.
+    assert list(long.columns) == ['ID', 'wavelength', 'value',
+                                  'sensor', 'band']
+    assert len(long) == 3                       # 4 cells - 1 NaN
+    assert set(long['ID']) == {5, 6}
+    assert set(long['wavelength']) == {443.0, 490.0}
+    # Native data carries no sensor / band.
+    assert long['sensor'].isna().all()
+
+
+def test_to_long_satband_synthetic():
+    df = pandas.DataFrame(
+        {'rrs_S_band1': [0.05, 0.06], 'lambda_S_band1': [444.2, 445.0]},
+        index=pandas.Index([9, 10], name='ID'))
+    df.attrs['columns'] = {
+        'rrs_S_band1': {'variable': 'rrs', 'role': 'spectral_band',
+                        'sensor': 'S', 'band': '1',
+                        'lambda_col': 'lambda_S_band1'},
+        'lambda_S_band1': {'variable': None, 'role': 'lambda',
+                           'sensor': 'S', 'band': '1'},
+    }
+    long = pangaea.to_long(df, kind='rrs')
+    # Per-row Lambda becomes the wavelength; sensor / band carried through.
+    assert set(long['wavelength']) == {444.2, 445.0}
+    assert (long['sensor'] == 'S').all()
+    assert (long['band'] == '1').all()
+
+
+def test_to_long_empty_for_unknown_kind():
+    # A variable family with no spectral columns yields an empty frame
+    # with the documented columns.
+    long = pangaea.to_long(_native_frame(), kind='aph')
+    assert list(long.columns) == ['ID', 'wavelength', 'value',
+                                  'sensor', 'band']
+    assert len(long) == 0
+
+
+def test_n_spectral_counts():
+    counts = pangaea.n_spectral(_native_frame(), kind='rrs')
+    # obs 5 has both points; obs 6 has only rrs_490.
+    assert counts.loc[5] == 2
+    assert counts.loc[6] == 1
+    # A family with no columns returns zeros over the index.
+    zeros = pangaea.n_spectral(_native_frame(), kind='bbp')
+    assert (zeros == 0).all()
+    assert list(zeros.index) == [5, 6]
+
+
+def test_column_metadata_roundtrip():
+    df = _native_frame()
+    meta = pangaea.column_metadata(df)
+    assert meta is df.attrs['columns']
+    assert meta['rrs_443']['orig'] == 'RRS [1/sr] (at 443nm)'
+    # Empty / non-loaded frames return an empty mapping, not an error.
+    assert pangaea.column_metadata(pandas.DataFrame()) == {}
+
+
+def test_band_name_strips_whitespace():
+    assert pangaea._band_name('rrs', 'OLCI S3A', '11') == 'rrs_OLCIS3A_band11'
+
+
+def test_dataset_file_bad_key():
+    with pytest.raises(KeyError):
+        pangaea.dataset_file('not_a_key')
+
+
+def test_pangaea_path_missing(monkeypatch):
+    # With no OS_COLOR and a bogus explicit path, resolution must fail
+    # with a clear FileNotFoundError.
+    monkeypatch.delenv('OS_COLOR', raising=False)
+    with pytest.raises(FileNotFoundError):
+        pangaea.pangaea_path(path='/no/such/pangaea/dir')
+
+
 # --------------------------------------------------------------------
 # Data-dependent tests (skipped if the V3 directory is absent)
 # --------------------------------------------------------------------

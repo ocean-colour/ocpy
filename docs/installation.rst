@@ -92,13 +92,13 @@ To verify that ocpy is installed correctly:
 
 .. code-block:: python
 
-   import oceancolor
+   import ocpy
 
    # Check version
-   print(f"ocpy version: {oceancolor.__version__}")
+   print(f"ocpy version: {ocpy.__version__}")
 
    # Test basic functionality
-   from oceancolor.water.absorption import a_water
+   from ocpy.water.absorption import a_water
    import numpy as np
 
    wavelengths = np.array([443, 490, 555, 670])
@@ -153,7 +153,7 @@ The ``hydrolight`` module requires the Loisel+2023 Hydrolight simulation dataset
 
 .. code-block:: python
 
-   from oceancolor.hydrolight.loisel23 import load_ds
+   from ocpy.hydrolight.loisel23 import load_ds
 
    # Load dataset with Raman scattering, 30-degree solar zenith
    ds = load_ds(X=2, Y=30)

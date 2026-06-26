@@ -21,20 +21,20 @@ There are two objects:
 
 A :class:`~ocpy.spectra.core.Spectrum` carries:
 
-============  ====================================================
-Attribute     Meaning
-============  ====================================================
-``wavelength``  Wavelengths (nm), 1D numpy array, sorted ascending
-``values``      Values, same length as ``wavelength``
-``errors``      1-sigma errors (or ``None``)
-``units``       Opaque units string, e.g. ``'1/sr'``
-``source``      Where the data came from
-``date``        Observation date/time (``np.datetime64``)
+=================  ====================================================
+Attribute          Meaning
+=================  ====================================================
+``wavelength``     Wavelengths (nm), 1D numpy array, sorted ascending
+``values``         Values, same length as ``wavelength``
+``errors``         1-sigma errors (or ``None``)
+``units``          Opaque units string, e.g. ``'1/sr'``
+``source``         Where the data came from
+``date``           Observation date/time (``np.datetime64``)
 ``lat`` / ``lon``  Latitude / longitude (deg)
-``depth``       Depth (m)
-``quality``     Named QF flags kept separate, e.g. ``{'qf_time': 0}``
-``metadata``    Free-form dict (richer location, sensor/band, ...)
-============  ====================================================
+``depth``          Depth (m)
+``quality``        Named QF flags kept separate, e.g. ``{'qf_time': 0}``
+``metadata``       Free-form dict (richer location, sensor/band, ...)
+=================  ====================================================
 
 Quick start
 ===========

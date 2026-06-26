@@ -48,6 +48,15 @@ If you need to run Python, use the "ocean14" Conda environment.
 5. Read this doc.  Execute the 3rd task under "Implement".
 6. Read this doc.  Execute the 3rd task under "Explore".
 7. Read this doc.  Execute the 4th task under "Implement".
+8. Read this doc.  Execute the 1st task under "Polishing".
+
+## Polishing
+
+1. Make a rigorous pass through the code base.  Then:
+    - Make sure the docs are up-to-date.  
+    - Add new unit tests where sensible.  
+    - Turn on CI on GitHub
+    - Log your work
 
 ## Implement
 
@@ -673,3 +682,65 @@ table, only **3** carry spectral IOP data (all `aph`); the other 167 IOP
 rows hold only TSM — now captured as the scalar `tss`. So hyperspectral-Rrs
 + spectral-IOP match-ups are the scarcest, most valuable subset of PANAGEA.
 163 of the 338 do carry a chlorophyll value.
+
+### 2026-06-26 (Polishing pass: notebooks, docs, tests, CI)
+
+Executed Polishing task 1 — a rigorous pass through the code base.
+
+**Notebooks (import breakage fixed).** The module was renamed
+`panagea.py` → `pangaea.py` in an earlier commit, but all six notebooks in
+`nb/PANAGEA/` still did `from ocpy.insitu import panagea` and called
+`panagea.*` — a hard import error on a fresh run. Replaced the stale lowercase
+`panagea` token with `pangaea` in every notebook (the uppercase `PANAGEA`
+directory/prose was left untouched). Re-executed all six end-to-end against
+the mounted V3 data: `PANAGEA_demo`, `10_coverage`, `11_chlorophyll`,
+`12_rrs_spectra`, `13_iops`, `20_hyperspectral_extract` — all clean.
+
+**Docs (made up to date).**
+- `docs/pangaea.rst`: documented the two methods added in Implement task 4 —
+  `n_spectral` and `extract_hyperspectral` — with a new "Hyperspectral
+  extraction" section and rows in the API-summary table; refreshed the
+  closing notebook note (notebooks now use the `pangaea` import).
+- Added `docs/api/insitu.rst` (autodoc for the whole `ocpy.insitu.pangaea`
+  surface plus `gloria.load_gloria`) and wired it into the `index.rst` API
+  toctree.
+- Fixed pervasive **package-rename rot**: every tracked `docs/**/*.rst` still
+  referenced the old `oceancolor` package name (the repo was renamed to
+  `ocpy`). Replaced `oceancolor` → `ocpy` across all 23 source rst files,
+  which cleared dozens of autodoc import failures.
+- `docs/api/utils.rst`: the "Spectral Utilities" section pointed at a
+  non-existent `ocpy.utils.spectra`; repointed to the real
+  `ocpy.spectra.utils` (with `:no-index:` to avoid duplicate-object
+  warnings against `api/spectra.rst`).
+- `docs/spectra.rst`: fixed a malformed attribute table (first-column rule
+  was narrower than the `lat / lon` cell).
+- Verified with a cold Sphinx build: the new/edited pages emit **zero**
+  warnings.
+
+**Tests (added where sensible).** Extended `ocpy/tests/test_pangaea.py` with
+8 new data-independent unit tests covering the previously-untested helpers:
+`to_long` (native, sat-band, and the empty-family case), `n_spectral`,
+`column_metadata` (incl. empty frame), `_band_name`, and the error paths of
+`dataset_file` (bad key) and `pangaea_path` (missing directory). Full file:
+**19 passed, 4 skipped** (the data-dependent tests skip when the drive is
+unmounted, which happened mid-session).
+
+**CI (turned on).** Added `.github/workflows/tests.yml` — a lightweight,
+pip-based GitHub Actions workflow (Python 3.10/3.11/3.12) that installs only
+the deps the clean test modules need and runs `test_pangaea`, `test_spectra`
+and `test_coords` on every push/PR (59 passed, 10 skipped locally). Added
+Tests + Docs status badges to `README.md`. The workflow file activates
+Actions once pushed; **JXP performs the git push** per repo policy.
+
+**Flagged (out of scope, not done).** Several *source* modules still import
+the pre-rename `oceancolor` package — `ocpy/ls2/kd_nn.py`,
+`ocpy/tara/ingest.py`, `ocpy/polarize/load_data.py`,
+`ocpy/satellites/seawifs.py`, `ocpy/ls2/io.py`, and their tests
+(`test_ls2`, `test_water`, `test_ph`, `test_polarize`, `test_ls2_kd`). These
+fail to import on a fresh checkout and are why the CI test scope is limited
+for now. Completing the `oceancolor` → `ocpy` migration in the source tree
+(and then widening the CI scope) is the recommended next pass; it is a
+repo-wide refactor independent of the PANGAEA work, so it was left for a
+dedicated effort rather than folded in here. A few pre-existing docstring
+formatting warnings (`ls2_main`, `utils.coords`, `pace.io`) and "title
+overline too short" rst nits also remain.

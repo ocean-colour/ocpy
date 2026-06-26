@@ -2,7 +2,7 @@
 Inherent Optical Properties
 ============================
 
-.. module:: oceancolor.iop
+.. module:: ocpy.iop
    :synopsis: Inherent optical property calculations
 
 The ``iop`` module provides functions for calculating and modeling inherent optical
@@ -11,21 +11,21 @@ properties (IOPs) including absorption by CDOM, detritus, and minerals.
 CDOM Absorption
 ---------------
 
-.. module:: oceancolor.iop.cdom
+.. module:: ocpy.iop.cdom
    :synopsis: CDOM absorption modeling
 
 Colored Dissolved Organic Matter (CDOM) absorption is typically modeled using
 exponential or power-law functions.
 
-.. autofunction:: oceancolor.iop.cdom.a_exp
+.. autofunction:: ocpy.iop.cdom.a_exp
 
-.. autofunction:: oceancolor.iop.cdom.a_pow
+.. autofunction:: ocpy.iop.cdom.a_pow
 
-.. autofunction:: oceancolor.iop.cdom.fit_exp_norm
+.. autofunction:: ocpy.iop.cdom.fit_exp_norm
 
-.. autofunction:: oceancolor.iop.cdom.fit_exp_tot
+.. autofunction:: ocpy.iop.cdom.fit_exp_tot
 
-.. autofunction:: oceancolor.iop.cdom.fit_pow
+.. autofunction:: ocpy.iop.cdom.fit_pow
 
 CDOM Models
 ^^^^^^^^^^^
@@ -60,7 +60,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.iop import cdom
+   from ocpy.iop import cdom
 
    wavelengths = np.arange(350, 701, 5)
 
@@ -81,12 +81,12 @@ Example Usage
 ZLee IOP Methods
 ----------------
 
-.. module:: oceancolor.iop.zlee
+.. module:: ocpy.iop.zlee
    :synopsis: Zheng Lee IOP methods
 
 The ZLee module implements IOP retrieval methods from the Zheng Lee suite of algorithms.
 
-.. autofunction:: oceancolor.iop.zlee.Y_from_Rrs
+.. autofunction:: ocpy.iop.zlee.Y_from_Rrs
 
 Example Usage
 ^^^^^^^^^^^^^
@@ -94,7 +94,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.iop.zlee import Y_from_Rrs
+   from ocpy.iop.zlee import Y_from_Rrs
 
    wavelengths = np.array([412, 443, 490, 510, 555, 670])
    Rrs = np.array([0.003, 0.004, 0.005, 0.006, 0.007, 0.001])
@@ -105,7 +105,7 @@ Example Usage
 Particle Cross-Sections
 -----------------------
 
-.. module:: oceancolor.iop.cross
+.. module:: ocpy.iop.cross
    :synopsis: Particle cross-sections from Stramski et al. 2001
 
 Functions for optical cross-sections of oceanic particles based on Stramski et al. (2001).
@@ -113,29 +113,29 @@ Functions for optical cross-sections of oceanic particles based on Stramski et a
 Detritus
 ^^^^^^^^
 
-.. autofunction:: oceancolor.iop.cross.detritus_abs
+.. autofunction:: ocpy.iop.cross.detritus_abs
 
-.. autofunction:: oceancolor.iop.cross.detritus_scatt
+.. autofunction:: ocpy.iop.cross.detritus_scatt
 
-.. autofunction:: oceancolor.iop.cross.detritus_backscatt
+.. autofunction:: ocpy.iop.cross.detritus_backscatt
 
 Minerals
 ^^^^^^^^
 
-.. autofunction:: oceancolor.iop.cross.minerals_abs
+.. autofunction:: ocpy.iop.cross.minerals_abs
 
-.. autofunction:: oceancolor.iop.cross.mineral_scatt
+.. autofunction:: ocpy.iop.cross.mineral_scatt
 
-.. autofunction:: oceancolor.iop.cross.mineral_backscatt
+.. autofunction:: ocpy.iop.cross.mineral_backscatt
 
 Bubbles
 ^^^^^^^
 
-.. autofunction:: oceancolor.iop.cross.bubbles_abs
+.. autofunction:: ocpy.iop.cross.bubbles_abs
 
-.. autofunction:: oceancolor.iop.cross.bubbles_scatt
+.. autofunction:: ocpy.iop.cross.bubbles_scatt
 
-.. autofunction:: oceancolor.iop.cross.bubbles_backscatt
+.. autofunction:: ocpy.iop.cross.bubbles_backscatt
 
 Cross-Section Background
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -159,7 +159,7 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from oceancolor.iop import cross
+   from ocpy.iop import cross
 
    wavelengths = np.arange(400, 701, 10)
 

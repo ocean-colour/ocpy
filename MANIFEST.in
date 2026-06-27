@@ -1,0 +1,5 @@
+# Ship the bundled data files (ocpy/data/**) in the sdist. Combined with
+# include_package_data=True in setup.py this makes the files install with the
+# package so importlib.resources.files('ocpy') resolves them on a fresh
+# pip install, not just from a source checkout.
+recursive-include ocpy/data *

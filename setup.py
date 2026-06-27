@@ -21,14 +21,19 @@ if os.path.exists('README.md'):
 setup_keywords['provides'] = [setup_keywords['name']]
 setup_keywords['requires'] = ['Python (>3.8.0)']
 setup_keywords['install_requires'] = [
-    'seaborn', 'pyarrow', 'healpy', 'cftime', 'bokeh', 
+    'seaborn', 'pyarrow', 'healpy', 'cftime', 'bokeh',
     'xarray', 'h5netcdf', 'importlib-metadata', 'scikit-learn',
-    'openpyxl', 'pyproj', 'cartopy', 'netcdf4', 'geopy', 
-    'geopandas']
+    'openpyxl', 'pyproj', 'cartopy', 'netcdf4', 'geopy',
+    'geopandas', 'ipython']
 setup_keywords['zip_safe'] = False
-setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages()
-setup_keywords['setup_requires'] = ['pytest-runner']
+# Ship the bundled data files (ocpy/data/**) in both the sdist and the wheel
+# so importlib.resources.files('ocpy') resolves them on a fresh pip install,
+# not just from a source checkout. include_package_data + MANIFEST.in covers
+# the sdist; package_data forces inclusion in the wheel even though ocpy/data
+# is not itself a package (it has no __init__.py).
+setup_keywords['include_package_data'] = True
+setup_keywords['package_data'] = {'ocpy': ['data/**/*']}
 setup_keywords['tests_require'] = ['pytest']
 
 if os.path.isdir('bin'):

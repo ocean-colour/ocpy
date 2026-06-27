@@ -450,10 +450,6 @@ The "Logs" section will record Claude's work.  Please use the following format:
 
 <Detailed description of the work and what you learned>
 
-### <Date> (Short summary of the work)
-
-<Detailed description of the work and what you learned>
-
 ...
 
 ## Logs

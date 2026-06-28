@@ -1,0 +1,108 @@
+# Build configuration and project metadata for the ocpy package.
+# This file is the single source of truth for packaging; setup.py is
+# retained only as a thin shim for legacy/editable installs.
+
+[build-system]
+# setuptools >= 61 understands the [project] table natively.
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Distribution name on PyPI.  The import package stays `ocpy`, but the
+# bare name "ocpy" is already taken on PyPI by an unrelated project, so
+# we distribute as "ocpy-ocean" (mirrors the sibling "bing-ocean").
+name = "ocpy-ocean"
+description = "Ocean Color Analysis -- here, there, and everywhere"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "J. Xavier Prochaska", email = "jxp@ucsc.edu" },
+]
+requires-python = ">=3.10"
+keywords = [
+    "ocean color", "remote sensing", "bio-optics", "IOP",
+    "PACE", "MODIS", "SeaWiFS", "Rrs", "chlorophyll",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Runtime dependencies actually imported by the ocpy package (verified by
+# scanning every `import`/`from` statement under ocpy/ and bin/).  The
+# heavy deps that used to live in setup.py but are NOT imported anywhere
+# (healpy, cartopy, pyproj, geopy, cftime, openpyxl, importlib-metadata)
+# have been dropped to keep `pip install` lean.
+#
+# Two deps below are required at runtime even though they are not imported
+# by name:
+#   * h5netcdf -- xarray backend used explicitly as engine='h5netcdf'
+#                 in ocpy/hydrolight/loisel23.py
+#   * pyarrow  -- parquet engine pandas uses to read the Tara tables
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "xarray",
+    "scikit-learn",
+    "netcdf4",
+    "h5netcdf",
+    "pyarrow",
+    "geopandas",
+    "shapely",
+    "bokeh",
+    "ipython",
+]
+
+# Version is read from ocpy/__init__.py:__version__ (single source).
+dynamic = ["version"]
+
+[project.optional-dependencies]
+# Test/development extras: `pip install ocpy-ocean[dev]`
+dev = ["pytest", "pytest-cov"]
+# Documentation build extras (mirrors docs/requirements.txt)
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme>=1.0",
+    "sphinx-autodoc-typehints>=1.18",
+]
+
+[project.urls]
+Homepage = "https://github.com/ocean-colour/ocpy"
+Documentation = "https://ocpy.readthedocs.io"
+Repository = "https://github.com/ocean-colour/ocpy"
+Issues = "https://github.com/ocean-colour/ocpy/issues"
+
+[project.scripts]
+# Replace the legacy bin/ scripts with console entry points.  Both
+# main() functions self-parse sys.argv when called with no argument,
+# so they wire directly as zero-argument console scripts.
+ocpy_view = "ocpy.scripts.plot_oc_scene:main"
+ocpy_plot_rrs = "ocpy.scripts.plot_rrs:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "ocpy.__version__" }
+
+[tool.setuptools.packages.find]
+# Ship only the importable package; exclude papers/, nb/, docs/, runs/.
+include = ["ocpy*"]
+
+[tool.setuptools.package-data]
+# Reference data (water IOPs, LS2 LUTs, phytoplankton spectra, satellite
+# error models, ...) is loaded at runtime via importlib.resources /
+# resource_filename, so it MUST be bundled into the wheel.  ocpy/data has
+# no __init__.py, so it is not a package -- list its files explicitly.
+ocpy = ["data/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["ocpy/tests"]

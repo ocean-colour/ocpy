@@ -16,10 +16,16 @@ ocpy is a Python package for ocean color analysis. It provides tools for:
 ## Build and Install
 
 ```bash
-pip install -e .
+pip install -e .          # runtime deps
+pip install -e .[dev]     # + pytest
 ```
 
-Dependencies are defined in `setup.py` and include: seaborn, pyarrow, healpy, xarray, h5netcdf, scikit-learn, cartopy, netcdf4, geopandas.
+Packaging metadata and dependencies now live in `pyproject.toml` (the
+single source of truth); `setup.py` is a thin shim for legacy/editable
+installs. On PyPI the distribution is named `ocpy-ocean` (the import
+package stays `ocpy`). Runtime deps: numpy, scipy, pandas, matplotlib,
+seaborn, xarray, scikit-learn, netcdf4, h5netcdf, pyarrow, geopandas,
+shapely, bokeh, ipython.
 
 ## Running Tests
 

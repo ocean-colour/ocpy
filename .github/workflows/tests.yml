@@ -4,11 +4,17 @@ name: Tests
 # every push and pull request. The large in situ / satellite datasets are not
 # available on CI, so the data-dependent tests skip automatically.
 #
-# NOTE: the test scope below is intentionally limited to the modules whose
-# import chains are clean (no data download and no stale ``oceancolor``
-# imports). Several other test modules (test_ls2, test_water, test_ph,
-# test_polarize, test_ls2_kd) still import the pre-rename ``oceancolor``
-# package and will be added here once that migration to ``ocpy`` is complete.
+# NOTE: the pre-rename ``oceancolor`` imports have all been migrated to
+# ``ocpy``.  The test scope below is still intentionally limited -- the
+# remaining test modules need deps not installed here (e.g. IPython) or
+# have non-import issues unrelated to the rename:
+#   * test_water, test_polarize, test_ls2_kd -- import chains are now
+#       clean but pull in IPython (and bundled data); enable once the CI
+#       dep list and data fixtures are sorted.
+#   * test_ph    -- references ocpy.ph.io / load_tables, which no longer
+#       exist after the ph/ module reorganization.
+#   * test_ls2   -- test_ls2_run raises a numpy scalar-conversion
+#       TypeError inside ls2_main.py (algorithm bug).
 
 on:
   push:

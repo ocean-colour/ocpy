@@ -13,8 +13,8 @@ except ImportError:
     warnings.warn("geopandas not installed")
 
 # Module-level path to the bundled Tara ap/cp parquet. Kept as a module
-# attribute (and aliased by load_tara_db below) for back-compatibility with
-# the pre-rename oceancolor API that callers/tests still use.
+# attribute (and aliased by load_tara_db below) for back-compatibility
+# with the API that callers/tests use.
 db_name = os.path.join(str(resources.files('ocpy')), 'data', 'Tara',
                        'Tara_APCP.parquet')
 

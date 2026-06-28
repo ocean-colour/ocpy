@@ -35,6 +35,10 @@ If you need to run python, use the "ocean14" environment in conda.
     - If you have any additional suggestions or questions, put them in the Q&A section.
     - Log your work
 
+2. I have answered all the Q&A questions.  Please read them and:
+    - Replace all oceancolor imports with ocpy.
+    - Log your work
+
 ## Q&A
 
 **Q1 (RESOLVED): PyPI distribution name.** The bare name `ocpy` is already
@@ -60,16 +64,22 @@ I left these untouched -- the migration is a separate, broader effort
 already tracked in CI, not a packaging change. Recommend completing it
 (or shipping a temporary `oceancolor` -> `ocpy` alias) before release.
 
+A. Replace all oceancolor imports with ocpy.
+
 **Q3 (suggestion): `ocpy/water/WOPP/WOPP_gui.py` is Python 2 only.** It
 imports `Tkinter` / `tkFileDialog`, which don't exist in Python 3, so it
 cannot run under the supported interpreters. Suggest deleting it,
 porting to `tkinter`, or excluding it from the wheel.
+
+A. It is ok;  I inherited it and we don't use it.
 
 **Q4 (suggestion): dropped heavy dependencies.** Removed from the deps
 list because nothing under `ocpy/` imports them: `healpy`, `cartopy`,
 `pyproj`, `geopy`, `cftime`, `openpyxl`, `importlib-metadata`. If any are
 needed by notebooks or undocumented workflows, add them back (ideally as
 an optional extra rather than a hard runtime dep).
+
+A. This is fine.
 
 ## Logging
 
@@ -132,3 +142,52 @@ testing, external-data env vars, docs link, and citation.
 - The repo still contains stale `oceancolor` imports (pre-rename) and a
   Python-2-only WOPP GUI -- documented as release blockers/suggestions
   in Q&A (Q2-Q4); left untouched as they are out of packaging scope.
+
+### 2026-06-28 (Task 2 -- migrate `oceancolor` imports to `ocpy`)
+
+Per the Q2 answer, replaced every pre-rename `oceancolor` import/data
+reference with `ocpy`. Work continues on branch `prep_for_pip`.
+
+**Files changed (9 code/test files):**
+- `ocpy/tara/ingest.py`        -- `from oceancolor.tara import io` and
+  `resource_filename('oceancolor', 'data')` -> `ocpy`.
+- `ocpy/ls2/kd_nn.py`          -- `from oceancolor.ls2 import io` -> `ocpy`.
+- `ocpy/ls2/io.py`             -- 4x `resource_filename('oceancolor', ...)`
+  -> `ocpy`.
+- `ocpy/polarize/load_data.py` -- 2x `resource_filename('oceancolor', ...)`
+  -> `ocpy`.
+- tests: `test_water.py`, `test_ph.py`, `test_polarize.py`,
+  `test_ls2_kd.py`, `test_ls2.py` -- `from oceancolor...` -> `from ocpy...`.
+
+**Deliberately NOT changed (not imports):**
+- `ocpy/satellites/seawifs.py:13` -- a NASA URL
+  (`oceancolor.gsfc.nasa.gov`), not an import.
+- `ocpy/tara/io.py:17` -- a comment that referenced the rename; reworded
+  to drop the now-stale "pre-rename oceancolor" phrasing.
+
+**Also updated stale references to the old name:**
+- `CLAUDE.md` -- the note claiming tests import from `oceancolor` now
+  says they import from `ocpy`.
+- `.github/workflows/tests.yml` -- the header NOTE no longer claims the
+  excluded tests import `oceancolor`; it now records that the migration
+  is complete and why each remaining test is still excluded (CI deps /
+  non-import bugs).
+
+**Verification (conda env `ocean14`):**
+- All four migrated package modules import cleanly:
+  `ocpy.tara.ingest`, `ocpy.ls2.kd_nn`, `ocpy.ls2.io`,
+  `ocpy.polarize.load_data`.
+- `pytest` on the migrated tests: `test_water`, `test_polarize`,
+  `test_ls2_kd` PASS (6 passed). Two still fail, but for reasons
+  unrelated to the rename (the imports themselves now resolve):
+    * `test_ph.py` -- `from ocpy.ph import io` fails because `ocpy.ph`
+      has no `io` submodule and `load_tables` exists nowhere in the repo
+      (leftover from the ph/ reorganization; pre-existing).
+    * `test_ls2.py::test_ls2_run` -- runtime `TypeError: only
+      0-dimensional arrays can be converted to Python scalars` in
+      `ocpy/ls2/ls2_main.py:103` (numpy/scipy version issue; pre-existing,
+      not import-related).
+- Recommend fixing those two as a separate follow-up before widening CI
+  test scope. The `oceancolor` -> `ocpy` import migration itself is
+  complete: `grep -rn oceancolor --include='*.py'` now matches only the
+  NASA URL comment in seawifs.py.

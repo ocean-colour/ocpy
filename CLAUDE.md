@@ -40,7 +40,7 @@ pytest ocpy/tests/test_water.py
 pytest ocpy/tests/test_ls2.py::test_ls2_run
 ```
 
-Note: Tests import from `oceancolor` namespace (e.g., `from oceancolor.water.scattering import PMH`), not `ocpy`.
+Note: Tests now import from the `ocpy` namespace (e.g., `from ocpy.water.scattering import PMH`); the pre-rename `oceancolor` imports have been migrated.
 
 ## Code Architecture
 

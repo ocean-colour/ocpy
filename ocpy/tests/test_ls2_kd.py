@@ -1,6 +1,6 @@
 import numpy as np
 
-from oceancolor.ls2 import kd_nn
+from ocpy.ls2 import kd_nn
 
 from IPython import embed
 

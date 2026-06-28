@@ -1,7 +1,7 @@
 """ Tests for phytoplankton """""
 import os
 
-from oceancolor.ph import io
+from ocpy.ph import io
 
 import pytest
 

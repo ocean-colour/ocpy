@@ -11,7 +11,7 @@ import warnings
 
 import pandas
 
-from oceancolor.tara import io
+from ocpy.tara import io
 
 # HARD CODED FOR INGESTION ONLY
 tara_path = '/home/xavier/Projects/Oceanography/Color/data/Tara'
@@ -75,7 +75,7 @@ def read_one_file(ofile:str, skip_sig:bool=False):
                            delimiter=' ', index_col=False)
     elif os.path.basename(ofile) == 'Tara_ACS_apcp2011_351ap.txt':
         ex_file = os.path.join(
-            resource_filename('oceancolor', 'data'),
+            resource_filename('ocpy', 'data'),
             'Tara', '682bc9fe5b_Tara_ACS_apcp2011_351ap.sb')
         df_sig, _ = read_one_file(ex_file, skip_sig=True)
         # Fuss!

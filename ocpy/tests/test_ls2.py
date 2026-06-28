@@ -8,8 +8,8 @@ import pytest
 
 import pandas
 
-from oceancolor.ls2.io import load_LUT
-from oceancolor.ls2.ls2_main import LS2_main
+from ocpy.ls2.io import load_LUT
+from ocpy.ls2.ls2_main import LS2_main
 
 from IPython import embed
 

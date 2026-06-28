@@ -17,7 +17,7 @@ def koetner2020(sheet:str=None):
         pandas.DataFrame or tuple: 
             DataFrame of the full table or tuple of the sheet, psis [deg], vsf [1/m sr]
     """
-    file_2020 = os.path.join(resource_filename('oceancolor', 'data'), 'polarization',
+    file_2020 = os.path.join(resource_filename('ocpy', 'data'), 'polarization',
                          'Koestner_et_al_2020_AO_Fig4.xlsx')
     # Open                        
     k2020 = pandas.read_excel(file_2020, sheet_name=None)
@@ -63,7 +63,7 @@ def koetner2021(sheet:str=None):
         pandas.DataFrame or tuple: 
             DataFrame of the full table or tuple of the sheet, psis [deg], vsf [1/m sr]
     """
-    file_2021 = os.path.join(resource_filename('oceancolor', 'data'), 'polarization',
+    file_2021 = os.path.join(resource_filename('ocpy', 'data'), 'polarization',
                          'Koestner-et-al-2021_AO_VSFs.xlsx')
     # Open                        
     k2021 = pandas.read_excel(file_2021, sheet_name=None)

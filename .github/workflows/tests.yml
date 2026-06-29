@@ -4,11 +4,15 @@ name: Tests
 # every push and pull request. The large in situ / satellite datasets are not
 # available on CI, so the data-dependent tests skip automatically.
 #
-# NOTE: the test scope below is intentionally limited to the modules whose
-# import chains are clean (no data download and no stale ``oceancolor``
-# imports). Several other test modules (test_ls2, test_water, test_ph,
-# test_polarize, test_ls2_kd) still import the pre-rename ``oceancolor``
-# package and will be added here once that migration to ``ocpy`` is complete.
+# NOTE: the pre-rename ``oceancolor`` imports have all been migrated to
+# ``ocpy``, and test_ph / test_ls2 now pass locally (the ph/io reorg and
+# the numpy>=2 scalar-conversion issue in ls2_main.py are both fixed).
+# The CI scope below is still intentionally limited because the remaining
+# test modules (test_water, test_ph, test_polarize, test_ls2_kd, test_ls2)
+# pull in IPython transitively, which is not installed in this lightweight
+# job.  Add ``ipython`` to the install step (and the test files below) to
+# enable them.  Separately, test_plot_oc_scene has 4 pre-existing failures
+# in detect_file_type mocking, unrelated to packaging.
 
 on:
   push:

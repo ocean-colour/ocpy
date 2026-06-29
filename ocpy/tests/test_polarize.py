@@ -1,7 +1,7 @@
 """ Tests for phytoplankton """""
 import os
 
-from oceancolor.polarize import load_data
+from ocpy.polarize import load_data
 
 import pytest
 

@@ -1,4 +1,4 @@
-from oceancolor.water.scattering import PMH, dlnasw_ds, rhou_sw
+from ocpy.water.scattering import PMH, dlnasw_ds, rhou_sw
 
 import pytest
 

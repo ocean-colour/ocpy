@@ -9,16 +9,16 @@ import pandas
 
 def load_LUT():
     """ Load the LUT from the package data """
-    filename = resource_filename('oceancolor', 
+    filename = resource_filename('ocpy', 
                                  os.path.join('data', 'LS2', 'LS2_LUT.npz'))
     return np.load(filename)
 
 def load_Kd_tables():
-    weights_1_file = resource_filename('oceancolor', 
+    weights_1_file = resource_filename('ocpy', 
                                  os.path.join('data', 'LS2', 'weights_1.csv'))
-    weights_2_file = resource_filename('oceancolor', 
+    weights_2_file = resource_filename('ocpy', 
                                  os.path.join('data', 'LS2', 'weights_2.csv'))
-    train_file = resource_filename('oceancolor', 
+    train_file = resource_filename('ocpy', 
                                  os.path.join('data', 'LS2', 'train_switch.csv'))
     # Load
     weights_1 = pandas.read_csv(weights_1_file)

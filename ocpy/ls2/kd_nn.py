@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 
-from oceancolor.ls2 import io as ls2_io
+from ocpy.ls2 import io as ls2_io
 
 from IPython import embed
 

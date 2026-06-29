@@ -41,6 +41,8 @@ If you need to run python, use the "ocean14" environment in conda.
 
 3. Please try to fix the two tests that are failing.  Log your work.
 
+4. Please generate a HOWTO_pypi.md file that gives a step-by-step guide to releasing the repo as a pypi package.  Log your work.
+
 ## Q&A
 
 **Q1 (RESOLVED): PyPI distribution name.** The bare name `ocpy` is already
@@ -253,3 +255,34 @@ pre-existing test_plot_oc_scene failures.
   unrelated to this work -- I touched neither `plot_oc_scene.py` nor its
   test. Left them for a separate follow-up (out of scope for "fix the
   two failing tests").
+
+### 2026-06-29 (Task 4 -- write the PyPI release HOWTO)
+
+Created `docs/HOWTO_pypi.md`, a step-by-step guide to releasing `ocpy`
+to PyPI. Adapted the structure from the sibling bing repo's
+`docs/HOWTO_pypi.md` and tailored every detail to ocpy.
+
+**Contents:** current packaging state (Tasks 1-3 done), pre-upload
+checklist (confirm the `ocpy-ocean` name, pick the version, document the
+not-bundled runtime data, the harmless Py2 WOPP GUI), one-time
+TestPyPI/PyPI account + token setup, build tooling install, build,
+`twine check`, TestPyPI smoke test, real upload, git tagging, optional
+Trusted-Publishing GitHub Action, and post-release housekeeping, plus a
+copy-paste "happy path" quick reference.
+
+**Facts verified live in conda env `ocean14` (so the guide is accurate):**
+- `python -m build` succeeds and produces a valid sdist + wheel
+  (`ocpy_ocean-0.1.0.tar.gz` / `ocpy_ocean-0.1.0-py3-none-any.whl`); the
+  wheel bundles `ocpy/data/**` (e.g. `LS2/LS2_LUT.npz`) and both console
+  entry points (`ocpy_view`, `ocpy_plot_rrs`). Artifacts cleaned after.
+- `build` 1.5.0 is installed in `ocean14`; `twine` is NOT -> the guide
+  says to `pip install ... twine`.
+- `pip index versions ocpy-ocean` -> "No matching distribution found"
+  (the name is free); bare `ocpy` is taken (latest 0.5.3.1), confirming
+  the `ocpy-ocean` choice.
+- Unlike bing, ocpy has no git-only hard dependency -- all runtime deps
+  are on PyPI, so `pip install ocpy-ocean` is self-contained (noted in
+  the guide).
+- Noted a dev-env wrinkle: a stale `ocpy 0.1.dev0` editable install from
+  the old setup.py can linger; the guide says to uninstall + remove
+  `*.egg-info` before building.

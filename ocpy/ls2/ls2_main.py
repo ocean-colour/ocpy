@@ -100,7 +100,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
             (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(), 
              LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
             np.array([[a00,a01],[a10,a11]]))
-        a = float(f([eta,muw]))
+        a = f([eta, muw]).item()  # numpy>=2: 1-elem array -> scalar
         #a = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
         #                         np.array([[a00,a01],[a10,a11]]),eta,muw) 
         
@@ -119,7 +119,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
             (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(),
             LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
             np.array([[bb00,bb01],[bb10,bb11]]))
-        bb = float(f([eta,muw]))
+        bb = f([eta, muw]).item()  # numpy>=2: 1-elem array -> scalar
         #bb = interpolate.interp2d(LS2_LUT['eta'][idx_eta:idx_eta+2],LS2_LUT['muw'][idx_muw:idx_muw+2],
         #                         np.array([[bb00,bb01],[bb10,bb11]]),eta,muw)
         
@@ -160,7 +160,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
                 (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(), 
                 LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
                 np.array([[a00,a01],[a10,a11]]))
-            a = float(f([eta,muw]))
+            a = f([eta, muw]).item()  # numpy>=2: 1-elem array -> scalar
                     
             #calculation of bb from Eq. 8  
             
@@ -188,7 +188,7 @@ def LS2_main(sza:float,lambda_:float,Rrs:float,Kd:float,aw:float,
                 (LS2_LUT['eta'][idx_eta:idx_eta+2].flatten(),
                 LS2_LUT['muw'][idx_muw:idx_muw+2].flatten()), 
                 np.array([[bb00,bb01],[bb10,bb11]]))
-            bb = float(f([eta,muw]))
+            bb = f([eta, muw]).item()  # numpy>=2: 1-elem array -> scalar
         #if Flag is not 1, do nothing and return original values of a, anw, bb,  
         #bbp with kappa returned as 1  
     else:        

@@ -3,7 +3,6 @@
 #clear command window and workspace; close figures  
 import numpy as np
 import pathlib
-import datetime
 import pytest
 
 import pandas
@@ -152,44 +151,17 @@ def test_ls2_run():
             output_a[i,j], output_anw[i,j], output_bb[i,j], output_bbp[i,j], output_kappa[i,j] = LS2_main(
                 sza[i], lambda_[j], Rrs[i,j], Kd[i,j], aw[j], bw[j], bp[i,j], LS2_LUT, input_Flag_Raman)
 
-    #save inputs and outputs into an excel file  
-    date_str = datetime.datetime.today().strftime('%Y%m%d') 
-    outfile = f'LS2_test_run_{date_str}.xlsx'
-    save_dfs = {}
-    with pandas.ExcelWriter(outfile) as writer:  
-        for i in range(Rrs.shape[1]):
-            df = pandas.DataFrame()
-            df['Input wavelength [nm]'] = lambda_[i]
-            df['Input sza [deg]'] = sza
-            df['Input Rrs [1/sr]'] = Rrs[:,i]
-            df['Input Kd [1/m]'] = Kd[:,i]
-            df['Input aw [1/m]'] = aw[i]
-            df['Input bw [1/m]'] = bw[i]
-            df['Input bp [1/m]'] = bp[:,i]
-            df['Ouput a [1/m]'] = output_a[:,i]
-            df['Output anw [1/m]'] = output_anw[:,i]
-            df['Output bb [1/m]'] = output_bb[:,i]
-            df['Output bbp [1/m]'] = output_bbp[:,i]
-            df['Output kappa [dim]'] = output_kappa[:,i]
-            
-            #df.columns = ['Input wavelength [nm]','Input sza [deg]','Input Rrs [1/sr]',  
-            #                'Input Kd [1/m]','Input aw [1/m]','Input bw [1/m]','Input bp [1/m]',  
-            #                'Ouput a [1/m]','Output anw [1/m]','Output bb [1/m]',  
-            #                'Output bbp [1/m]','Output kappa [dim]']  
-            df.to_excel(writer, sheet_name=f'{lambda_[i]} nm', index=False)
+    # Compare to the reference LS2 test run output.  The reference was
+    # converted once from the original legacy LS2_test_run.xls into a
+    # dependency-free CSV (one row per sample; the 'Sheet' column marks
+    # the wavelength), so the test no longer needs the optional xlrd /
+    # openpyxl Excel engines and writes no output file as a side effect.
+    ls2_ref = pandas.read_csv(data_path('LS2_test_run.csv'))
+    ref_412 = ls2_ref[ls2_ref['Sheet'] == '412 nm']
 
-            # Save
-            save_dfs[f'{lambda_[i]} nm'] = df
+    # 412 nm is the first entry in lambda_, hence column 0 of output_bb.
+    idx_412 = lambda_.index(412)
 
-    print(f'Output saved to {outfile}')
-
-    # Compare to the LS2 test run output
-    ls2_test_run = pandas.read_excel(data_path('LS2_test_run.xls'), sheet_name=None)
-
-    # Test
-    ls2_412 = ls2_test_run['412 nm']
-    df = save_dfs['412 nm']
-
-    assert np.allclose(ls2_412['Output bb [1/m]'].values, 
-                       df['Output bb [1/m]'].values, 
+    assert np.allclose(ref_412['Output bb [1/m]'].values,
+                       output_bb[:, idx_412],
                        rtol=1e-3)

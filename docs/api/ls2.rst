@@ -32,6 +32,11 @@ Main Algorithm
 .. module:: ocpy.ls2.ls2_main
    :synopsis: Core LS2 inversion algorithm
 
+.. autofunction:: ocpy.ls2.ls2_main.ls2_invert
+
+.. autoclass:: ocpy.ls2.ls2_main.LS2Result
+   :members: converged, counts
+
 .. autofunction:: ocpy.ls2.ls2_main.LS2_main
 
 .. autofunction:: ocpy.ls2.ls2_main.LS2_seek_pos
@@ -47,6 +52,21 @@ The LS2 algorithm operates in several steps:
 2. **LUT Interpolation**: The normalized Rrs is matched to pre-computed LUT entries
 3. **IOP Retrieval**: Absorption and backscattering are derived from the best-matching LUT entry
 4. **Raman Correction**: An optional correction factor (κ) accounts for Raman scattered light
+
+``ls2_invert`` is the entry point to use.  It runs over an ``(N, L)`` block of samples and
+wavelengths at once, iterates the Raman correction to convergence, and reports why any cell
+came back NaN through four per-cell flags rather than through a warning per cell.  ``LS2_main``
+is a thin scalar wrapper kept for its historical 5-tuple contract; it defaults to a single
+Raman pass, which is what the authors' MATLAB distribution does, and so remains a faithful
+oracle for it.
+
+Three behaviours differ deliberately from the earlier Python port, all bug fixes:
+
+* All four ``a`` corners are recomputed in the Raman branch.  The port recomputed one and
+  reused three stale corners; the authors' ``LS2_main.m`` recomputes all four.
+* κ above the Raman table's 702 nm limit is NaN, not the clamped end-of-table value.
+* Off-grid inputs return NaN rather than ``None``, and a value landing exactly on the last
+  ``eta`` or ``muw`` node no longer raises ``UnboundLocalError``.
 
 Input Requirements
 ^^^^^^^^^^^^^^^^^^
@@ -81,21 +101,14 @@ Example Usage
    a_w = absorption.a_water(wavelengths)
    b_w = np.array([0.0058, 0.0045, 0.0031, 0.0026, 0.0019, 0.0008])
 
-   # Run inversion
-   results = ls2_main.LS2_main(
-       sza=sza,
-       lambda_=wavelengths,
-       Rrs=Rrs,
-       Kd=Kd,
-       aw=a_w,
-       bw=b_w,
-       bp=np.zeros_like(wavelengths),
-       LS2_LUT=LUT,
-       Flag_Raman=1
-   )
+   # Run inversion over one spectrum (or an (N, L) block of them)
+   res = ls2_main.ls2_invert(
+       Rrs, Kd, a_w, b_w, np.zeros_like(wavelengths, dtype=float),
+       sza, wavelengths, LUT, raman=True)
 
-   print(f"Total absorption: {results['a']}")
-   print(f"Backscattering: {results['bb']}")
+   print(f"Total absorption: {res.a}")
+   print(f"Backscattering: {res.bb}")
+   print(f"Flags: {res.counts()}")
 
 I/O Functions
 -------------

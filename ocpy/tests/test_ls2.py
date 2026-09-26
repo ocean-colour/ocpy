@@ -1,167 +1,408 @@
-""" Tests for the ls2 module """
+"""Tests for the LS2 inversion model.
 
-#clear command window and workspace; close figures  
-import numpy as np
+The oracle is ``files/LS2_test_run.csv``, the authors' own reference vector
+(``LS2_test_run.xls`` from the SIO Ocean Optics Research Laboratory's
+``LS2_Distribution``) converted once into a dependency-free CSV so the tests
+need neither ``xlrd`` nor ``openpyxl``.  It holds 60 cells: 10 samples at each
+of 412, 443, 490, 510, 555 and 670 nm, with every input column alongside the
+MATLAB outputs.  The inputs are read back out of it rather than duplicated as
+literals, so the test and its oracle cannot drift apart.
+
+The reference was produced by the authors' single-pass code, so every
+comparison against it pins ``max_iter=1``.  Convergence of the iterated mode is
+tested separately, by self-consistency.
+
+Reference:
+
+Loisel, H., D. Stramski, D. Dessailly, C. Jamet, L. Li and R. A. Reynolds
+(2018), An inverse model for estimating the optical absorption and
+backscattering coefficients of seawater from remote-sensing reflectance over a
+broad range of oceanic and coastal marine environments, *J. Geophys. Res.
+Oceans*, 123, 2141-2171, doi:10.1002/2017JC013632.
+
+Original test script: M. Kehrli, R. A. Reynolds and D. Stramski, October 2022.
+"""
+
 import pathlib
+import time
+
+import numpy as np
+import pandas
 import pytest
 
-import pandas
-
 from ocpy.ls2.io import load_LUT
-from ocpy.ls2.ls2_main import LS2_main
+from ocpy.ls2.ls2_main import (LS2_calc_kappa, LS2_main, LS2_seek_pos,
+                               ls2_invert)
 
-from IPython import embed
+#: Wavelengths of the reference vector, in the order its sheets were written.
+WAVES = (412., 443., 490., 510., 555., 670.)
+
 
 def data_path(filename):
     data_dir = pathlib.Path(__file__).parent.absolute().joinpath('files')
     # TODO: This really should have the `.resolve()`, but it crashes the
     #       Windows/python3.9 CI test (only that one).  When PypeIt advances
     #       to python>=3.10, reinstate the last part of the following line:
-    return str(data_dir.joinpath(filename))#.resolve())
+    return str(data_dir.joinpath(filename))
 
 
-#define input parameters:  
-
-def test_ls2_run():
-    '''
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %Test script for the LS2 code. The LS2 code is run for ten specified inputs
-    %and the resulting output from the test script is saved to
-    %LS2_test_run_YYYYMMDD.xls file for comparison with provided output
-    %file LS2_test_run.xls
-    %
-    %Reference: 
-    %
-    %Loisel, H., D. Stramski, D. Dessaily, C. Jamet, L. Li, and R.
-    %A. Reynolds. 2018. An inverse model for estimating the optical absorption
-    %and backscattering coefficients of seawater from remote-sensing
-    %reflectance over a broad range of oceanic and coastal marine environments.
-    %Journal of Geophysical Research: Oceans, 123, 2141–2171. doi:
-    %10.1002/2017JC013632 
-    %
-    %Created: October 12, 2022
-    %Completed: October 14, 2022
-    %Updates: N/A
-    %
-    %M. Kehrli, R. A. Reynolds, and D. Stramski 
-    %Ocean Optics Research Laboratory, Scripps Institution of Oceanography
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    '''
+@pytest.fixture(scope='module')
+def lut():
+    """The LS2 look-up tables, materialised out of the lazy npz once."""
+    npz = load_LUT()
+    return {key: np.asarray(npz[key]) for key in npz.files}
 
 
-    #input solar zenith angle [deg]  
-    sza = [58.3534804715254, 57.8478623967075, 55.7074826164700, 56.3604406592725,  
-        56.4697386744023,56.8356539563103,46.7609493705841,42.9575051280531,  
-        39.1258070531710,36.7202617271538]  
+@pytest.fixture(scope='module')
+def reference():
+    """The authors' reference vector as ``(inputs, outputs)`` ``(10, 6)`` blocks.
 
-    #input light wavelengths [nm]  
-    lambda_ = [412,443,490,510,555,670]  
+    Returns
+    -------
+    inputs : dict
+        ``Rrs``, ``Kd``, ``bp`` of shape ``(10, 6)``; ``aw``, ``bw``, ``wave``
+        of shape ``(6,)``; ``sza`` of shape ``(10,)``.
+    outputs : dict
+        ``a``, ``anw``, ``bb``, ``bbp``, ``kappa``, each ``(10, 6)``, with the
+        blanks of the CSV carried through as NaN.
+    """
+    df = pandas.read_csv(data_path('LS2_test_run.csv'))
+    blocks = [df[df['Input wavelength [nm]'] == w].reset_index(drop=True)
+              for w in WAVES]
 
-    #input Rrs [sr^-1]  
-    Rrs = np.array([[0.00233524115013000,0.00294175586230000,0.00393113794469000,  
-                    0.00340969897475000,0.00229711245356000,0.000126252474968051],  
-                    [0.00389536285161000,0.00380553119300000,0.00370193558239000,  
-                    0.00287218595770000,0.00161623731374000, 6.63224220817391e-05], 
-        [0.00445894839227000,0.00429316064858000,
-        0.00415100665860000,0.00310168437705000,0.00160982272779000,
-        7.69489021946615e-05], [0.00369218043611000,0.00338770153633000,
-        0.00335975955251000,0.00277502852091000,0.00163977701600000,
-        9.94781359675408e-05], [0.00439946721488000,0.00410361567739000,
-        0.00384560916516000,0.00281071322991000,0.00145740677722000,
-        7.57133335455754e-05], [0.00407536933494000,0.00393833413124000,
-        0.00377045558470000,0.00294465987184000,0.00155830890220000,
-        5.98787860868771e-05], [0.00839651952650000,0.00703053123029000,
-        0.00515382893062000,0.00328301126479000,0.00143446649046000,
-        7.37164311815052e-05], [0.0108879293669300,0.00844627966419000,
-        0.00598548662295000,0.00380069346088000,0.00162622388794000,
-        3.81004114285704e-05], [0.00996484275824000,0.00805847039179000,
-        0.00569828863615000,0.00339472028869000,0.00146868678397000,
-        3.54625174513673e-05], [0.00654238127443000,0.00606473089160000,
-        0.00511788480497000,0.00358608311014000,0.00161083692320000,
-        3.81378558561512e-05]])
+    def _col(name):
+        return np.column_stack([b[name].values for b in blocks])
 
-    #input Kd [m^-1]  
-    Kd = np.array([[0.187632830961948,0.138869886516291,0.0903870213746760,0.0887979802802584,  
-                    0.105697824445020,0.562373761609887],  
-                    [0.0959924017590809,0.0776637266248738,0.0621434486477123,0.0679142033853613,  
-                    0.0929498240015621,0.541582660606669],   
-        [0.0838916051527420,0.0676778528875712,0.0548092373676583,
-        0.0606911584475843,0.0867712558516902,0.532867854871956],
-        [0.107015673766332,0.0859385855948466,0.0669716298720907,
-        0.0720650641466051,0.0953025020320744,0.535712492953156],
-        [0.0819636283043127,0.0664145944821315,0.0545267015934212,
-        0.0608791413489761,0.0875697338410355,0.536433237168806],
-        [0.0870883103721925,0.0704351866270744,0.0568638096692833,
-        0.0627223237995291,0.0883024973409085,0.531148295108121],
-        [0.0397738921806664,0.0355556278806364,0.0371061601830686,
-        0.0462176494000053,0.0758945231309703,0.500096222235249],
-        [0.0358540683547611,0.0323961377543049,0.0353061269500453,
-        0.0446719301032437,0.0738646909883413,0.484404799921858],
-        [0.0352724958202497,0.0316083929271783,0.0342524209435186,
-        0.0435171225162597,0.0732685592707990,0.487660368105567],
-        [0.0497417842712074,0.0416885187358688,0.0380380139571626,
-        0.0449932910491427,0.0717349865479659,0.474223095982504],
-                    ])
+    inputs = dict(
+        Rrs=_col('Input Rrs [1/sr]'),
+        Kd=_col('Input Kd [1/m]'),
+        bp=_col('Input bp [1/m]'),
+        aw=np.array([b['Input aw [1/m]'][0] for b in blocks]),
+        bw=np.array([b['Input bw [1/m]'][0] for b in blocks]),
+        sza=blocks[0]['Input sza [deg]'].values,
+        wave=np.array(WAVES),
+    )
+    outputs = dict(
+        a=_col('Ouput a [1/m]'),      # the CSV inherits the original typo
+        anw=_col('Output anw [1/m]'),
+        bb=_col('Output bb [1/m]'),
+        bbp=_col('Output bbp [1/m]'),
+        kappa=_col('Output kappa [dim]'),
+    )
+    return inputs, outputs
 
-    #input aw [m^-1]  
-    aw = [0.004673,0.00721,0.015,0.0325,0.0592,0.439]  
 
-    #input bw [m^-1]  
-    bw = [0.00658572,0.004777,0.003098,0.002598,0.00184881,0.0008]  
+def _invert(inputs, lut, **kwargs):
+    """Call :func:`ls2_invert` on the reference inputs."""
+    return ls2_invert(inputs['Rrs'], inputs['Kd'], inputs['aw'], inputs['bw'],
+                      inputs['bp'], inputs['sza'], inputs['wave'], lut,
+                      **kwargs)
 
-    #input bp [m^-1]  
-    bp = np.array([[0.370479484460264,0.344554283516092,0.311505199178834,0.299289309014959,  
-                    0.275022608284016,0.227817235220342],
-                    [0.222636201160542,0.207056692727185,0.187196152812537,0.179855127212045,  
-                        0.165272279059717,0.136904649071855],    
-        [0.193719314154925,0.180163335060562,0.162882362105773,
-        0.156494818493782,0.143806049426719,0.119122921540043],
-        [0.260143039084721,0.241938898652156,0.218732514495725,
-        0.210154768829226,0.193115192978207,0.159968555377470],
-        [0.179080613026910,0.166549012566787,0.150573903198136,
-        0.144669044249190,0.132939121742499,0.110121212786697],
-        [0.204161647168565,0.189874940481825,0.171662446190711,
-        0.164930585555782,0.151557835375583,0.125544177064849],
-        [0.0934854453083219,0.0869435744176718,0.0786040887082217,
-        0.0755215754255463,0.0693982044450966,0.0574865723388487],
-        [0.0886492843355160,0.0824458355445431,0.0745377656045563,
-        0.0716147159730051,0.0658081173805993,0.0545126942481083],
-        [0.0800160719773182,0.0744167531707790,0.0672788197033778,
-        0.0646404346169708,0.0593993182966759,0.0492039129173957],
-        [0.132749681531226,0.123460200430847,0.111618099573194,
-        0.107240919197775,0.0985457095330905,0.0816311474490525],
-                    ])
 
-    #input LS2 LUTs  
-    LS2_LUT = load_LUT()
+def test_ls2_run(reference, lut):
+    """All four coefficients reproduce the authors' reference vector.
 
-    #input Raman Flag  
-    input_Flag_Raman = 1  
+    This is the test the stale-corner defect failed: the earlier port
+    recomputed only ``a00`` in the Raman branch and reused three stale corners,
+    so ``bb`` agreed and ``a`` did not.
+    """
+    inputs, ref = reference
+    res = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=False)
 
-    #preallocate output variables  
-    output_a = np.full(Rrs.shape, np.nan)  
-    output_anw = np.full(Rrs.shape, np.nan)  
-    output_bb = np.full(Rrs.shape, np.nan)  
-    output_bbp = np.full(Rrs.shape, np.nan)      
-    output_kappa = np.full(Rrs.shape, np.nan)  
+    np.testing.assert_allclose(res.a, ref['a'], rtol=1e-9)
+    np.testing.assert_allclose(res.bb, ref['bb'], rtol=1e-9)
 
-    #loop to run LS2 for all samples at every wavelength and calculate outputs
-    for i in range(Rrs.shape[0]):
-        for j in range(Rrs.shape[1]):
-            output_a[i,j], output_anw[i,j], output_bb[i,j], output_bbp[i,j], output_kappa[i,j] = LS2_main(
-                sza[i], lambda_[j], Rrs[i,j], Kd[i,j], aw[j], bw[j], bp[i,j], LS2_LUT, input_Flag_Raman)
 
-    # Compare to the reference LS2 test run output.  The reference was
-    # converted once from the original legacy LS2_test_run.xls into a
-    # dependency-free CSV (one row per sample; the 'Sheet' column marks
-    # the wavelength), so the test no longer needs the optional xlrd /
-    # openpyxl Excel engines and writes no output file as a side effect.
-    ls2_ref = pandas.read_csv(data_path('LS2_test_run.csv'))
-    ref_412 = ls2_ref[ls2_ref['Sheet'] == '412 nm']
+def test_ls2_run_kappa(reference, lut):
+    """kappa is finite exactly where the reference is, and NaN in its 14 blanks."""
+    inputs, ref = reference
+    res = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=False)
 
-    # 412 nm is the first entry in lambda_, hence column 0 of output_bb.
-    idx_412 = lambda_.index(412)
+    finite = np.isfinite(ref['kappa'])
+    assert finite.sum() == 46 and (~finite).sum() == 14
 
-    assert np.allclose(ref_412['Output bb [1/m]'].values,
-                       output_bb[:, idx_412],
-                       rtol=1e-3)
+    np.testing.assert_allclose(res.kappa[finite], ref['kappa'][finite],
+                               rtol=1e-9)
+    assert np.all(np.isnan(res.kappa[~finite]))
+    # Every blank is a cell whose bb/a left the table's admissible range.
+    assert np.array_equal(res.kappa_out_of_range, ~finite)
+
+
+def test_ls2_run_nonwater(reference, lut):
+    """anw = a - aw and bbp = bb - bw/2, including where the reference is blank.
+
+    The MATLAB test script replaced negative ``anw`` by NaN before writing --
+    hence 11 blanks -- but wrote three negative ``bbp`` values through.  With
+    ``clip_negative=False`` we reproduce both: the three negatives exactly, and
+    a negative value under each of the 11 blanks.
+    """
+    inputs, ref = reference
+    res = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=False)
+
+    # bbp has no blanks, and its three negative entries must match.
+    assert np.isfinite(ref['bbp']).all()
+    assert (ref['bbp'] < 0).sum() == 3
+    np.testing.assert_allclose(res.bbp, ref['bbp'], rtol=1e-9)
+    np.testing.assert_allclose(res.bbp, res.bb - inputs['bw'] / 2., rtol=1e-12)
+
+    finite = np.isfinite(ref['anw'])
+    assert finite.sum() == 49 and (~finite).sum() == 11
+    np.testing.assert_allclose(res.anw[finite], ref['anw'][finite], rtol=1e-9)
+    assert np.all(res.anw[~finite] < 0.)
+    assert np.all(res.negative[~finite])
+
+
+def test_ls2_clip_negative(reference, lut):
+    """``clip_negative`` NaNs each coefficient independently, as MATLAB does."""
+    inputs, ref = reference
+    raw = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=False)
+    clipped = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=True)
+
+    assert np.all(np.isnan(clipped.anw[raw.anw < 0.]))
+    assert np.all(np.isnan(clipped.bbp[raw.bbp < 0.]))
+    # a and bb are positive everywhere here, so they survive untouched.
+    np.testing.assert_allclose(clipped.a, raw.a, rtol=1e-12)
+    np.testing.assert_allclose(clipped.bb, raw.bb, rtol=1e-12)
+
+
+def test_scalar_wrapper_matches_vectorized(reference, lut):
+    """``LS2_main`` is a faithful thin wrapper, and returns its 5-tuple."""
+    inputs, _ = reference
+    res = _invert(inputs, lut, raman=True, max_iter=1, clip_negative=True)
+
+    scalar = np.array([[LS2_main(inputs['sza'][i], inputs['wave'][j],
+                                 inputs['Rrs'][i, j], inputs['Kd'][i, j],
+                                 inputs['aw'][j], inputs['bw'][j],
+                                 inputs['bp'][i, j], lut, 1)
+                        for j in range(len(WAVES))]
+                       for i in range(len(inputs['sza']))])
+    assert scalar.shape == (10, 6, 5)
+
+    for k, name in enumerate(('a', 'anw', 'bb', 'bbp', 'kappa')):
+        np.testing.assert_allclose(scalar[:, :, k], getattr(res, name),
+                                   rtol=1e-12, equal_nan=True,
+                                   err_msg=f'scalar {name} differs')
+
+
+def test_raman_off_is_the_first_pass(reference, lut):
+    """``raman=False`` returns the uncorrected solution, with kappa of 1."""
+    inputs, _ = reference
+    off = _invert(inputs, lut, raman=False)
+    zero = _invert(inputs, lut, raman=True, max_iter=0)
+
+    np.testing.assert_allclose(off.a, zero.a, rtol=1e-12, equal_nan=True)
+    np.testing.assert_allclose(off.bb, zero.bb, rtol=1e-12, equal_nan=True)
+    assert np.all(off.kappa == 1.)
+    assert np.all(off.n_iter == 0)
+    assert not off.not_converged.any()
+
+
+def test_raman_iteration_converges(reference, lut):
+    """The Raman iteration converges well inside its cap, and is a fixed point.
+
+    Measured on the reference vector: every cell whose kappa stays in range
+    converges in 2 to 5 passes against a cap of 10, and a further pass then
+    moves ``bb/a`` by less than the tolerance.  The planning round estimated
+    four passes; five is what the stated criterion actually costs.
+    """
+    inputs, _ = reference
+    tol = 1e-3
+    res = _invert(inputs, lut, raman=True, tol=tol, max_iter=10)
+    usable = ~res.kappa_out_of_range
+
+    assert usable.sum() == 43
+    assert not res.not_converged[usable].any()
+    assert res.n_iter[usable].min() >= 2
+    assert res.n_iter[usable].max() <= 6      # measured 5, cap is 10
+
+    # One more pass than the iteration took must move bb/a by less than tol.
+    extra = _invert(inputs, lut, raman=True, tol=tol,
+                    max_iter=int(res.n_iter[usable].max()) + 1)
+    moved = np.abs(extra.bb / extra.a - res.bb / res.a) / np.abs(res.bb / res.a)
+    assert np.nanmax(moved[usable]) < tol
+
+    # Iterating changes the answer enough to be worth reporting: the authors'
+    # single pass leaves bb about 0.3% (median) low against convergence.
+    single = _invert(inputs, lut, raman=True, max_iter=1)
+    shift = np.abs(res.bb - single.bb) / np.abs(single.bb)
+    assert 1e-4 < np.nanmedian(shift[usable]) < 1e-1
+
+
+def test_kappa_leaving_range_on_a_later_pass(reference, lut):
+    """A late kappa failure halts that cell and keeps the last completed pass.
+
+    Iterating moves ``bb/a``, so a cell admissible on the first pass can leave
+    the table's range on a later one.  Three of the reference vector's cells do
+    -- all at 670 nm, where ``bb/a`` is smallest -- taking the usable count from
+    46 at ``max_iter=1`` down to 43 under iteration.  The documented behaviour
+    is to stop there, keep the coefficients of the last completed pass, report
+    ``kappa`` as NaN and set ``kappa_out_of_range``.  On the first pass that
+    reduces exactly to the authors' behaviour, which
+    :func:`test_ls2_run_kappa` pins.
+    """
+    inputs, _ = reference
+    single = _invert(inputs, lut, raman=True, max_iter=1)
+    iterated = _invert(inputs, lut, raman=True, max_iter=10)
+
+    late = iterated.kappa_out_of_range & ~single.kappa_out_of_range
+    assert late.sum() == 3
+    assert np.all(inputs['wave'][np.argwhere(late)[:, 1]] == 670.)
+
+    assert np.all(np.isnan(iterated.kappa[late]))
+    assert np.all(iterated.n_iter[late] >= 1)      # a correction was applied
+    assert np.all(np.isfinite(iterated.a[late]))   # and its result was kept
+    assert np.all(iterated.not_converged[late])
+
+
+def test_kappa_is_applied_to_the_original_rrs(reference, lut):
+    """The correction is not cumulative (Loisel & Stramski 2000, Eq. 22).
+
+    One converged pass from the final kappa must reproduce the final answer;
+    if kappa were applied to an already-corrected Rrs it would not.
+    """
+    inputs, _ = reference
+    res = _invert(inputs, lut, raman=True, max_iter=10)
+    usable = ~res.kappa_out_of_range
+
+    redo = ls2_invert(inputs['Rrs'] * res.kappa, inputs['Kd'], inputs['aw'],
+                      inputs['bw'], inputs['bp'], inputs['sza'],
+                      inputs['wave'], lut, raman=False)
+    np.testing.assert_allclose(redo.a[usable], res.a[usable], rtol=1e-12)
+    np.testing.assert_allclose(redo.bb[usable], res.bb[usable], rtol=1e-12)
+
+
+def _single(lut, *, sza=30., wave=490., Rrs=0.004, Kd=0.05, aw=0.015,
+            bw=0.003, bp=0.15, **kwargs):
+    """One cell through :func:`ls2_invert`, for the edge-case tests."""
+    return ls2_invert([[Rrs]], [[Kd]], [aw], [bw], [[bp]], [sza], [wave],
+                      lut, **kwargs)
+
+
+def test_grid_edges_are_finite(lut):
+    """eta on its last node and sza at 70 degrees both return a solution.
+
+    Both used to raise ``UnboundLocalError``: the bracketing scan never
+    assigned an index for a value sitting exactly on the final node.  ``sza =
+    70`` is worse than that -- the stored ``muw`` nodes are rounded to six
+    decimals, so it lands 4.9e-7 *outside* the table and has to be snapped back
+    onto the edge.
+    """
+    # eta = bw / (bp + bw) = 0.2 exactly, the last eta node.
+    at_eta = _single(lut, bw=0.003, bp=4 * 0.003, raman=False)
+    assert np.isfinite(at_eta.a).all() and not at_eta.off_grid.any()
+
+    at_muw = _single(lut, sza=70., raman=False)
+    assert np.isfinite(at_muw.a).all() and not at_muw.off_grid.any()
+
+    # And the scalar helper agrees.
+    assert LS2_seek_pos(0.2, lut['eta'], 'eta') == 19
+    assert LS2_seek_pos(lut['muw'].ravel()[-1], lut['muw'], 'muw') == 6
+
+
+def test_off_grid_returns_nan_not_none(lut):
+    """Past the edge every output is NaN and ``off_grid`` says so.
+
+    The earlier port used a bare ``return`` here, handing the caller ``None``
+    and breaking its 5-tuple unpacking.
+    """
+    # eta > 0.2 requires bp < 4 bw; clear blue water routinely fails this.
+    res = _single(lut, bw=0.003, bp=0.001, raman=True)
+    assert res.off_grid.all()
+    for name in ('a', 'anw', 'bb', 'bbp', 'kappa'):
+        assert np.all(np.isnan(getattr(res, name))), name
+
+    out = LS2_main(30., 490., 0.004, 0.05, 0.015, 0.003, 0.001, lut, 1)
+    assert len(out) == 5
+    assert all(np.isnan(v) for v in out)
+
+    # sza beyond the muw table is off-grid too.
+    assert np.isnan(LS2_seek_pos(0.5, lut['muw'], 'muw'))
+    assert _single(lut, sza=80., raman=False).off_grid.all()
+
+
+def test_kappa_is_nan_above_the_table(lut):
+    """Above 702 nm kappa is NaN, not the clamped value ``np.interp`` gives.
+
+    The Raman table stops at 702 nm.  A hyperspectral corpus running to 750 nm
+    must be told the correction is unavailable there rather than handed the
+    702 nm row.
+    """
+    lam = lut['kappa'][:, 0]
+    assert lam.max() == 702.
+
+    res = _single(lut, wave=750., Rrs=5e-4, Kd=0.5, aw=2.8, bw=6e-4, bp=0.1,
+                  raman=True, max_iter=1)
+    assert np.all(np.isnan(res.kappa))
+    assert res.kappa_out_of_range.all()
+
+    # The scalar helper too, at a bb/a that is admissible at 702 nm.
+    ratio = float(np.mean(lut['kappa'][-1, 5:7]))
+    assert np.isfinite(LS2_calc_kappa(ratio, 702., lut['kappa']))
+    assert np.isnan(LS2_calc_kappa(ratio, 703., lut['kappa']))
+    assert np.isnan(LS2_calc_kappa(ratio, 301., lut['kappa']))
+
+
+def test_lut_limiting_relation(lut):
+    """``a1 * muw = 1`` at every LUT node, the paper's Rrs -> 0 limit.
+
+    Eq. 9 gives ``a -> Kd / a1`` as ``Rrs -> 0``, and the paper's limiting
+    relation is ``a -> Kd * muw``.  The published table satisfies this to
+    4.4e-6 across all 21 x 8 = 168 nodes, which is a useful invariant to hold
+    any re-derived coefficients to.
+    """
+    a1 = lut['a'][:, :, 0]
+    muw = lut['muw'].ravel()
+    assert a1.shape == (21, 8)
+
+    product = a1 * muw[None, :]
+    assert np.abs(product - 1.).max() < 1e-5
+    assert np.abs(product - 1.).max() > 1e-7   # it is not exact; do not assume so
+
+
+def test_vectorized_speed(lut):
+    """800k cells run in seconds, not the 18.5 minutes the scalar path costs.
+
+    The scalar entry point re-reads the npz, rebuilds two
+    ``RegularGridInterpolator`` objects and evaluates the kappa cubic at all
+    101 table rows for every cell.  The wall-clock bound below is loose enough
+    for a slow shared runner and still two orders of magnitude under that.
+    """
+    rng = np.random.default_rng(0)
+    n_samples, n_waves = 10_000, 80
+    wave = np.linspace(400., 700., n_waves)
+
+    start = time.time()
+    res = ls2_invert(rng.uniform(1e-4, 8e-3, (n_samples, n_waves)),
+                     rng.uniform(0.02, 0.5, (n_samples, n_waves)),
+                     rng.uniform(0.005, 2., n_waves),
+                     rng.uniform(5e-4, 7e-3, n_waves),
+                     rng.uniform(0.02, 0.4, (n_samples, n_waves)),
+                     rng.uniform(0., 60., n_samples), wave, lut,
+                     raman=True, max_iter=10)
+    elapsed = time.time() - start
+
+    assert res.a.shape == (n_samples, n_waves)
+    assert res.counts()['n_cells'] == n_samples * n_waves
+    assert elapsed < 60., f'800k cells took {elapsed:.1f} s'
+
+
+def test_no_warning_storm(lut, recwarn):
+    """Negative, off-grid and out-of-range cells are counted, never warned about.
+
+    One warning per cell is 800k warnings on the benchmark corpus, which hides
+    everything else in the log.
+    """
+    rng = np.random.default_rng(1)
+    res = ls2_invert(rng.uniform(-1e-3, 8e-3, (200, 20)),
+                     rng.uniform(0.02, 0.5, (200, 20)),
+                     rng.uniform(0.005, 2., 20),
+                     rng.uniform(5e-4, 7e-3, 20),
+                     rng.uniform(0.0005, 0.4, (200, 20)),
+                     rng.uniform(0., 75., 200),
+                     np.linspace(400., 750., 20), lut, raman=True)
+
+    counts = res.counts()
+    assert counts['off_grid'] > 0
+    assert counts['negative'] > 0
+    assert counts['kappa_out_of_range'] > 0
+    assert len(recwarn) == 0, [str(w.message) for w in recwarn]

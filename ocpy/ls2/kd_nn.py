@@ -3,8 +3,6 @@ import warnings
 
 from ocpy.ls2 import io as ls2_io
 
-from IPython import embed
-
 def load_weights(wtype:str):
     """
     Load weights and biases for the neural network based on the given water type.

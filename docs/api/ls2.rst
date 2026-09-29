@@ -77,7 +77,9 @@ Input Requirements
 * **Kd**: Diffuse attenuation coefficient (m⁻¹) - can be estimated using the Kd_NN module
 * **aw**: Pure water absorption (m⁻¹)
 * **bw**: Pure water scattering (m⁻¹)
-* **bp**: Particulate scattering (m⁻¹) - set to zeros if unknown
+* **bp**: Particulate scattering (m⁻¹).  Must exceed 4·bw (η = bw/(bp+bw) ≤ 0.2);
+  zeros put every cell off-grid and return NaN.  The authors estimate it from
+  Chl when it is not measured
 * **LS2_LUT**: Look-up tables loaded via ``load_LUT()``
 * **Flag_Raman**: 0=no Raman, 1=with Raman correction
 
@@ -100,11 +102,11 @@ Example Usage
    Kd = np.array([0.05, 0.04, 0.035, 0.03, 0.04, 0.5])
    a_w = absorption.a_water(wavelengths)
    b_w = np.array([0.0058, 0.0045, 0.0031, 0.0026, 0.0019, 0.0008])
+   b_p = 0.1 * (wavelengths / 660.) ** -1   # must exceed 4 b_w, else off-grid
 
    # Run inversion over one spectrum (or an (N, L) block of them)
    res = ls2_main.ls2_invert(
-       Rrs, Kd, a_w, b_w, np.zeros_like(wavelengths, dtype=float),
-       sza, wavelengths, LUT, raman=True)
+       Rrs, Kd, a_w, b_w, b_p, sza, wavelengths, LUT, raman=True)
 
    print(f"Total absorption: {res.a}")
    print(f"Backscattering: {res.bb}")

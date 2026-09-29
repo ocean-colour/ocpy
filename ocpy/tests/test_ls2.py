@@ -222,7 +222,8 @@ def test_raman_iteration_converges(reference, lut):
     assert np.nanmax(moved[usable]) < tol
 
     # Iterating changes the answer enough to be worth reporting: the authors'
-    # single pass leaves bb about 0.3% (median) low against convergence.
+    # single pass is off from convergence by a median |d bb| of 0.34% (max
+    # 1.6%), in both directions; a moves far less (median 0.02%).
     single = _invert(inputs, lut, raman=True, max_iter=1)
     shift = np.abs(res.bb - single.bb) / np.abs(single.bb)
     assert 1e-4 < np.nanmedian(shift[usable]) < 1e-1
@@ -360,12 +361,14 @@ def test_lut_limiting_relation(lut):
 
 
 def test_vectorized_speed(lut):
-    """800k cells run in seconds, not the 18.5 minutes the scalar path costs.
+    """800k cells run in seconds, not the 18.5 minutes the old scalar path cost.
 
-    The scalar entry point re-reads the npz, rebuilds two
-    ``RegularGridInterpolator`` objects and evaluates the kappa cubic at all
-    101 table rows for every cell.  The wall-clock bound below is loose enough
-    for a slow shared runner and still two orders of magnitude under that.
+    The pre-2026-09-23 scalar entry point re-read the npz, rebuilt two
+    ``RegularGridInterpolator`` objects and evaluated the kappa cubic at all
+    101 table rows for every cell.  Measured here at 1.5 s with ``max_iter=10``
+    (``LS2_main`` looped per cell, now a wrapper over this path, costs ~1.4
+    min).  The wall-clock bound below is loose enough for a slow shared runner
+    and still more than an order of magnitude under the old cost.
     """
     rng = np.random.default_rng(0)
     n_samples, n_waves = 10_000, 80

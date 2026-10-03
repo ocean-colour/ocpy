@@ -78,6 +78,31 @@ Example Usage
    a440, S_CDOM = cdom.fit_exp_tot(measured_wave, measured_a)
    print(f"a_CDOM(440) = {a440:.3f} m⁻¹, S = {S_CDOM:.4f} nm⁻¹")
 
+Particulate Scattering
+----------------------
+
+.. module:: ocpy.iop.scattering
+   :synopsis: Particulate scattering from chlorophyll
+
+LS2 needs the particulate scattering coefficient ``b_p`` only to form
+``eta = b_w / (b_p + b_w)``.  When it is not measured, the LS2 authors estimate it
+from chlorophyll, and ``bp_from_chla`` reproduces their ``bp_from_Chla.m`` exactly:
+``b_p(660) = 0.347 Chl^0.766`` (Loisel & Morel 1998, Eq. 6) carried to other
+wavelengths by a plain ``lambda^-1``.  That shape is the authors' choice, not the
+chlorophyll-dependent exponent of Morel & Maritorena (2001).
+
+.. autofunction:: ocpy.iop.scattering.bp_from_chla
+
+.. code-block:: python
+
+   import numpy as np
+   from ocpy.chl.band_ratios import oc4v4
+   from ocpy.iop.scattering import bp_from_chla
+
+   wave = np.arange(400., 751., 5.)
+   chl = oc4v4(wave, Rrs)            # Rrs of shape (N, L)
+   bp = bp_from_chla(wave, chl)      # shape (N, L)
+
 ZLee IOP Methods
 ----------------
 

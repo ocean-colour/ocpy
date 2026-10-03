@@ -41,7 +41,9 @@ The algorithm:
 
 1. Computes three ratios: Rrs(443)/Rrs(555), Rrs(490)/Rrs(555), Rrs(510)/Rrs(555)
 2. Takes the maximum ratio
-3. Applies a 4th-order polynomial in log-space
+3. Applies a polynomial in the log of that ratio: ``oc4`` uses the 1998 form (a cubic
+   plus an additive constant); ``oc4v4`` uses OC4 version 4 (O'Reilly et al. 2000, a
+   quartic), which is what LS2 cites
 
 OC2 Algorithm
 ^^^^^^^^^^^^^

@@ -57,4 +57,5 @@ jobs:
             ocpy/tests/test_pangaea.py \
             ocpy/tests/test_spectra.py \
             ocpy/tests/test_coords.py \
-            ocpy/tests/test_ls2.py
+            ocpy/tests/test_ls2.py \
+            ocpy/tests/test_ls2_chl.py

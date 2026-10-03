@@ -19,6 +19,8 @@ chlorophyll concentration, derived from global in-situ datasets.
 
 .. autofunction:: ocpy.chl.band_ratios.oc4
 
+.. autofunction:: ocpy.chl.band_ratios.oc4v4
+
 .. autofunction:: ocpy.chl.band_ratios.oc2
 
 Algorithm Description
@@ -26,18 +28,31 @@ Algorithm Description
 
 **OC4 Algorithm**
 
-The OC4 algorithm uses the maximum band ratio among three blue wavelengths:
+Both OC4 variants use the maximum band ratio among three blue wavelengths:
 
 .. math::
 
-   R = \\log_{10}\\left(\\max\\left(\\frac{R_{rs}(443)}{R_{rs}(555)}, \\frac{R_{rs}(490)}{R_{rs}(555)}, \\frac{R_{rs}(510)}{R_{rs}(555)}\\right)\\right)
+   R = \log_{10}\left(\max\left(\frac{R_{rs}(443)}{R_{rs}(555)}, \frac{R_{rs}(490)}{R_{rs}(555)}, \frac{R_{rs}(510)}{R_{rs}(555)}\right)\right)
+
+They differ in the polynomial, and they are not interchangeable.  ``oc4`` is the
+first OC4 (O'Reilly et al. 1998), a *modified cubic*: a cubic plus an additive
+constant outside the power of ten,
 
 .. math::
 
-   \\log_{10}(Chl) = a_0 + a_1 R + a_2 R^2 + a_3 R^3 + a_4 R^4
+   Chl = 10^{a_0 + a_1 R + a_2 R^2 + a_3 R^3} + a_4,
+   \qquad (a_0, \ldots, a_4) = (0.4708, -3.8469, 4.5338, -2.4434, -0.0414).
 
-where the coefficients (a₀, a₁, a₂, a₃, a₄) are derived from NASA's ocean color
-algorithm database.
+``oc4v4`` is OC4 version 4 (O'Reilly et al. 2000), a pure quartic,
+
+.. math::
+
+   \log_{10} Chl = 0.366 - 3.067 R + 1.930 R^2 + 0.649 R^3 - 1.532 R^4.
+
+``oc4`` is kept unchanged because BING and IOPtics call it.  Use ``oc4v4``
+wherever OC4v4 is what is cited, as it is by LS2 (Loisel et al. 2018).
+``oc4v4`` is vectorized over spectra (``Rrs`` of shape ``(..., L)``) and
+raises if a required band is more than ``max_offset`` nm from the grid.
 
 **OC2 Algorithm**
 
@@ -45,11 +60,11 @@ The OC2 algorithm uses a single band ratio:
 
 .. math::
 
-   R = \\log_{10}\\left(\\frac{R_{rs}(490)}{R_{rs}(555)}\\right)
+   R = \log_{10}\left(\frac{R_{rs}(490)}{R_{rs}(555)}\right)
 
 .. math::
 
-   \\log_{10}(Chl) = a_0 + a_1 R + a_2 R^2 + a_3 R^3 + a_4 R^4
+   Chl = 10^{a_0 + a_1 R + a_2 R^2 + a_3 R^3} + a_4
 
 OC2 is simpler but less accurate than OC4, particularly at low chlorophyll concentrations.
 
@@ -195,6 +210,10 @@ References
 * O'Reilly, J.E., Maritorena, S., Mitchell, B.G., Siegel, D.A., Carder, K.L.,
   Garver, S.A., Kahru, M., and McClain, C. (1998). Ocean color chlorophyll
   algorithms for SeaWiFS. Journal of Geophysical Research, 103(C11), 24937-24953.
+
+* O'Reilly, J.E., et al. (2000). Ocean color chlorophyll a algorithms for SeaWiFS,
+  OC2, and OC4: Version 4. In SeaWiFS Postlaunch Calibration and Validation
+  Analyses, Part 3, NASA Tech. Memo. 2000-206892, Vol. 11, pp. 9-23.
 
 * O'Reilly, J.E. and Werdell, P.J. (2019). Chlorophyll algorithms for ocean color
   sensors - OC4, OC5 & OC6. Remote Sensing of Environment, 229, 32-47.

@@ -234,12 +234,13 @@ def test_kappa_leaving_range_on_a_later_pass(reference, lut):
 
     Iterating moves ``bb/a``, so a cell admissible on the first pass can leave
     the table's range on a later one.  Three of the reference vector's cells do
-    -- all at 670 nm, where ``bb/a`` is smallest -- taking the usable count from
-    46 at ``max_iter=1`` down to 43 under iteration.  The documented behaviour
-    is to stop there, keep the coefficients of the last completed pass, report
-    ``kappa`` as NaN and set ``kappa_out_of_range``.  On the first pass that
-    reduces exactly to the authors' behaviour, which
-    :func:`test_ls2_run_kappa` pins.
+    -- all at 670 nm, where ``bb/a`` is smallest -- taking the converged count
+    from 46 admissible at ``max_iter=1`` down to 43 under iteration.  The
+    behaviour chosen in ls2 Q28 is to stop there, keep the coefficients of the
+    last completed pass, report the ``kappa`` *last applied* (so it still
+    reproduces ``a`` and ``bb``) and rely on ``kappa_out_of_range`` and
+    ``not_converged`` to say what happened.  A failure on the first pass is
+    still NaN, the authors' behaviour, which :func:`test_ls2_run_kappa` pins.
     """
     inputs, _ = reference
     single = _invert(inputs, lut, raman=True, max_iter=1)
@@ -249,7 +250,8 @@ def test_kappa_leaving_range_on_a_later_pass(reference, lut):
     assert late.sum() == 3
     assert np.all(inputs['wave'][np.argwhere(late)[:, 1]] == 670.)
 
-    assert np.all(np.isnan(iterated.kappa[late]))
+    assert np.all(np.isfinite(iterated.kappa[late]))
+    assert np.all(iterated.kappa_out_of_range[late])
     assert np.all(iterated.n_iter[late] >= 1)      # a correction was applied
     assert np.all(np.isfinite(iterated.a[late]))   # and its result was kept
     assert np.all(iterated.not_converged[late])
@@ -258,12 +260,15 @@ def test_kappa_leaving_range_on_a_later_pass(reference, lut):
 def test_kappa_is_applied_to_the_original_rrs(reference, lut):
     """The correction is not cumulative (Loisel & Stramski 2000, Eq. 22).
 
-    One converged pass from the final kappa must reproduce the final answer;
-    if kappa were applied to an already-corrected Rrs it would not.
+    One uncorrected pass on ``Rrs * kappa_final`` must reproduce the final
+    answer; if kappa were applied to an already-corrected Rrs it would not.
+    Because a late kappa failure reports the kappa last applied (ls2 Q28),
+    this holds for every cell with a finite kappa, including those three.
     """
     inputs, _ = reference
     res = _invert(inputs, lut, raman=True, max_iter=10)
-    usable = ~res.kappa_out_of_range
+    usable = np.isfinite(res.kappa)
+    assert usable.sum() == 46
 
     redo = ls2_invert(inputs['Rrs'] * res.kappa, inputs['Kd'], inputs['aw'],
                       inputs['bw'], inputs['bp'], inputs['sza'],

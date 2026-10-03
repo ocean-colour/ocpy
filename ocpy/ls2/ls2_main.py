@@ -102,8 +102,9 @@ class LS2Result:
     bb: np.ndarray
     #: Particulate backscattering coefficient, ``bb - bw/2`` [m^-1].
     bbp: np.ndarray
-    #: Raman correction factor applied to ``Rrs`` [dim].  1.0 where the
-    #: correction was not requested, NaN where it could not be evaluated.
+    #: Raman correction factor applied to ``Rrs`` [dim], always the one that
+    #: produced the returned ``a`` and ``bb``.  1.0 where the correction was
+    #: not requested, NaN where it could not be evaluated even once.
     kappa: np.ndarray
     #: Number of completed Raman passes.  0 when ``raman=False``.
     n_iter: np.ndarray
@@ -112,8 +113,10 @@ class LS2Result:
     #: ``kappa`` could not be evaluated, either because ``bb/a`` left the
     #: table's admissible range at that wavelength or because the wavelength
     #: itself is outside the table's 302-702 nm span.  The iteration stops
-    #: there, the coefficients of the last completed pass are kept, and
-    #: ``kappa`` is NaN.
+    #: there and the coefficients of the last completed pass are kept.
+    #: ``kappa`` is then the value that produced them -- the last *applied*
+    #: one -- or NaN if the failure came on the first pass and no correction
+    #: was ever applied.
     kappa_out_of_range: np.ndarray
     #: At least one of ``a``, ``anw``, ``bb``, ``bbp`` came out negative.
     #: Whether the offending value was replaced by NaN is governed by
@@ -340,8 +343,10 @@ def ls2_invert(Rrs, Kd, aw, bw, bp, sza, wave, LS2_LUT, *, raman=True,
 
     If ``kappa`` leaves its admissible range on a later pass, the iteration
     stops there, the coefficients of the last completed pass are kept, and
-    ``kappa`` is reported as NaN with ``kappa_out_of_range`` set.  On the first
-    pass this reduces exactly to the authors' behaviour: no correction at all,
+    ``kappa`` is reported as the value last *applied* -- so the returned
+    ``kappa`` always reproduces the returned ``a`` and ``bb`` -- with
+    ``kappa_out_of_range`` and ``not_converged`` set.  On the first pass this
+    reduces exactly to the authors' behaviour: no correction at all,
     uncorrected coefficients, ``kappa`` NaN.
     """
     Rrs = np.atleast_2d(np.asarray(Rrs, dtype=float))
@@ -411,7 +416,8 @@ def ls2_invert(Rrs, Kd, aw, bw, bp, sza, wave, LS2_LUT, *, raman=True,
 
             stalled = active & ~usable
             kappa_oor |= stalled
-            kappa = np.where(stalled, np.nan, kappa)
+            # Keep the last applied kappa; NaN only if none was ever applied.
+            kappa = np.where(stalled & (n_iter == 0), np.nan, kappa)
             active = active & usable
             if not active.any():
                 break

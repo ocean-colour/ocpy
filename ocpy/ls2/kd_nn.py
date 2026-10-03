@@ -1,31 +1,412 @@
-import numpy as np
+"""Neural networks for the diffuse attenuation coefficient ``<Kd>_1``.
+
+LS2 needs ``<Kd>_1``, the average attenuation coefficient of downwelling
+planar irradiance between the surface and the first attenuation depth.  In
+remote-sensing use it comes from a neural network fed by ``Rrs`` and the solar
+zenith angle.  This module ports the networks of the SIO Ocean Optics Research
+Laboratory's ``Kd_NN_Distribution`` (Kehrli, Taylor, Reynolds, Stramski and
+Loisel; MIT licence), which follow Jamet et al. (2012).
+
+Three releases are carried, selected by name:
+
+``'MODIS_v1.1'``
+    The authors' MODIS network as of 2023-10-10 (commit ``a5c7ec2``), and the
+    one ocpy has always shipped (``weights_1/2.csv``).  Clear-water hidden
+    layers 8/6, turbid 9/6; inputs ``[Rrs, lambda, muw]``.  It reproduces the
+    authors' v1.1 reference vector to machine precision.  It is the default
+    of :func:`Kd_NN_MODIS` so that existing results do not move.
+``'MODIS_v1.3'``
+    The authors' current MODIS network (2025-04-15).  A retrained network,
+    not a bug fix: clear 8/8, turbid 4/4, inputs reordered to
+    ``[Rrs, muw, lambda]``.  On the 100 reference spectra it differs from
+    v1.1 by up to tens of percent.
+``'PACE_v2.3'``
+    The authors' PACE network: ``Rrs`` at 12 PACE wavelengths, ``sza`` (not
+    ``muw``) as an input, a plain ``tanh`` activation, clear 19/17 and
+    turbid 17/9.
+
+All three switch between a clear- and a turbid-water network on a blue/green
+``Rrs`` ratio of 0.85 (488/547 for MODIS, 490/560 for PACE), and return NaN
+where any ``Rrs`` input to the selected branch is negative.
+
+:func:`kd_nn` is the vectorized entry point: ``(N, nb)`` spectra by ``(L,)``
+output wavelengths in one call, weights loaded once and cached.
+:func:`Kd_NN_MODIS` and :func:`Kd_NN_PACE` are scalar wrappers with the
+authors' single-spectrum, single-wavelength contract; they always return a
+``(1, 1)`` array, NaN included.
+
+References
+----------
+Jamet, C., H. Loisel and D. Dessailly (2012), Retrieval of the spectral
+diffuse attenuation coefficient Kd(lambda) in open and coastal ocean waters
+using a neural network inversion, *J. Geophys. Res.*, 117, C10023.
+
+Loisel, H. et al. (2018), An inverse model for estimating the optical
+absorption and backscattering coefficients of seawater from remote-sensing
+reflectance over a broad range of oceanic and coastal marine environments,
+*J. Geophys. Res. Oceans*, 123, 2141-2171.
+"""
+
+from __future__ import annotations
+
+import functools
+import os
 import warnings
+from dataclasses import dataclass
+from importlib.resources import files
+
+import numpy as np
 
 from ocpy.ls2 import io as ls2_io
 
-def load_weights(wtype:str):
+#: Refractive index of seawater used to refract the solar beam.
+N_WATER = 1.34
+
+#: Blue/green ``Rrs`` ratio at and above which the clear-water network is used.
+CLEAR_RATIO = 0.85
+
+
+@dataclass(frozen=True)
+class _Branch:
+    """How one branch (clear or turbid) of a network is wired.
+
+    Attributes
+    ----------
+    rrs_idx : tuple of int
+        Columns of the input ``Rrs`` fed to this branch, in order.
+    aux : tuple of str
+        The non-``Rrs`` inputs that follow, in order, from ``'muw'``,
+        ``'sza'`` and ``'lambda'``.
+    stat_rows : tuple of int
+        Rows of ``train_switch`` holding the mean and standard deviation of
+        each input, followed by the row of the output (``log10 Kd``).
+    arch : tuple of int
+        ``(ne, nc1, nc2)``: input neurons and the two hidden-layer widths.
     """
-    Load weights and biases for the neural network based on the given water type.
 
-    Parameters:
-        wtype (str): The water type. Can be either 'turbid' or any other value.
+    rrs_idx: tuple
+    aux: tuple
+    stat_rows: tuple
+    arch: tuple
 
-    Returns:
-    tuple: A tuple containing the weights and biases for the neural network.
-           The tuple contains the following elements in order: w1, b1, w2, b2, wout, bout.
-           - w1: The weights for the first hidden layer.
-           - b1: The biases for the first hidden layer.
-           - w2: The weights for the second hidden layer.
-           - b2: The biases for the second hidden layer.
-           - wout: The weights for the output layer.
-           - bout: The biases for the output layer.
+
+@dataclass(frozen=True)
+class _Spec:
+    """Static description of one released network, transcribed from its ``.m``."""
+
+    name: str
+    bands: tuple
+    switch: tuple       # (numerator, denominator) columns of Rrs
+    clear: _Branch
+    turbid: _Branch
+    activation: str     # 'lecun' (1.715905 tanh(2x/3)) or 'tansig' (tanh)
+
+
+_SPECS = {
+    'MODIS_v1.1': _Spec(
+        name='MODIS_v1.1', bands=(443., 488., 531., 547., 667.), switch=(1, 3),
+        # Kd_NN_MODIS.m @ a5c7ec2: inputs = [Rrs, lambda, muw]
+        clear=_Branch((0, 1, 2, 3), ('lambda', 'muw'),
+                      (1, 2, 3, 4, 6, 7, 8), (6, 8, 6)),
+        turbid=_Branch((0, 1, 2, 3, 4), ('lambda', 'muw'),
+                       (1, 2, 3, 4, 5, 6, 7, 8), (7, 9, 6)),
+        activation='lecun'),
+    'MODIS_v1.3': _Spec(
+        name='MODIS_v1.3', bands=(443., 488., 531., 547., 667.), switch=(1, 3),
+        # Kd_NN_MODIS.m @ 19c2501: inputs = [Rrs, muw, lambda]
+        clear=_Branch((0, 1, 2, 3), ('muw', 'lambda'),
+                      (1, 2, 3, 4, 7, 6, 8), (6, 8, 8)),
+        turbid=_Branch((0, 1, 2, 3, 4), ('muw', 'lambda'),
+                       (1, 2, 3, 4, 5, 7, 6, 8), (7, 4, 4)),
+        activation='lecun'),
+    'PACE_v2.3': _Spec(
+        name='PACE_v2.3',
+        bands=(440., 470., 490., 510., 530., 560., 580., 600., 620., 640.,
+               670., 700.),
+        switch=(2, 5),
+        # Kd_NN_PACE.m @ 982b52c: inputs = [Rrs, sza, lambda]; the clear
+        # branch drops Rrs(670) and Rrs(700).
+        clear=_Branch(tuple(range(10)), ('sza', 'lambda'),
+                      tuple(range(10)) + (12, 13, 14), (12, 19, 17)),
+        turbid=_Branch(tuple(range(12)), ('sza', 'lambda'),
+                       tuple(range(15)), (14, 17, 9)),
+        activation='tansig'),
+}
+
+#: Names accepted by :func:`kd_nn` and :func:`load_network`.
+NETWORKS = tuple(_SPECS)
+
+
+@dataclass(frozen=True)
+class _Layers:
+    """Weights, biases and normalization of one branch, ready to evaluate."""
+
+    w1: np.ndarray      # (nc1, ne)
+    b1: np.ndarray      # (nc1,)
+    w2: np.ndarray      # (nc2, nc1)
+    b2: np.ndarray      # (nc2,)
+    wout: np.ndarray    # (nc2,)
+    bout: float
+    mu: np.ndarray      # (ne,) input means
+    std: np.ndarray     # (ne,) input standard deviations
+    mu_kd: float        # output mean, log10 Kd
+    std_kd: float       # output standard deviation, log10 Kd
+
+
+@dataclass(frozen=True)
+class KdNetwork:
+    """A loaded Kd network: its static description plus both branches."""
+
+    spec: _Spec
+    clear: _Layers
+    turbid: _Layers
+    version: str
+    source_commit: str
+
+    @property
+    def bands(self) -> tuple:
+        """Input ``Rrs`` wavelengths [nm], in the order expected."""
+        return self.spec.bands
+
+
+def _layers(npz, prefix, branch, mean, std):
+    """Reshape one branch's LUT columns exactly as MATLAB ``reshape`` does."""
+    ne, nc1, nc2 = branch.arch
+    col = {k: np.asarray(npz[f'{prefix}_{k}'], dtype=float)
+           for k in ('b1', 'b2', 'bout', 'w1', 'w2', 'wout')}
+    expected = {'b1': nc1, 'b2': nc2, 'bout': 1, 'w1': nc1 * ne,
+                'w2': nc2 * nc1, 'wout': nc2}
+    for key, size in expected.items():
+        if col[key].size != size:
+            raise ValueError(f'{prefix}_{key} has {col[key].size} values, '
+                             f'expected {size} for architecture {branch.arch}')
+    rows = np.asarray(branch.stat_rows)
+    return _Layers(
+        # MATLAB reshape is column-major.
+        w1=col['w1'].reshape((nc1, ne), order='F'),
+        b1=col['b1'],
+        w2=col['w2'].reshape((nc2, nc1), order='F'),
+        b2=col['b2'],
+        wout=col['wout'],
+        bout=float(col['bout'][0]),
+        mu=mean[rows[:-1]], std=std[rows[:-1]],
+        mu_kd=float(mean[rows[-1]]), std_kd=float(std[rows[-1]]))
+
+
+@functools.lru_cache(maxsize=None)
+def load_network(name: str = 'MODIS_v1.1') -> KdNetwork:
+    """Load (once, then from cache) one of the released Kd networks.
+
+    Parameters
+    ----------
+    name : str, optional
+        One of :data:`NETWORKS`.  Default ``'MODIS_v1.1'``.
+
+    Returns
+    -------
+    KdNetwork
     """
-    weights_1, weights_2, train_switch = ls2_io.load_Kd_tables()
+    if name not in _SPECS:
+        raise ValueError(f'Unknown Kd network {name!r}; choose from {NETWORKS}')
+    spec = _SPECS[name]
+    path = files('ocpy').joinpath(
+        os.path.join('data', 'LS2', f'Kd_NN_LUT_{name}.npz'))
+    with np.load(path) as npz:
+        mean = np.asarray(npz['train_mean'], dtype=float)
+        std = np.asarray(npz['train_std'], dtype=float)
+        return KdNetwork(spec=spec,
+                         clear=_layers(npz, 'clear', spec.clear, mean, std),
+                         turbid=_layers(npz, 'turbid', spec.turbid, mean, std),
+                         version=str(npz['version']),
+                         source_commit=str(npz['source_commit']))
 
-    #number of input neurons in the NN
-    #number of neurons on the first hidden layer in the NN
-    #number of neurons on the second hidden layer in the NN
-    #number of neurons on the output layer in the NN
+
+def _activate(z, kind):
+    """The hidden-layer transfer function, exactly as each ``.m`` writes it."""
+    if kind == 'tansig':
+        # MATLAB's tansig: 2/(1+exp(-2n))-1, which is tanh(n) to rounding.
+        with np.errstate(over='ignore'):
+            return 2. / (1. + np.exp(-2. * z)) - 1.
+    raise AssertionError(kind)
+
+
+def _forward(x_n, layers, kind):
+    """Evaluate one branch on normalized inputs ``x_n`` of shape ``(M, ne)``."""
+    if kind == 'lecun':
+        # The MODIS .m files use 0.6666667 in the first layer and 2./3 in
+        # the second; kept verbatim for bit-level agreement.
+        a = 1.715905 * np.tanh(0.6666667 * (x_n @ layers.w1.T + layers.b1))
+        b = 1.715905 * np.tanh((2. / 3.) * (a @ layers.w2.T + layers.b2))
+    else:
+        a = _activate(x_n @ layers.w1.T + layers.b1, kind)
+        b = _activate(a @ layers.w2.T + layers.b2, kind)
+    y = b @ layers.wout + layers.bout
+    return 10.0 ** (1.5 * y * layers.std_kd + layers.mu_kd)
+
+
+def kd_nn(Rrs, sza, wave, network: str = 'MODIS_v1.1', *,
+          return_branch: bool = False):
+    """Vectorized ``<Kd>_1`` from ``Rrs`` and solar zenith angle.
+
+    Parameters
+    ----------
+    Rrs : array_like
+        Remote-sensing reflectance [sr^-1] at the network's bands
+        (``load_network(network).bands``), shape ``(N, nb)`` or ``(nb,)``.
+    sza : array_like
+        Solar zenith angle [deg], shape ``(N,)`` or scalar.
+    wave : array_like
+        Output wavelengths [nm] at which Kd is wanted, shape ``(L,)`` or
+        scalar.  Wavelength is an *input* to these networks, so any value
+        works numerically; the training data span roughly 350-750 nm.
+    network : str, optional
+        One of :data:`NETWORKS`.  Default ``'MODIS_v1.1'``.
+    return_branch : bool, optional
+        Also return a dict of per-spectrum boolean arrays ``clear``,
+        ``turbid`` and ``negative``.  A spectrum whose switch ratio is not
+        finite is in neither branch and comes back NaN.
+
+    Returns
+    -------
+    Kd : numpy.ndarray
+        Average attenuation coefficient [m^-1] between the surface and the
+        first attenuation depth, shape ``(N, L)``.  NaN where an ``Rrs``
+        input to the selected branch is negative; no warning is emitted.
+    branch : dict, optional
+        Only if ``return_branch``.
+    """
+    net = load_network(network)
+    spec = net.spec
+
+    Rrs = np.atleast_2d(np.asarray(Rrs, dtype=float))
+    if Rrs.shape[-1] != len(spec.bands):
+        raise ValueError(f'{network} expects Rrs at {len(spec.bands)} bands '
+                         f'{spec.bands}, got shape {Rrs.shape}')
+    n = Rrs.shape[0]
+    sza = np.broadcast_to(np.asarray(sza, dtype=float).ravel(), (n,)) \
+        if np.size(sza) in (1, n) else None
+    if sza is None:
+        raise ValueError('sza must be a scalar or have one value per spectrum')
+    wave = np.atleast_1d(np.asarray(wave, dtype=float)).ravel()
+    nl = wave.size
+
+    muw = np.cos(np.arcsin(np.sin(np.deg2rad(sza)) / N_WATER))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ratio = Rrs[:, spec.switch[0]] / Rrs[:, spec.switch[1]]
+    clear = ratio >= CLEAR_RATIO
+    turbid = ratio < CLEAR_RATIO
+
+    Kd = np.full((n, nl), np.nan)
+    negative = np.zeros(n, dtype=bool)
+    for mask, branch, layers in ((clear, spec.clear, net.clear),
+                                 (turbid, spec.turbid, net.turbid)):
+        rrs = Rrs[:, branch.rrs_idx]
+        neg = mask & np.any(rrs < 0., axis=1)
+        negative |= neg
+        use = mask & ~neg
+        if not use.any():
+            continue
+        m = int(use.sum())
+        aux = {'muw': np.repeat(muw[use], nl), 'sza': np.repeat(sza[use], nl),
+               'lambda': np.tile(wave, m)}
+        x = np.column_stack([np.repeat(rrs[use], nl, axis=0)]
+                            + [aux[name] for name in branch.aux])
+        x_n = (2. / 3.) * (x - layers.mu) / layers.std
+        Kd[use] = _forward(x_n, layers, spec.activation).reshape(m, nl)
+
+    if return_branch:
+        return Kd, {'clear': clear, 'turbid': turbid, 'negative': negative}
+    return Kd
+
+
+def _scalar(network, Rrs, sza, lambda_):
+    """Shared body of the scalar wrappers: one spectrum, one wavelength."""
+    Kd, info = kd_nn(np.asarray(Rrs, dtype=float).reshape(1, -1), sza,
+                     lambda_, network, return_branch=True)
+    if info['negative'][0]:
+        warnings.warn('Negative Rrs input detected. Kd set to NaN.')
+    return Kd[:, :1]
+
+
+def Kd_NN_MODIS(Rrs, sza, lambda_, *, version: str = '1.1'):
+    """``<Kd>_1`` at one wavelength from MODIS ``Rrs``; scalar wrapper.
+
+    A thin wrapper over :func:`kd_nn` with the authors' ``Kd_NN_MODIS.m``
+    contract.  The band list (443, 488, 531, 547, 667 nm) and the "40,000
+    inputs and outputs" of the training set are as stated in the authors'
+    own docstring; neither is described in Loisel et al. (2018).
+
+    Parameters
+    ----------
+    Rrs : array_like
+        Spectral remote-sensing reflectance [sr^-1] at 443, 488, 531, 547
+        and 667 nm, five values.
+    sza : float
+        Solar zenith angle [deg].
+    lambda_ : float
+        Output wavelength [nm].
+    version : str, optional
+        ``'1.1'`` (default; the network ocpy has always shipped) or ``'1.3'``
+        (the authors' current release).
+
+    Returns
+    -------
+    numpy.ndarray
+        Kd [m^-1], always shape ``(1, 1)``.  NaN, with a warning, if an
+        ``Rrs`` input to the selected branch is negative.
+    """
+    return _scalar(f'MODIS_v{version}', Rrs, sza, lambda_)
+
+
+def Kd_NN_PACE(Rrs, sza, lambda_):
+    """``<Kd>_1`` at one wavelength from PACE ``Rrs``; scalar wrapper.
+
+    A thin wrapper over :func:`kd_nn` with the authors' ``Kd_NN_PACE.m`` (v2.3)
+    contract.
+
+    Parameters
+    ----------
+    Rrs : array_like
+        Spectral remote-sensing reflectance [sr^-1] at 440, 470, 490, 510,
+        530, 560, 580, 600, 620, 640, 670 and 700 nm, twelve values.
+    sza : float
+        Solar zenith angle [deg].
+    lambda_ : float
+        Output wavelength [nm].
+
+    Returns
+    -------
+    numpy.ndarray
+        Kd [m^-1], always shape ``(1, 1)``.  NaN, with a warning, if an
+        ``Rrs`` input to the selected branch is negative.
+    """
+    return _scalar('PACE_v2.3', Rrs, sza, lambda_)
+
+
+def load_weights(wtype: str):
+    """Load the v1.1 MODIS weights in the historical layout (legacy API).
+
+    Kept for backward compatibility; :func:`kd_nn` does not use it.  The
+    matrices are transposed relative to :class:`KdNetwork` -- ``w1`` is
+    ``(ne, nc1)`` -- because :func:`MLP_Kd` multiplies on the right.  The
+    old "these could be backwards" doubt about this reshape is settled: it
+    is the transpose of MATLAB's column-major ``reshape(w1, nc1, ne)``, and
+    the v1.1 network reproduces the authors' reference vector.
+
+    Parameters
+    ----------
+    wtype : str
+        ``'turbid'`` for the turbid-water network; anything else gives the
+        clear-water network.
+
+    Returns
+    -------
+    tuple
+        ``(w1, b1, w2, b2, wout, bout)``.
+    """
+    weights_1, weights_2, _ = ls2_io.load_Kd_tables()
+
+    # Input neurons, first and second hidden layers, outputs.
     if wtype == 'turbid':
         ne, nc1, nc2, ns = 7, 9, 6, 1
         weights = weights_2
@@ -33,208 +414,45 @@ def load_weights(wtype:str):
         ne, nc1, nc2, ns = 6, 8, 6, 1
         weights = weights_1
 
-    # Extract weights and biases from LUT
     b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
-    #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
     w1, w2, wout = weights["w1"], weights["w2"], weights["wout"]
 
-    # Nans
     b1 = b1[np.isfinite(b1)].values
     b2 = b2[np.isfinite(b2)].values
     bout = bout[np.isfinite(bout)].values
     w1 = w1[np.isfinite(w1)].values
     w2 = w2[np.isfinite(w2)].values
     wout = wout[np.isfinite(wout)].values
-    # Reshape
-    #w1 = w1.reshape(nc1, ne)  # These could be backwards
-    w1 = w1.reshape(ne, nc1)  # These could be backwards
+
+    w1 = w1.reshape(ne, nc1)
     w2 = w2.reshape(nc1, nc2)
     wout = wout.reshape(ns, nc2)
 
-    # Return
     return w1, b1, w2, b2, wout, bout
-
-def Kd_NN_MODIS(Rrs, sza, lambda_):#, Kd_NN_LUT_MODIS):
-    """
-    Implements the neural network (NN) algorithm to calculate the diffuse 
-    attenuation coefficient of downwelling planar irradiance (Kd) at a
-    preselected output light wavelength (lambda) using input remote-sensing
-    reflectance (Rrs) at MODIS wavelengths and solar zenith angle (sza).
-
-    Args:
-        Rrs: (1, 5) float array. Values of spectral remote-sensing reflectance
-            (sr^-1) at MODIS light wavelengths: 443, 488, 531, 547, 667 [nm].
-        sza: (1, 1) float. Solar zenith angle [deg] associated with input Rrs
-            values.
-        lambda_: (1, 1) float. Output light wavelength [nm] at which the desired
-            value of Kd is estimated for a given input.
-        Kd_NN_LUT_MODIS: (1, 1) dict. Structure containing three required
-            look-up tables (LUTs). Can be loaded via a similar function (e.g., 
-            load_Kd_NN_LUT_MODIS).
-
-            - weights_1: LUT with weights and biases from NN for clear waters
-            (where Rrs(488)/Rrs(547) >= 0.85).
-            - weights_2: LUT with weights and biases from NN for turbid waters
-            (where Rrs(488)/Rrs(547) < 0.85).
-            - train_switch: LUT with means and standard deviations of 40,000 
-            inputs and outputs used to train the NN.
-
-    Returns:
-        Kd: (1, 1) float. The estimated value of the average diffuse attenuation
-            coefficient of downwelling planar irradiance [m^-1] between the sea
-            surface and first attenuation depth at the output light wavelength
-            (lambda) for input spectral Rrs and sza.
-    %Version 1.1 (v1.1)
-    %
-    %Version History: 
-    %2018-04-04: Original implementation in C written by David Dessailly
-    %2020-03-23: Original Matlab version, D. Jorge 
-    %2022-09-01: Revised Matlab version, M. Kehrli
-    %2022-11-03: Final Revised MATLAB version (v1.0), M. Kehrli, R. A. Reynolds
-    %and D. Stramski
-    %2023-10-10: Corrected weights and biases in KdNN LUT for clear waters
-    %(v1.1)
-    """
-    # Load up the tables
-    weights_1, weights_2, train_switch = ls2_io.load_Kd_tables()
-
-    # Check function arguments and existence of LUTs
-    Rrs = np.asarray(Rrs).reshape(1, -1)
-    sza = np.asarray(sza).reshape(1, -1)
-    lambda_ = np.asarray(lambda_).reshape(1, -1)
-
-    # Refractive index of seawater
-    nw = 1.34
-
-    #calculation of muw [dim], the cosine of the angle of refraction of the
-    #solar beam just beneath the sea surface
-    #muw = np.cos(np.deg2rad(np.arcsin(np.sin(np.deg2rad(sza)) / nw)))
-    muw = np.cos(np.arcsin(np.sin(np.deg2rad(sza))/nw))
-
-    # Combine inputs
-    #inputs = np.concatenate((Rrs, [lambda_], [muw]))
-    inputs = np.concatenate([Rrs, lambda_, muw], axis=1)
-
-    # Access data from LUT (assuming similar structure as MATLAB)
-    #train_switch = Kd_NN_LUT_MODIS["train_switch"]
-    #mu = train_switch["MEAN"][1:-1]  # exclude Rrs(667) for clear waters
-    means = train_switch.MEAN.values
-    stds = train_switch.STD.values
-    #std = train_switch["STD"][1:-1]
-
-    # Water type determination using blue-green band ratio
-    ratio = inputs[0, 1] / inputs[0, 3]
-
-    # Build NN for clear waters
-    if ratio >= 0.85:
-        #read in NN weights and biases for clear waters
-        #weights = weights_1
-        #number of input neurons in the NN
-        #number of neurons on the first hidden layer in the NN
-        #number of neurons on the second hidden layer in the NN
-        #number of neurons on the output layer in the NN
-        #ne, nc1, nc2, ns = 6, 8, 6, 1
-
-        w1, b1, w2, b2, wout, bout = load_weights('clear')
-
-        # Check for negative Rrs input
-        if np.any(inputs[0, :4] < 0):
-            warnings.warn("Negative Rrs input detected. Kd set to NaN.")
-            return np.nan
-
-        #mean and stadard deviation of input and output parameters from
-        #training dataset; remove Rrs(667) data for clear waters
-        mu = np.array(means[1:5].tolist()+means[6:].tolist())
-        std = np.array(stds[1:5].tolist()+stds[6:].tolist())
-
-
-        #set NN input for clear waters
-        #x = inputs([1:4,6:7]);
-        keep = np.ones_like(inputs, dtype=bool)
-        keep[:,4] = False
-        #x = inputs[0:4]+inputs[5:7]
-        x = inputs[keep].reshape(1,-1)
-
-        # Normalize inputs
-        x_N = np.ones_like(x)
-        for j in range(6):
-            x_N[:, j] = (2/3) * ((x[:, j] - mu[j]) / std[j])
-
-    # Build NN for turbid waters
-    elif ratio < 0.85:
-        #read in NN weights and biases for turbid waters
-        #weights = weights_2
-        #number of input neurons in the NN
-        #number of neurons on the first hidden layer in the NN
-        #number of neurons on the second hidden layer in the NN
-        #number of neurons on the output layer in the NN
-        #ne, nc1, nc2, ns = 7, 9, 6, 1
-
-        # Extract weights and biases from LUT
-        #b1, b2, bout = weights["b1"], weights["b2"], weights["bout"]
-        #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
-
-        #w1, w2, wout = weights["w1"].reshape(nc1, ne), weights["w2"].reshape(nc2, nc1), weights["wout"].reshape(ns, nc2)
-
-        w1, b1, w2, b2, wout, bout = load_weights('turbid')
-
-        # Check for negative Rrs input
-        if np.any(inputs[0] < 0):
-            warnings.warn("Negative Rrs input detected. Kd set to NaN.")
-            return np.nan
-
-        # Unpack things
-        x = inputs
-        mu = means[1:]
-        std = stds[1:]
-
-        # Normalize inputs
-        x_N = np.ones_like(x)
-        for j in range(7):
-            x_N[:, j] = (2/3) * ((x[:, j] - mu[j]) / std[j])
-
-    # Kd inversion 
-    Kd = MLP_Kd(x_N, w1, b1, w2, b2, wout, bout, 
-                np.array(mu[-1]).reshape(1,-1), 
-                np.array(std[-1]).reshape(1,-1)) 
-
-    return Kd
 
 
 def MLP_Kd(x, w1, b1, w2, b2, wout, bout, muKd, stdKd):
-    """
-    This function computes the output of the neural network based on the 
-    provided inputs, weights, biases, and normalization constants.
+    """Forward pass of the v1.1 MODIS network in the legacy layout.
 
-    Args:
-        x: (rx, ni) float array. The inputs to the NN, where rx is the number 
-            of samples and ni is the number of input neurons (6 for clear 
-            waters, 7 for turbid waters).
-        w1: (nc1, ni) float array. Connection weights of the first hidden layer.
-        b1: (nc1, 1) float array. Neuron bias of the first hidden layer.
-        w2: (nc2, nc1) float array. Connection weights of the second hidden layer.
-        b2: (nc2, 1) float array. Neuron bias of the second hidden layer.
-        wout: (1, nc2) float array. Connection weights of the output layer.
-        bout: (1, 1) float array. Neuron bias of the output layer.
-        muKd: (1, 1) float. The mean output of Kd values from NN training.
-        stdKd: (1, 1) float. The standard deviation output of Kd values from 
-            NN training.
+    Kept for backward compatibility with :func:`load_weights`; :func:`kd_nn`
+    does not use it.
 
-    Returns:
-        Kd: (rx, 1) float array. The estimated Kd value for each sample obtained 
-            from the NN.
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Normalized inputs, shape ``(rx, ne)``.
+    w1, b1, w2, b2, wout, bout : numpy.ndarray
+        As returned by :func:`load_weights`.
+    muKd, stdKd : float or numpy.ndarray
+        Mean and standard deviation of the training ``log10 Kd``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Kd [m^-1], shape ``(rx, 1)``.
     """
-    # Get number of samples
     rx, _ = x.shape
-
-    # Forward propagation through the NN with tanh activation
     a = 1.715905 * np.tanh(0.6666667 * (np.dot(x, w1) + np.ones((1, rx)) * b1))
-    #a = 1.715905 * np.tanh(0.6666667 * (np.dot(x, w1.T) + np.ones((1, rx)) * b1))
-    #b = 1.715905 * np.tanh((2.0 / 3.0) * (np.dot(a, w2.T) + np.ones((1, rx)) * b2))
     b = 1.715905 * np.tanh((2.0 / 3.0) * (np.dot(a, w2) + np.ones((1, rx)) * b2))
     y = np.dot(b, wout.T) + bout * np.ones((rx, 1))
-
-    # Denormalize the output (assuming log-transformed training data)
-    Kd = 10.0 ** (1.5 * y * stdKd + muKd)
-
-    return Kd
+    return 10.0 ** (1.5 * y * stdKd + muKd)

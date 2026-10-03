@@ -141,34 +141,60 @@ Loading the LUTs:
    # Load main LS2 look-up tables
    LUT = load_LUT()
 
-   # Load Kd neural network weights
+   # Legacy v1.1 Kd weights as CSV tables; kd_nn.load_network() is the
+   # cached loader for all three released networks
    Kd_weights = load_Kd_tables()
 
 Kd Neural Network
 -----------------
 
 .. module:: ocpy.ls2.kd_nn
-   :synopsis: Neural network for Kd estimation
+   :synopsis: Neural networks for Kd estimation
 
-The Kd neural network provides estimates of the diffuse attenuation coefficient (Kd)
-from Rrs, which is required as input to the LS2 algorithm.
+LS2 needs ``<Kd>_1``, the average attenuation coefficient of downwelling irradiance
+between the surface and the first attenuation depth.  In remote-sensing use it comes
+from a neural network fed by Rrs and the solar zenith angle.  ``ocpy`` ports three
+releases of the authors' networks (``Kd_NN_Distribution``, MIT licence), each of which
+reproduces the authors' own reference vector to ~1e-13:
 
-.. autofunction:: ocpy.ls2.kd_nn.load_weights
+.. list-table::
+   :header-rows: 1
+   :widths: 18 34 18 30
+
+   * - Name
+     - Rrs bands [nm]
+     - Hidden layers (clear / turbid)
+     - Notes
+   * - ``MODIS_v1.1``
+     - 443, 488, 531, 547, 667
+     - 8/6 and 9/6
+     - 2023-10-10; the network ocpy has always shipped, and the default
+   * - ``MODIS_v1.3``
+     - 443, 488, 531, 547, 667
+     - 8/8 and 4/4
+     - 2025-04-15; the authors' current release, retrained
+   * - ``PACE_v2.3``
+     - 440, 470, 490, 510, 530, 560, 580, 600, 620, 640, 670, 700
+     - 19/17 and 17/9
+     - 2025-04-15; takes sza rather than its refracted cosine
+
+Each switches between a clear- and a turbid-water network on a blue/green Rrs ratio of
+0.85 (488/547 for MODIS, 490/560 for PACE).  ``kd_nn`` is the vectorized entry point;
+``Kd_NN_MODIS`` and ``Kd_NN_PACE`` are scalar wrappers that always return a ``(1, 1)``
+array.  ``load_weights`` and ``MLP_Kd`` are the legacy v1.1 interface, kept for backward
+compatibility.
+
+.. autofunction:: ocpy.ls2.kd_nn.kd_nn
+
+.. autofunction:: ocpy.ls2.kd_nn.load_network
 
 .. autofunction:: ocpy.ls2.kd_nn.Kd_NN_MODIS
 
+.. autofunction:: ocpy.ls2.kd_nn.Kd_NN_PACE
+
+.. autofunction:: ocpy.ls2.kd_nn.load_weights
+
 .. autofunction:: ocpy.ls2.kd_nn.MLP_Kd
-
-Neural Network Architecture
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Kd estimation uses a multi-layer perceptron (MLP) trained on radiative transfer
-simulations. Two separate networks handle:
-
-* **Clear waters**: Low chlorophyll, open ocean conditions
-* **Turbid waters**: High scattering, coastal conditions
-
-The appropriate network is selected automatically based on Rrs characteristics.
 
 Example Usage
 ^^^^^^^^^^^^^
@@ -176,20 +202,17 @@ Example Usage
 .. code-block:: python
 
    import numpy as np
-   from ocpy.ls2.kd_nn import Kd_NN_MODIS, load_weights
+   from ocpy.ls2.kd_nn import kd_nn, Kd_NN_MODIS
 
-   # Load weights
-   weights_clear = load_weights('clear')
-   weights_turbid = load_weights('turbid')
+   # One MODIS spectrum at 443, 488, 531, 547 and 667 nm
+   Rrs = np.array([0.00663, 0.00570, 0.00262, 0.00206, 0.000156])
 
-   # Example MODIS wavelengths and Rrs
-   wavelengths = np.array([412, 443, 488, 531, 551, 667])
-   Rrs = np.array([0.005, 0.006, 0.007, 0.008, 0.007, 0.001])
-   sza = 30.0
+   # Scalar: Kd at 430 nm for sza = 30 degrees, shape (1, 1)
+   Kd = Kd_NN_MODIS(Rrs, 30., 430.)
 
-   # Estimate Kd
-   Kd = Kd_NN_MODIS(Rrs, sza, wavelengths)
-   print(f"Estimated Kd: {Kd}")
+   # Vectorized: N spectra x L output wavelengths, shape (N, L)
+   wave = np.arange(400., 701., 5.)
+   Kd = kd_nn(np.vstack([Rrs, Rrs]), [30., 60.], wave, 'MODIS_v1.3')
 
 Theoretical Background
 ----------------------

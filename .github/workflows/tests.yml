@@ -11,7 +11,7 @@ name: Tests
 # ``io`` module has moved off the deprecated ``pkg_resources`` onto
 # ``importlib.resources``, matching the rest of the package.  The CI scope is
 # still limited because the remaining test modules (test_water, test_ph,
-# test_polarize, test_ls2_kd) pull in IPython transitively, which is not
+# test_polarize) pull in IPython transitively, which is not
 # installed in this lightweight job.  Add ``ipython`` to the install step
 # (and the test files below) to enable them.  Separately, test_plot_oc_scene
 # has 4 pre-existing failures in detect_file_type mocking, unrelated to
@@ -58,4 +58,5 @@ jobs:
             ocpy/tests/test_spectra.py \
             ocpy/tests/test_coords.py \
             ocpy/tests/test_ls2.py \
-            ocpy/tests/test_ls2_chl.py
+            ocpy/tests/test_ls2_chl.py \
+            ocpy/tests/test_ls2_kd.py

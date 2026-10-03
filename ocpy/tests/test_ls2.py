@@ -414,3 +414,30 @@ def test_no_warning_storm(lut, recwarn):
     assert counts['negative'] > 0
     assert counts['kappa_out_of_range'] > 0
     assert len(recwarn) == 0, [str(w.message) for w in recwarn]
+
+
+def test_muw_override(reference, lut):
+    """An explicit muw replaces the refracted solar cosine, per cell.
+
+    Passing the very muw that sza implies reproduces the default exactly; a
+    per-wavelength muw is honoured cell by cell; a muw outside the table is
+    off-grid.
+    """
+    inputs, _ = reference
+    base = _invert(inputs, lut, raman=True, max_iter=1)
+    muw = np.cos(np.arcsin(np.sin(np.deg2rad(inputs['sza'])) / 1.34))
+    same = _invert(inputs, lut, raman=True, max_iter=1,
+                   muw=np.broadcast_to(muw[:, None], inputs['Rrs'].shape))
+    np.testing.assert_allclose(same.a, base.a, rtol=1e-12)
+    np.testing.assert_allclose(same.bb, base.bb, rtol=1e-12, equal_nan=True)
+
+    per_band = np.broadcast_to(muw[:, None], inputs['Rrs'].shape).copy()
+    per_band[:, 2] = 0.9
+    alt = _invert(inputs, lut, raman=False, muw=per_band)
+    ref = _invert(inputs, lut, raman=False)
+    np.testing.assert_allclose(alt.a[:, [0, 1, 3, 4, 5]],
+                               ref.a[:, [0, 1, 3, 4, 5]], rtol=1e-12)
+    assert not np.allclose(alt.a[:, 2], ref.a[:, 2])
+
+    low = _invert(inputs, lut, raman=False, muw=0.5)       # below cos(70 deg refr.)
+    assert low.off_grid.all()

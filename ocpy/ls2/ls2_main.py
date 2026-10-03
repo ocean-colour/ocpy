@@ -291,7 +291,8 @@ def _kappa_terms(wave, rLUT):
 
 
 def ls2_invert(Rrs, Kd, aw, bw, bp, sza, wave, LS2_LUT, *, raman=True,
-               tol=1.0e-3, max_iter=10, clip_negative=False) -> LS2Result:
+               tol=1.0e-3, max_iter=10, clip_negative=False,
+               muw=None) -> LS2Result:
     """Run LS2 over a block of samples and wavelengths.
 
     Parameters
@@ -329,6 +330,14 @@ def ls2_invert(Rrs, Kd, aw, bw, bp, sza, wave, LS2_LUT, *, raman=True,
         the authors do.  Default False: the raw values are returned and the
         ``negative`` flag records where they occurred, because a benchmark
         needs to see the sign of the failure rather than only its absence.
+    muw : array_like, optional
+        Enter the look-up tables at this ``muw`` instead of the refracted
+        cosine of ``sza`` (Table 1, step 1), broadcastable to ``(N, L)`` --
+        so it may differ per wavelength.  For diagnostics only: an
+        *effective* cosine taken from a radiative-transfer light field
+        tests whether a bias is illumination bookkeeping rather than
+        coefficient error (IOPtics ls2 Q9).  ``sza`` is then ignored.
+        Values outside the table's ``muw`` span are off-grid.
 
     Returns
     -------
@@ -375,8 +384,12 @@ def ls2_invert(Rrs, Kd, aw, bw, bp, sza, wave, LS2_LUT, *, raman=True,
     if muw_nodes.size != 8 or not np.all(np.diff(muw_nodes) < 0):
         raise ValueError('muw look-up table must be 8 values in descending order')
 
-    # Step 1: muw, the cosine of the refracted solar beam.
-    muw = np.cos(np.arcsin(np.sin(np.deg2rad(sza)) / N_WATER))
+    # Step 1: muw, the cosine of the refracted solar beam -- unless the
+    # caller supplies an effective one (a diagnostic; see ``muw`` above).
+    if muw is None:
+        muw = np.cos(np.arcsin(np.sin(np.deg2rad(sza)) / N_WATER))
+    else:
+        muw = np.broadcast_to(np.asarray(muw, dtype=float), shape)
 
     # Steps 3 & 4: total scattering and its pure-water fraction.
     with np.errstate(divide='ignore', invalid='ignore'):

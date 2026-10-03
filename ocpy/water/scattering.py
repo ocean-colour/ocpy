@@ -3,8 +3,6 @@ import numpy as np
 from ocpy.water import absorption
 from ocpy.hydrolight import loisel23
 
-from IPython import embed
-
 def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
     """
     % Xiaodong Zhang, Lianbo Hu, and Ming-Xia He (2009), Scatteirng by pure
@@ -33,19 +31,26 @@ def betasw_ZHH2009(lambda_,Tc,theta,S,delta=0.039):
             %
         
     """
-    raise ValueError("THIS IS NOT SUCCESFULLY CONVERTED YET")
+    # Corrected and validated 2026-10-03 (IOPtics ls2 task 7). The port had
+    # three transcription errors, all inherited from the PDF-extracted
+    # ``zhang2009.m`` beside it: the Boltzmann constant at 1e-22 (it is
+    # 1.38e-23 J/K) and two T^3 coefficients of ``dlnasw_ds`` at 1e+11 (they
+    # are 1e-11). Fixed, bsw matches EPFT-UP's independent port exactly and
+    # L23's pure-seawater scattering to -0.27% at 20 degC, S = 35, uniformly
+    # over 400-750 nm (``ocpy/tests/test_water.py``).
 
     # values of the constants
     Na = 6.0221417930e23  # Avogadros constant
-    Kbz = 1.3806503e-22  # Boltzmann constant
+    Kbz = 1.3806503e-23  # Boltzmann constant [J/K]
     Tk = Tc + 273.15  # Absolute tempearture
     M0 = 18e-3  # Molecular weigth of water in kg/mol
 
     if not np.isscalar(Tc) or not np.isscalar(S):
         raise ValueError('Both Tc and S need to be scalar variables')
 
-    lambda_ = np.array(lambda_)  # a column variable
-    rad = np.deg2rad(theta)  # angle in radian as a column variable
+    lambda_ = np.atleast_1d(np.asarray(lambda_, dtype=float))
+    theta = np.atleast_1d(np.asarray(theta, dtype=float))
+    rad = np.deg2rad(theta)  # angle in radian
 
     # nsw: absolute refractive index of seawater
     # dnds: partial derivative of seawater refractive index w.r.t. salinity
@@ -192,8 +197,8 @@ def dlnasw_ds(Tc, S):
     # water activity data of seawater is from Millero and Leung (1976,American Journal of Science,276,1035-1077).
     # Table 19 was reproduced using Eqs.(14,22,23,88,107) then were fitted to polynominal equation.
     # dlnawds is partial derivative of natural logarithm of water activity w.r.t.salinity
-    dlnawds = (-5.58651e-4 + 2.40452e-7 * Tc - 3.12165e-9 * Tc ** 2 + 2.40808e11 * Tc ** 3) + \
-              1.5 * (1.79613e-5 - 9.9422e-8 * Tc + 2.08919e-9 * Tc ** 2 - 1.39872e11 * Tc ** 3) * S ** 0.5 + \
+    dlnawds = (-5.58651e-4 + 2.40452e-7 * Tc - 3.12165e-9 * Tc ** 2 + 2.40808e-11 * Tc ** 3) + \
+              1.5 * (1.79613e-5 - 9.9422e-8 * Tc + 2.08919e-9 * Tc ** 2 - 1.39872e-11 * Tc ** 3) * S ** 0.5 + \
               2 * (-2.31065e-6 - 1.37674e-9 * Tc - 1.93316e-11 * Tc ** 2) * S
 
     return dlnawds

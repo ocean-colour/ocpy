@@ -168,11 +168,12 @@ reproduces the authors' own reference vector to ~1e-13:
    * - ``MODIS_v1.1``
      - 443, 488, 531, 547, 667
      - 8/6 and 9/6
-     - 2023-10-10; the network ocpy has always shipped, and the default
+     - 2023-10-10; the network ocpy shipped, and the default until 2026-10-04
    * - ``MODIS_v1.3``
      - 443, 488, 531, 547, 667
      - 8/8 and 4/4
-     - 2025-04-15; the authors' current release, retrained
+     - 2025-04-15; the authors' current release, retrained; the default since
+       2026-10-04, after the LS2 Kd diagnostic against L23 (IOPtics ls2 task 10)
    * - ``PACE_v2.3``
      - 440, 470, 490, 510, 530, 560, 580, 600, 620, 640, 670, 700
      - 19/17 and 17/9

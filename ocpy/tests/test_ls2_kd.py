@@ -51,15 +51,15 @@ def test_hard_coded_scalars():
 
     They are rows 0 and 1 of the authors' v1.1 reference vector, one clear
     and one turbid, and they originally validated ``load_weights``' reshape
-    order.  The default network is still v1.1, so they must not move.
+    order.  The default moved to v1.3 on 2026-10-04, so v1.1 is named here.
     """
     Rrs = [[0.00663061627778120, 0.00569886961307466, 0.00261783091270704,
             0.00206376550494829, 0.000155664525215032],
            [0.00278698717627185, 0.00555055435696759, 0.00965557516418457,
             0.0114125090066875, 0.00402413455723548]]
 
-    Kd0 = kd_nn.Kd_NN_MODIS(Rrs[0], 30, 430)        # clear
-    Kd1 = kd_nn.Kd_NN_MODIS(Rrs[1], 60, 531)        # turbid
+    Kd0 = kd_nn.Kd_NN_MODIS(Rrs[0], 30, 430, version='1.1')     # clear
+    Kd1 = kd_nn.Kd_NN_MODIS(Rrs[1], 60, 531, version='1.1')     # turbid
     assert Kd0.shape == Kd1.shape == (1, 1)
     np.testing.assert_allclose(Kd0, 0.04600481236, rtol=1e-9)
     np.testing.assert_allclose(Kd1, 0.5623341777, rtol=1e-9)
@@ -194,7 +194,8 @@ def test_weights_are_loaded_once(monkeypatch):
     monkeypatch.setattr(ls2_io, 'load_Kd_tables', _boom)
     rrs, sza, wave, ref = _reference('MODIS_v1.1')
     for i in range(5):
-        np.testing.assert_allclose(kd_nn.Kd_NN_MODIS(rrs[i], sza[i], wave[i]),
+        np.testing.assert_allclose(kd_nn.Kd_NN_MODIS(rrs[i], sza[i], wave[i],
+                                                     version='1.1'),
                                    [[ref[i]]], rtol=1e-11)
 
 
@@ -223,3 +224,13 @@ def test_bad_arguments():
         kd_nn.kd_nn(np.ones(5) * 1e-3, 30., 443., 'PACE_v2.3')
     with pytest.raises(ValueError, match='sza'):
         kd_nn.kd_nn(np.ones((3, 5)) * 1e-3, [30., 40.], 443.)
+
+
+def test_the_default_is_v1_3():
+    """Both entry points default to the authors' current MODIS release."""
+    rrs, sza, wave, ref = _reference('MODIS_v1.3')
+    np.testing.assert_allclose(kd_nn.Kd_NN_MODIS(rrs[0], sza[0], wave[0]),
+                               [[ref[0]]], rtol=1e-11)
+    np.testing.assert_allclose(kd_nn.kd_nn(rrs[:3], sza[:3], wave[0])[:, 0],
+                               kd_nn.kd_nn(rrs[:3], sza[:3], wave[0],
+                                           'MODIS_v1.3')[:, 0], rtol=0)

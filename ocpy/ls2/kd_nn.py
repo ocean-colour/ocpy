@@ -13,13 +13,18 @@ Three releases are carried, selected by name:
     The authors' MODIS network as of 2023-10-10 (commit ``a5c7ec2``), and the
     one ocpy has always shipped (``weights_1/2.csv``).  Clear-water hidden
     layers 8/6, turbid 9/6; inputs ``[Rrs, lambda, muw]``.  It reproduces the
-    authors' v1.1 reference vector to machine precision.  It is the default
-    of :func:`Kd_NN_MODIS` so that existing results do not move.
+    authors' v1.1 reference vector to machine precision.  It was the default
+    until 2026-10-04, when the LS2 Kd diagnostic (IOPtics ls2 task 10) found
+    it 15-19% high against L23's ``<Kd>_1`` at 410-490 nm and swinging from
+    -22% to +25% across 400-700 nm.  Pass it by name to reproduce earlier
+    results.
 ``'MODIS_v1.3'``
     The authors' current MODIS network (2025-04-15).  A retrained network,
     not a bug fix: clear 8/8, turbid 4/4, inputs reordered to
     ``[Rrs, muw, lambda]``.  On the 100 reference spectra it differs from
-    v1.1 by up to tens of percent.
+    v1.1 by up to tens of percent.  The default of :func:`kd_nn` and
+    :func:`Kd_NN_MODIS` since 2026-10-04: against L23 it reads within 3.2%
+    (median over 400-700 nm), but still +15% at 490 nm.
 ``'PACE_v2.3'``
     The authors' PACE network: ``Rrs`` at 12 PACE wavelengths, ``sza`` (not
     ``muw``) as an input, a plain ``tanh`` activation, clear 19/17 and
@@ -200,7 +205,8 @@ def load_network(name: str = 'MODIS_v1.1') -> KdNetwork:
     Parameters
     ----------
     name : str, optional
-        One of :data:`NETWORKS`.  Default ``'MODIS_v1.1'``.
+        One of :data:`NETWORKS`.  Default ``'MODIS_v1.3'`` (was
+        ``'MODIS_v1.1'`` before 2026-10-04).
 
     Returns
     -------
@@ -244,7 +250,7 @@ def _forward(x_n, layers, kind):
     return 10.0 ** (1.5 * y * layers.std_kd + layers.mu_kd)
 
 
-def kd_nn(Rrs, sza, wave, network: str = 'MODIS_v1.1', *,
+def kd_nn(Rrs, sza, wave, network: str = 'MODIS_v1.3', *,
           return_branch: bool = False):
     """Vectorized ``<Kd>_1`` from ``Rrs`` and solar zenith angle.
 
@@ -260,7 +266,8 @@ def kd_nn(Rrs, sza, wave, network: str = 'MODIS_v1.1', *,
         scalar.  Wavelength is an *input* to these networks, so any value
         works numerically; the training data span roughly 350-750 nm.
     network : str, optional
-        One of :data:`NETWORKS`.  Default ``'MODIS_v1.1'``.
+        One of :data:`NETWORKS`.  Default ``'MODIS_v1.3'`` (was
+        ``'MODIS_v1.1'`` before 2026-10-04).
     return_branch : bool, optional
         Also return a dict of per-spectrum boolean arrays ``clear``,
         ``turbid`` and ``negative``.  A spectrum whose switch ratio is not
@@ -328,7 +335,7 @@ def _scalar(network, Rrs, sza, lambda_):
     return Kd[:, :1]
 
 
-def Kd_NN_MODIS(Rrs, sza, lambda_, *, version: str = '1.1'):
+def Kd_NN_MODIS(Rrs, sza, lambda_, *, version: str = '1.3'):
     """``<Kd>_1`` at one wavelength from MODIS ``Rrs``; scalar wrapper.
 
     A thin wrapper over :func:`kd_nn` with the authors' ``Kd_NN_MODIS.m``
@@ -346,8 +353,8 @@ def Kd_NN_MODIS(Rrs, sza, lambda_, *, version: str = '1.1'):
     lambda_ : float
         Output wavelength [nm].
     version : str, optional
-        ``'1.1'`` (default; the network ocpy has always shipped) or ``'1.3'``
-        (the authors' current release).
+        ``'1.3'`` (default since 2026-10-04; the authors' current release)
+        or ``'1.1'`` (the network ocpy shipped before then).
 
     Returns
     -------
